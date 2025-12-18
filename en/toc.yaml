@@ -2,14 +2,14 @@ title: IceGate Documentation
 href: index.yaml
 navigation:
   logo:
-    url: "../en/"
+    url: "."
     urlTitle: "IceGate"
     text: "IceGate"
   header:
     leftItems:
       - text: "Documentation"
         type: "link"
-        url: "../en/"
+        url: "."
       - text: "GitHub"
         type: "link"
         url: "https://github.com/icegatetech/icegate"

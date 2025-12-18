@@ -20,12 +20,50 @@ IceGate est un moteur de lac de données d'observabilité qui stocke les logs, t
 - **Économique** : Architecture basée sur le stockage objet
 - **Transactions ACID** : Support complet des transactions
 
-## Composants Système
+## Contexte Système
 
-- **Ingest** : Réception des données via OTLP
-- **Query** : Exécution des requêtes (APIs Loki/Prometheus/Tempo)
-- **Maintain** : Opérations de maintenance et compaction
-- **Alert** : Alertes basées sur des règles (planifié)
+![Contexte Système](../../assets/c4/structurizr-SystemContext.png)
+
+## Diagramme des Conteneurs
+
+![Conteneurs](../../assets/c4/structurizr-Containers.png)
+
+## Détails des Composants
+
+### Service Ingest
+
+![Composants Ingest](../../assets/c4/structurizr-IngestComponents.png)
+
+**Objectif :** Accepter les données d'observabilité via OpenTelemetry Protocol (OTLP)
+
+- **Protocoles :** OTLP HTTP (port 4318), OTLP gRPC (port 4317)
+- **Garantie de Livraison :** Exactly-once
+- **Chemin d'Écriture :** Données → WAL (Parquet) → Stockage Objet
+
+### Service Query
+
+![Composants Query](../../assets/c4/structurizr-QueryComponents.png)
+
+**Objectif :** Exécuter des requêtes sur les logs, traces, métriques et événements
+
+- **Moteur :** Apache DataFusion + Apache Arrow
+- **APIs :** Loki (3100), Prometheus (9090), Tempo (3200)
+- **Langages de Requête :** LogQL, PromQL (planifié), TraceQL (planifié)
+
+### Service Maintain
+
+![Composants Maintain](../../assets/c4/structurizr-MaintainComponents.png)
+
+**Objectif :** Opérations de cycle de vie et d'optimisation des données
+
+- **Compaction :** Fusion des petits fichiers WAL en tables Iceberg optimisées
+- **TTL :** Expiration et suppression des anciennes données
+- **Optimisation :** Réécriture des fichiers pour de meilleures performances
+- **Nettoyage :** Suppression des fichiers orphelins
+
+### Service Alert (Planifié)
+
+**Objectif :** Alertes basées sur des règles sur les données d'observabilité
 
 ## Étapes Suivantes
 

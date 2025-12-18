@@ -17,3 +17,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Structurizr
+c4/_site/
+c4/_puml/
+c4/.structurizr/
+c4/workspace.json

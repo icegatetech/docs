@@ -14,42 +14,19 @@ IceGate is an observability data lake engine that stores logs, traces, metrics, 
 - **Cost-Effective**: Object storage-based architecture minimizes infrastructure costs
 - **ACID Transactions**: Full transaction support without a dedicated OLTP database
 
-## System Components
+## System Context
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Clients                                  │
-│   (OpenTelemetry SDK, Grafana, curl, Applications)              │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      IceGate Services                            │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────┐│
-│  │   Ingest    │  │    Query    │  │  Maintain   │  │  Alert  ││
-│  │  (OTLP)     │  │ (Loki/Prom) │  │ (Compaction)│  │ (Rules) ││
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────┘│
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     Catalog (Nessie)                             │
-│              Apache Iceberg REST Catalog                         │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  Object Storage (S3/MinIO)                       │
-│    ┌─────────┐    ┌─────────────┐    ┌──────────────┐          │
-│    │   WAL   │    │   Iceberg   │    │   Catalog    │          │
-│    │ (Live)  │    │   Tables    │    │   Metadata   │          │
-│    └─────────┘    └─────────────┘    └──────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
-```
+![System Context](../../assets/c4/structurizr-SystemContext.png)
+
+## Container Diagram
+
+![Containers](../../assets/c4/structurizr-Containers.png)
 
 ## Component Details
 
 ### Ingest Service
+
+![Ingest Components](../../assets/c4/structurizr-IngestComponents.png)
 
 **Purpose:** Accept observability data via OpenTelemetry Protocol (OTLP)
 
@@ -60,6 +37,8 @@ IceGate is an observability data lake engine that stores logs, traces, metrics, 
 The Write-Ahead Log (WAL) stores data as Parquet files organized for compatibility with the Iceberg storage layer. WAL files can be queried directly for real-time data access.
 
 ### Query Service
+
+![Query Components](../../assets/c4/structurizr-QueryComponents.png)
 
 **Purpose:** Execute queries against logs, traces, metrics, and events
 
@@ -73,6 +52,8 @@ The query service reads from both:
 - **Iceberg Tables**: For historical data (compacted)
 
 ### Maintain Service
+
+![Maintain Components](../../assets/c4/structurizr-MaintainComponents.png)
 
 **Purpose:** Data lifecycle and optimization operations
 
