@@ -1,0 +1,50 @@
+# Diplodoc Linter Configuration
+# https://diplodoc.com/docs/en/project/lint
+
+log-levels:
+  # Markdownlint rules (MD-prefix)
+  MD001: 'warn'      # Header levels should increment by one
+  MD003: 'warn'      # Header style
+  MD004: 'warn'      # Unordered list style
+  MD005: 'error'     # Inconsistent indentation for list items
+  MD007: 'warn'      # Unordered list indentation
+  MD009: 'warn'      # Trailing spaces
+  MD010: 'error'     # Hard tabs
+  MD011: 'error'     # Reversed link syntax
+  MD012: 'warn'      # Multiple consecutive blank lines
+  MD013: 'disabled'  # Line length (disabled for technical docs)
+  MD014: 'warn'      # Dollar signs used before commands
+  MD018: 'error'     # No space after hash on atx style header
+  MD019: 'error'     # Multiple spaces after hash
+  MD022: 'warn'      # Headers should be surrounded by blank lines
+  MD023: 'error'     # Headers must start at the beginning of the line
+  MD025: 'warn'      # Multiple top-level headers
+  MD027: 'error'     # Multiple spaces after blockquote symbol
+  MD028: 'warn'      # Blank line inside blockquote
+  MD029: 'warn'      # Ordered list item prefix
+  MD030: 'warn'      # Spaces after list markers
+  MD031: 'warn'      # Fenced code blocks should be surrounded by blank lines
+  MD032: 'warn'      # Lists should be surrounded by blank lines
+  MD033: 'disabled'  # Inline HTML (allowed for technical docs)
+  MD034: 'warn'      # Bare URL used
+  MD036: 'warn'      # Emphasis used instead of a header
+  MD037: 'error'     # Spaces inside emphasis markers
+  MD038: 'error'     # Spaces inside code span elements
+  MD039: 'error'     # Spaces inside link text
+  MD041: 'warn'      # First line should be a top level header
+  MD042: 'error'     # No empty links
+  MD045: 'warn'      # Images should have alternate text
+  MD046: 'warn'      # Code block style
+  MD047: 'error'     # Files should end with a single newline character
+
+  # YFM-specific rules
+  YFM001: 'warn'     # Inline code length
+  YFM002: 'warn'     # No header for link
+  YFM003: 'error'    # Link is unreachable
+
+# Rule-specific configuration
+MD007:
+  indent: 2
+
+YFM001:
+  maximum: 120

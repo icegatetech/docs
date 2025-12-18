@@ -1,0 +1,73 @@
+title: IceGate Documentation
+href: index.yaml
+navigation:
+  logo:
+    url: "../en/"
+    urlTitle: "IceGate"
+    text: "IceGate"
+  header:
+    leftItems:
+      - text: "Documentation"
+        type: "link"
+        url: "../en/"
+      - text: "GitHub"
+        type: "link"
+        url: "https://github.com/icegatetech/icegate"
+    rightItems:
+      - type: controls
+items:
+  - name: Getting Started
+    expanded: true
+    items:
+      - name: Installation
+        href: getting-started/installation.md
+      - name: Quick Start
+        href: getting-started/quickstart.md
+      - name: Configuration
+        href: getting-started/configuration.md
+
+  - name: Guides
+    items:
+      - name: Data Ingestion
+        href: guides/ingestion.md
+      - name: Querying Data
+        href: guides/querying.md
+      - name: Multi-Tenancy
+        href: guides/multi-tenancy.md
+
+  - name: API Reference
+    items:
+      - name: Loki API
+        href: api-reference/loki.md
+      - name: Prometheus API
+        href: api-reference/prometheus.md
+      - name: Tempo API
+        href: api-reference/tempo.md
+
+  - name: Architecture
+    items:
+      - name: Overview
+        href: architecture/overview.md
+      - name: Data Model
+        href: architecture/data-model.md
+
+  - name: Operations
+    items:
+      - name: Deployment
+        href: operations/deployment.md
+      - name: Maintenance
+        href: operations/maintenance.md
+      - name: Troubleshooting
+        href: operations/troubleshooting.md
+
+  - name: Development
+    items:
+      - name: Development Patterns
+        href: development/patterns.md
+      - name: Contributing
+        href: development/contributing.md
+      - name: Building from Source
+        href: development/building.md
+
+  - name: FAQ
+    href: faq.md

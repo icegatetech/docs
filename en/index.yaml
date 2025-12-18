@@ -1,0 +1,24 @@
+title: IceGate Documentation
+description: |
+  An Observability Data Lake engine designed to be fast, easy-to-use, cost-effective, scalable, and fault-tolerant.
+meta:
+  title: IceGate - Observability Data Lake Engine
+links:
+  - title: Getting Started
+    description: Install IceGate and run your first queries in minutes
+    href: getting-started/installation.md
+  - title: Guides
+    description: Learn how to ingest data, query logs, and configure multi-tenancy
+    href: guides/ingestion.md
+  - title: API Reference
+    description: Loki, Prometheus, and Tempo compatible APIs
+    href: api-reference/loki.md
+  - title: Architecture
+    description: Understand IceGate's compute-storage separation design
+    href: architecture/overview.md
+  - title: Operations
+    description: Deploy, maintain, and troubleshoot IceGate in production
+    href: operations/deployment.md
+  - title: Development
+    description: Contribute to IceGate development
+    href: development/contributing.md

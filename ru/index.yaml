@@ -1,0 +1,24 @@
+title: Документация IceGate
+description: |
+  Движок озера данных для наблюдаемости, разработанный быть быстрым, простым в использовании, экономичным, масштабируемым и отказоустойчивым.
+meta:
+  title: IceGate - Движок Озера Данных для Наблюдаемости
+links:
+  - title: Начало Работы
+    description: Установите IceGate и выполните первые запросы за несколько минут
+    href: getting-started/installation.md
+  - title: Руководства
+    description: Узнайте как загружать данные, делать запросы к логам и настраивать мультитенантность
+    href: guides/ingestion.md
+  - title: Справочник API
+    description: API совместимые с Loki, Prometheus и Tempo
+    href: api-reference/loki.md
+  - title: Архитектура
+    description: Понимание архитектуры разделения вычислений и хранения IceGate
+    href: architecture/overview.md
+  - title: Эксплуатация
+    description: Развёртывание, обслуживание и устранение неполадок IceGate в продакшене
+    href: operations/deployment.md
+  - title: Разработка
+    description: Участие в разработке IceGate
+    href: development/contributing.md

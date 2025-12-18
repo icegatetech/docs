@@ -1,0 +1,73 @@
+title: Документация IceGate
+href: index.yaml
+navigation:
+  logo:
+    url: "../ru/"
+    urlTitle: "IceGate"
+    text: "IceGate"
+  header:
+    leftItems:
+      - text: "Документация"
+        type: "link"
+        url: "../ru/"
+      - text: "GitHub"
+        type: "link"
+        url: "https://github.com/icegatetech/icegate"
+    rightItems:
+      - type: controls
+items:
+  - name: Начало Работы
+    expanded: true
+    items:
+      - name: Установка
+        href: getting-started/installation.md
+      - name: Быстрый Старт
+        href: getting-started/quickstart.md
+      - name: Конфигурация
+        href: getting-started/configuration.md
+
+  - name: Руководства
+    items:
+      - name: Загрузка Данных
+        href: guides/ingestion.md
+      - name: Запросы к Данным
+        href: guides/querying.md
+      - name: Мультитенантность
+        href: guides/multi-tenancy.md
+
+  - name: Справочник API
+    items:
+      - name: API Loki
+        href: api-reference/loki.md
+      - name: API Prometheus
+        href: api-reference/prometheus.md
+      - name: API Tempo
+        href: api-reference/tempo.md
+
+  - name: Архитектура
+    items:
+      - name: Обзор
+        href: architecture/overview.md
+      - name: Модель Данных
+        href: architecture/data-model.md
+
+  - name: Эксплуатация
+    items:
+      - name: Развёртывание
+        href: operations/deployment.md
+      - name: Обслуживание
+        href: operations/maintenance.md
+      - name: Устранение Неполадок
+        href: operations/troubleshooting.md
+
+  - name: Разработка
+    items:
+      - name: Паттерны Разработки
+        href: development/patterns.md
+      - name: Участие в Проекте
+        href: development/contributing.md
+      - name: Сборка
+        href: development/building.md
+
+  - name: FAQ
+    href: faq.md

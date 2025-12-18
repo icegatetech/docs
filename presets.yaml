@@ -1,0 +1,19 @@
+# Variable presets for different documentation builds
+# https://diplodoc.com/docs/en/project/presets
+
+default:
+  product_name: "IceGate"
+  version: "0.1.0"
+  status: "alpha"
+
+development:
+  product_name: "IceGate"
+  version: "dev"
+  status: "development"
+  show_internal: true
+
+production:
+  product_name: "IceGate"
+  version: "0.1.0"
+  status: "alpha"
+  show_internal: false

@@ -1,0 +1,24 @@
+title: Documentation IceGate
+description: |
+  Un moteur de lac de données d'observabilité conçu pour être rapide, facile à utiliser, économique, évolutif et tolérant aux pannes.
+meta:
+  title: IceGate - Moteur de Lac de Données d'Observabilité
+links:
+  - title: Démarrage Rapide
+    description: Installez IceGate et exécutez vos premières requêtes en quelques minutes
+    href: getting-started/installation.md
+  - title: Guides
+    description: Apprenez à ingérer des données, interroger les logs et configurer le multi-tenancy
+    href: guides/ingestion.md
+  - title: Référence API
+    description: APIs compatibles Loki, Prometheus et Tempo
+    href: api-reference/loki.md
+  - title: Architecture
+    description: Comprendre l'architecture de séparation calcul-stockage d'IceGate
+    href: architecture/overview.md
+  - title: Opérations
+    description: Déployer, maintenir et dépanner IceGate en production
+    href: operations/deployment.md
+  - title: Développement
+    description: Contribuer au développement d'IceGate
+    href: development/contributing.md

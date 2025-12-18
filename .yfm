@@ -1,0 +1,45 @@
+# Diplodoc Configuration
+# https://diplodoc.com/docs/en/project/config
+
+# Variables available throughout documentation
+vars:
+  product_name: "IceGate"
+  product_description: "Observability Data Lake Engine"
+  version: "0.1.0"
+  repo_url: "https://github.com/icegatetech/icegate"
+  license: "Apache 2.0"
+
+# Markdown parsing options
+allowHTML: true
+linkify: true
+breaks: false
+conditionsInCode: false
+disableLiquid: false
+supportGithubAnchors: true
+
+# Default language
+lang: en
+
+# Available languages for language switcher
+langs: ['en', 'fr', 'ru']
+
+# Interface settings
+interface:
+  toc-header: false
+
+# Security
+needToSanitizeHtml: true
+
+# Build settings
+buildDisabled: false
+lint:
+  enabled: true
+  config: .yfmlint
+
+# Docs viewer settings (for language switcher and branding)
+docs-viewer:
+  project-name: icegate
+  langs: ['en', 'fr', 'ru']
+  logo-options:
+    title: IceGate
+

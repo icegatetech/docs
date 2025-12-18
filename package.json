@@ -1,0 +1,19 @@
+{
+  "name": "icegate-docs",
+  "version": "0.1.0",
+  "description": "IceGate Documentation",
+  "private": true,
+  "scripts": {
+    "build": "yfm -i . -o ./build",
+    "build:en": "yfm -i ./en -o ./build/en",
+    "build:fr": "yfm -i ./fr -o ./build/fr",
+    "build:ru": "yfm -i ./ru -o ./build/ru",
+    "serve": "npm run build && npx serve ./build -p 8080",
+    "lint": "yfm -i . -o ./.lint-build --strict && rm -rf ./.lint-build",
+    "clean": "rm -rf ./build"
+  },
+  "devDependencies": {
+    "@diplodoc/cli": "^5.17.2",
+    "serve": "^14.0.0"
+  }
+}
