@@ -44,7 +44,7 @@ workspace "IceGate" "Observability Data Lake Engine" {
             # External storage
             queueStorage = container "Queue Storage" "Queue segments (Parquet WAL files)" "MinIO / S3" "Database"
             icebergStorage = container "Iceberg Storage" "Iceberg data files and manifests" "MinIO / S3" "Database"
-            catalogStore = container "Catalog Store" "Iceberg catalog metadata" "Nessie / REST" "Database"
+            catalogStore = container "Catalog Store" "Iceberg catalog metadata" "Nessie / REST" "Catalog"
         }
 
         # Relationships - External to IceGate
@@ -146,6 +146,9 @@ workspace "IceGate" "Observability Data Lake Engine" {
             }
             element "Database" {
                 shape Cylinder
+            }
+            element "Catalog" {
+                shape Pipe
             }
         }
     }
