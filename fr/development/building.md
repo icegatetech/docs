@@ -15,7 +15,7 @@ Ce guide couvre la compilation d'IceGate à partir du code source.
 
 ## Prérequis
 
-- **Rust** >= 1.80.0
+- **Rust** >= 1.92.0
 - **Cargo** (inclus avec Rust)
 - **Git**
 

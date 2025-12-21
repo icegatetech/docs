@@ -11,7 +11,7 @@ Ce guide couvre l'installation d'IceGate et de ses dépendances pour le dévelop
 
 ### Outils Requis
 
-- **Rust** >= 1.80.0 (pour le support de l'édition Rust 2024)
+- **Rust** >= 1.92.0 (pour le support de l'édition Rust 2024)
 - **Cargo** (inclus avec Rust)
 - **Git**
 - **Docker** et **Docker Compose** (pour l'environnement de développement)
@@ -34,7 +34,7 @@ rustc --version
 cargo --version
 ```
 
-Vous devez avoir Rust 1.80.0 ou une version ultérieure installée.
+Vous devez avoir Rust 1.92.0 ou une version ultérieure installée.
 
 ## Installation de Rust
 

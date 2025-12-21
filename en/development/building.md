@@ -11,7 +11,7 @@ This guide covers building IceGate from source for development and production.
 
 ### Required
 
-- **Rust** >= 1.80.0 (for Rust 2024 edition support)
+- **Rust** >= 1.92.0 (for Rust 2024 edition support)
 - **Cargo** (included with Rust)
 - **Git**
 
@@ -193,7 +193,7 @@ make ci
 
 ### Compilation Errors
 
-1. Ensure Rust version >= 1.80.0:
+1. Ensure Rust version >= 1.92.0:
 
    ```bash
    rustup update

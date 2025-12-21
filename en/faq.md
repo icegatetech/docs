@@ -30,7 +30,7 @@ Apache License 2.0.
 
 ### What are the minimum requirements?
 
-- Rust 1.80.0+
+- Rust 1.92.0+
 - Docker (for development environment)
 - S3-compatible object storage
 

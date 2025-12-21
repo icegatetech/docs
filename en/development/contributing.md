@@ -19,7 +19,7 @@ We welcome contributions to IceGate! This guide explains how to get started.
 
 ### Prerequisites
 
-- Rust >= 1.80.0
+- Rust >= 1.92.0
 - Docker and Docker Compose
 - Git
 

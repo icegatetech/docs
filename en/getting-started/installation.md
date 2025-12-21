@@ -11,7 +11,7 @@ This guide covers installing IceGate and its dependencies for local development 
 
 ### Required Tools
 
-- **Rust** >= 1.80.0 (for Rust 2024 edition support)
+- **Rust** >= 1.92.0 (for Rust 2024 edition support)
 - **Cargo** (included with Rust)
 - **Git**
 - **Docker** and **Docker Compose** (for development environment)
@@ -40,7 +40,7 @@ rustfmt --version
 cargo clippy --version
 ```
 
-You should have Rust 1.80.0 or later installed.
+You should have Rust 1.92.0 or later installed.
 
 ## Installing Rust
 

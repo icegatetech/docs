@@ -11,7 +11,7 @@ description: Установка IceGate и его зависимостей
 
 ### Необходимые Инструменты
 
-- **Rust** >= 1.80.0 (для поддержки Rust 2024 edition)
+- **Rust** >= 1.92.0 (для поддержки Rust 2024 edition)
 - **Cargo** (входит в состав Rust)
 - **Git**
 - **Docker** и **Docker Compose** (для среды разработки)
@@ -34,7 +34,7 @@ rustc --version
 cargo --version
 ```
 
-Вам нужен Rust 1.80.0 или выше.
+Вам нужен Rust 1.92.0 или выше.
 
 ## Установка Rust
 
