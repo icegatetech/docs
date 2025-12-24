@@ -43,3 +43,6 @@ docs-viewer:
   logo-options:
     title: IceGate
 
+analytics:
+  gtm:
+    id: GTM-5FTZCL4M
