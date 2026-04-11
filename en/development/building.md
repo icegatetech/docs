@@ -98,14 +98,15 @@ debug = true
 
 IceGate uses a Cargo workspace:
 
-```
+```text
 Cargo.toml (workspace)
 ├── crates/
 │   ├── icegate-common/Cargo.toml
+│   ├── icegate-queue/Cargo.toml
 │   ├── icegate-query/Cargo.toml
 │   ├── icegate-ingest/Cargo.toml
 │   ├── icegate-maintain/Cargo.toml
-│   └── icegate-queue/Cargo.toml
+│   └── icegate-jobmanager/Cargo.toml
 ```
 
 Build individual crates:
@@ -120,19 +121,19 @@ cargo build -p icegate-common
 ### Query Service
 
 ```bash
-cargo run --bin query -- --config config/query.yaml
+cargo run --bin query -- run -c config/docker/query.yaml
 ```
 
 ### Ingest Service
 
 ```bash
-cargo run --bin ingest -- --config config/ingest.yaml
+cargo run --bin ingest -- run -c config/docker/ingest.yaml
 ```
 
 ### Maintain Service
 
 ```bash
-cargo run --bin maintain migrate --catalog-uri http://localhost:19120/api/v1
+cargo run --bin maintain -- migrate create -c config/docker/maintain.yaml
 ```
 
 ## LogQL Parser Regeneration
@@ -236,11 +237,20 @@ cargo build -j 2
 Build container images:
 
 ```bash
-docker build -t icegate/query:latest -f config/docker/Dockerfile .
+# Release build (multi-arch, cargo-chef cached)
+docker build -t icegate/query:latest \
+  --build-arg BINARY=query \
+  -f config/docker/release.Dockerfile .
+
+# Dev build (simpler, single-arch)
+docker build -t icegate/query:dev \
+  --build-arg BINARY=query \
+  --build-arg PROFILE=debug \
+  -f config/docker/Dockerfile .
 ```
 
 ## Next Steps
 
+- Set up a [Development Environment](setup.md) with Skaffold or Docker Compose
 - Review [Development Patterns](patterns.md)
 - Start [Contributing](contributing.md)
-- Explore the [Architecture](../architecture/overview.md)

@@ -40,12 +40,14 @@ cargo test
 ### Start Development Environment
 
 ```bash
-# Start all services with hot-reload
-make dev
+# Recommended: Skaffold with local Kubernetes
+skaffold dev
 
-# Or start without query service for debugging
-make debug
+# Alternative: Docker Compose with hot-reload
+make dev
 ```
+
+See [Development Setup](setup.md) for full details on Skaffold profiles and Docker Compose options.
 
 ## Code Style
 
@@ -97,11 +99,12 @@ This runs:
 
 ```
 crates/
-├── icegate-common/    # Shared infrastructure
-├── icegate-query/     # Query service (Loki/Prometheus/Tempo APIs)
-├── icegate-ingest/    # Ingest service (OTLP)
-├── icegate-maintain/  # Maintenance operations
-└── icegate-queue/     # Write-ahead log
+├── icegate-common/      # Shared infrastructure (catalog, storage, metrics, tracing)
+├── icegate-queue/       # Write-ahead log (Parquet on object storage)
+├── icegate-query/       # Query service (Loki/Prometheus/Tempo APIs)
+├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC)
+├── icegate-maintain/    # Maintenance operations (schema migration)
+└── icegate-jobmanager/  # Shift job state management
 ```
 
 See [Architecture](../architecture/overview.md) for details.

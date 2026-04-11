@@ -34,6 +34,18 @@ cargo build
 cargo test
 ```
 
+### Запуск Среды Разработки
+
+```bash
+# Рекомендуется: Skaffold с локальным Kubernetes
+skaffold dev
+
+# Альтернатива: Docker Compose с hot-reload
+make dev
+```
+
+Подробности о профилях Skaffold и вариантах Docker Compose смотрите в [Окружении для разработки](setup.md).
+
 ## CI Проверки
 
 ```bash
@@ -43,4 +55,4 @@ make ci
 ## Следующие Шаги
 
 - Изучите [Сборку](building.md)
-- Поймите [Паттерны Разработки](patterns.md)
+- Поймите [Паттерны разработки](patterns.md)

@@ -10,7 +10,7 @@ This guide covers deploying IceGate in production environments.
 ## Prerequisites
 
 - **Object Storage:** S3, MinIO, or S3-compatible storage
-- **Iceberg Catalog:** Nessie, AWS Glue, or other Iceberg REST catalog
+- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
 - **Docker/Kubernetes:** For container orchestration
 
 ## Architecture Considerations
@@ -35,7 +35,7 @@ This guide covers deploying IceGate in production environments.
 
 - CPU: 4-8 cores
 - Memory: 8-32 GB (depends on query complexity)
-- Disk: SSD for temp files (optional)
+- Disk: SSD recommended for cache (`catalog.cache.disk_dir`)
 
 **Maintain Service:**
 
@@ -45,12 +45,26 @@ This guide covers deploying IceGate in production environments.
 
 ## Docker Compose Deployment
 
-### Basic Production Setup
+### Docker Compose Profiles
+
+The project includes Docker Compose profiles for different deployment scenarios:
+
+```bash
+# Core services: MinIO, Nessie, Ingest, Query, Maintain
+make run-core-release
+
+# Core + load generator for testing
+make run-load-release
+
+# Core + monitoring (Jaeger, Prometheus, Grafana)
+# Core + analytics (Trino)
+make run-analytics-release
+```
+
+### Production Setup
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
-
 services:
   minio:
     image: minio/minio:latest
@@ -75,27 +89,33 @@ services:
 
   ingest:
     image: icegate/ingest:latest
+    command: run -c /etc/icegate/ingest.yaml
     environment:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
-      AWS_REGION: us-east-1
+    volumes:
+      - ./config/ingest.yaml:/etc/icegate/ingest.yaml:ro
     ports:
-      - "4317:4317"
-      - "4318:4318"
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "9091:9091"   # Prometheus metrics
     depends_on:
       - minio
       - nessie
 
   query:
     image: icegate/query:latest
+    command: run -c /etc/icegate/query.yaml
     environment:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
-      AWS_REGION: us-east-1
+    volumes:
+      - ./config/query.yaml:/etc/icegate/query.yaml:ro
+      - query-cache:/tmp/icegate/cache
     ports:
-      - "3100:3100"
-      - "9090:9090"
-      - "3200:3200"
+      - "3100:3100"   # Loki API
+      - "9090:9090"   # Prometheus API
+      - "3200:3200"   # Tempo API
     depends_on:
       - minio
       - nessie
@@ -105,7 +125,8 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
-      AWS_REGION: us-east-1
+    volumes:
+      - ./config/maintain.yaml:/etc/icegate/maintain.yaml:ro
     depends_on:
       - minio
       - nessie
@@ -113,6 +134,64 @@ services:
 volumes:
   minio-data:
   nessie-data:
+  query-cache:
+```
+
+### Docker Build
+
+Build container images from source:
+
+```bash
+# Build ingest service (release mode)
+docker build -t icegate/ingest:latest \
+  --build-arg BINARY=ingest \
+  --build-arg PROFILE=release \
+  -f config/docker/Dockerfile .
+
+# Build query service
+docker build -t icegate/query:latest \
+  --build-arg BINARY=query \
+  --build-arg PROFILE=release \
+  -f config/docker/Dockerfile .
+
+# Build maintain service
+docker build -t icegate/maintain:latest \
+  --build-arg BINARY=maintain \
+  --build-arg PROFILE=release \
+  -f config/docker/Dockerfile .
+```
+
+## Kubernetes Deployment
+
+### Helm Charts
+
+IceGate includes Helm charts for Kubernetes deployment:
+
+```bash
+# Install from local charts
+helm install icegate ./config/helm/icegate
+
+# With custom values
+helm install icegate ./config/helm/icegate \
+  -f my-values.yaml \
+  --set storage.bucket=my-warehouse
+```
+
+### Kustomize Overlays
+
+Pre-built Kustomize overlays are available for common scenarios:
+
+| Overlay | Description |
+|---------|-------------|
+| `skaffold` | Local development with Skaffold |
+| `orbstack` | OrbStack container runtime |
+| `aws-glue` | AWS Glue catalog integration |
+| `aws-s3tables` | AWS S3 Tables catalog integration |
+| `external-s3` | External S3 storage (not MinIO) |
+
+```bash
+# Apply with kustomize
+kubectl apply -k config/kustomize/overlays/aws-glue
 ```
 
 ## S3 Storage Configuration
@@ -121,55 +200,19 @@ volumes:
 
 ```yaml
 storage:
-  type: s3
-  bucket: icegate-warehouse
-  region: us-east-1
+  backend: !s3
+    bucket: icegate-warehouse
+    region: us-east-1
 ```
 
 ### MinIO
 
 ```yaml
 storage:
-  type: s3
-  bucket: warehouse
-  endpoint: http://minio:9000
-  region: us-east-1
-  force_path_style: true
-```
-
-## Documentation Hosting
-
-IceGate documentation is built with Diplodoc and can be deployed to S3/MinIO.
-
-### Build Documentation
-
-```bash
-cd docs
-npm install
-npm run build
-```
-
-### Deploy to S3
-
-```bash
-# Sync to S3 bucket
-aws s3 sync ./build s3://docs-bucket/icegate/ \
-  --delete \
-  --cache-control "max-age=3600"
-
-# For MinIO
-mc cp --recursive ./build/ minio/docs-bucket/icegate/
-```
-
-### S3 Static Website Configuration
-
-Enable static website hosting on your S3 bucket:
-
-```json
-{
-  "IndexDocument": {"Suffix": "index.html"},
-  "ErrorDocument": {"Key": "404.html"}
-}
+  backend: !s3
+    bucket: warehouse
+    endpoint: http://minio:9000
+    region: us-east-1
 ```
 
 ## High Availability
@@ -192,29 +235,47 @@ services:
 
 All services expose health endpoints:
 
-- Ingest: `GET /health`
-- Query: `GET /ready`
-- Maintain: `GET /health`
+- Ingest: `GET /health` (port 4318)
+- Query: `GET /ready` (port 3100)
 
 ## Monitoring
 
 ### Metrics
 
-IceGate services expose Prometheus metrics:
+IceGate services expose Prometheus metrics on a dedicated port (default: 9091):
 
-- Query: `http://query:9090/metrics`
-- Ingest: `http://ingest:9090/metrics`
+- Ingest metrics: `http://ingest:9091/metrics`
+- Query metrics: `http://query:9091/metrics`
+
+Configure in each service:
+
+```yaml
+metrics:
+  enabled: true
+  host: 0.0.0.0
+  port: 9091
+  path: /metrics
+```
+
+### Self-Observability with Tracing
+
+IceGate can export its own traces via OTLP for debugging:
+
+```yaml
+tracing:
+  enabled: true
+  service_name: icegate-query
+  otlp_endpoint: http://jaeger:4317
+  sample_ratio: 0.1  # 10% sampling in production
+```
 
 ### Logging
 
-Services log to stdout in JSON format. Configure log aggregation:
+Services log to stdout. Configure log level via `RUST_LOG` environment variable:
 
 ```yaml
-logging:
-  driver: json-file
-  options:
-    max-size: "100m"
-    max-file: "3"
+environment:
+  RUST_LOG: "info,icegate_query=debug"
 ```
 
 ## Security

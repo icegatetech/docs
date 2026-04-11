@@ -74,12 +74,15 @@ The query service reads from both:
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Table Format | Apache Iceberg | ACID transactions, time travel, schema evolution |
-| Query Engine | Apache DataFusion | Vectorized query execution |
-| Memory Format | Apache Arrow | Zero-copy data processing |
-| Storage Format | Apache Parquet | Columnar storage with compression |
-| Ingestion | OpenTelemetry | Standard observability protocol |
-| Catalog | Nessie | Iceberg REST catalog with Git-like semantics |
+| Table Format | Apache Iceberg 0.9 | ACID transactions, time travel, schema evolution |
+| Query Engine | Apache DataFusion 52.2 | Vectorized query execution |
+| Memory Format | Apache Arrow 57.0 | Zero-copy data processing |
+| Storage Format | Apache Parquet 57.0 | Columnar storage with ZSTD compression |
+| Ingestion | OpenTelemetry 0.31 | Standard observability protocol (gRPC + HTTP) |
+| Catalog | Nessie, AWS S3 Tables, AWS Glue | Iceberg REST catalog backends |
+| Job Manager | icegate-jobmanager | S3-based shift job state management |
+| Caching | foyer 0.22 | Hybrid memory + disk cache for S3 reads |
+| Language | Rust 1.92+ (2024 edition) | Memory-safe, high-performance runtime |
 
 ## Data Flow
 
@@ -97,14 +100,14 @@ The query service reads from both:
 3. Data read from Iceberg tables and/or WAL
 4. Results formatted and returned
 
-### Compaction Flow
+### Shift (Compaction) Flow
 
-1. Maintain service monitors WAL size
-2. When threshold reached, reads WAL files
-3. Merges and optimizes data
-4. Writes new Iceberg data files
+1. Ingest service's shift process monitors WAL segments
+2. Groups segments into shift tasks
+3. Reads WAL files in parallel, merges and re-partitions data
+4. Writes optimized Iceberg data files
 5. Commits new snapshot to catalog
-6. Deletes processed WAL files
+6. Deletes processed WAL segments
 
 ## Scalability
 

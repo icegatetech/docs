@@ -1,88 +1,191 @@
 ---
 title: Установка
-description: Установка IceGate и его зависимостей
+description: Установка IceGate в Kubernetes с помощью Helm
 ---
 
 # Установка
 
-Это руководство охватывает установку IceGate и его зависимостей для локальной разработки и продакшен развёртывания.
+IceGate разворачивается в Kubernetes с помощью Helm charts и оверлеев Kustomize для настройки под конкретное окружение.
 
 ## Предварительные Требования
 
-### Необходимые Инструменты
+- **Kubernetes** >= 1.28 с **Helm 3**
+- **Объектное хранилище:** AWS S3 или S3-совместимое (MinIO)
+- **Каталог Iceberg:** Nessie (REST), AWS S3 Tables или AWS Glue
 
-- **Rust** >= 1.92.0 (для поддержки Rust 2024 edition)
-- **Cargo** (входит в состав Rust)
-- **Git**
-- **Docker** и **Docker Compose** (для среды разработки)
+## Helm Chart
 
-### Опциональные Инструменты
+Helm chart разворачивает все компоненты IceGate: Ingest, Query и задачу Migrate (создание схемы в виде хука pre-install/pre-upgrade).
 
-- **rustfmt** - для форматирования кода (входит в Rust)
-- **clippy** - для статического анализа (входит в Rust)
-- **rust-analyzer** - для поддержки IDE
-
-## Проверка Предварительных Требований
-
-Убедитесь, что Rust установлен с правильной версией:
+### Установка из реестра OCI
 
 ```bash
-# Проверить версию Rust
-rustc --version
-
-# Проверить версию Cargo
-cargo --version
+helm install icegate oci://ghcr.io/icegatetech/charts/icegate \
+  --version 0.1.0 \
+  --namespace icegate \
+  --create-namespace \
+  -f values.yaml
 ```
 
-Вам нужен Rust 1.92.0 или выше.
-
-## Установка Rust
-
-Если у вас не установлен Rust, используйте rustup:
+### Установка из локальных чартов
 
 ```bash
-# Установить Rust через rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Следуйте инструкциям для завершения установки
-# Затем перезагрузите shell или выполните:
-source $HOME/.cargo/env
-
-# Проверить установку
-rustc --version
-cargo --version
-```
-
-## Установка IceGate
-
-### Из Исходного Кода
-
-Клонируйте репозиторий и соберите:
-
-```bash
-# Клонировать репозиторий
 git clone https://github.com/icegatetech/icegate.git
-cd icegate
-
-# Собрать в режиме debug
-cargo build
-
-# Или собрать в режиме release (оптимизированный)
-cargo build --release
+helm install icegate ./icegate/config/helm/icegate \
+  --namespace icegate \
+  --create-namespace \
+  -f values.yaml
 ```
 
-### Docker
+### Минимальный values.yaml
 
-Рекомендуемый способ запуска IceGate для разработки - Docker Compose:
+{% note info %}
+
+Значения Helm используют camelCase и плоские ключи (например, `backend: rest` + `rest.uri`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !rest`), который ожидают бинарные файлы IceGate. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
+
+{% endnote %}
+
+Минимальный файл `values.yaml` для REST-каталога (Nessie) с S3-совместимым хранилищем:
+
+```yaml
+catalog:
+  backend: rest
+  rest:
+    uri: http://nessie:19120/iceberg
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://minio:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### Каталог AWS Glue
+
+```yaml
+catalog:
+  backend: glue
+  glue:
+    catalogId: "123456789012"
+  warehouse: "s3://my-bucket/warehouse/"
+
+storage:
+  s3:
+    bucket: my-bucket
+    region: eu-central-1
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: eu-central-1
+```
+
+### Каталог AWS S3 Tables
+
+```yaml
+catalog:
+  backend: s3tables
+  s3tables:
+    tableBucketArn: "arn:aws:s3tables:eu-central-1:123456789012:bucket/my-tables"
+
+storage:
+  s3:
+    region: eu-central-1
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: eu-central-1
+```
+
+### Основные значения Helm
+
+| Значение | По умолчанию | Описание |
+|----------|--------------|----------|
+| `catalog.backend` | `rest` | Тип каталога: `rest`, `s3tables` или `glue` |
+| `storage.s3.bucket` | `warehouse` | Имя S3-бакета |
+| `storage.s3.endpoint` | `""` | Пользовательский S3-эндпоинт (MinIO). Опустить для реального AWS S3 |
+| `aws.existingSecret` | `""` | Secret с ключами `aws-access-key-id` и `aws-secret-access-key` |
+| `query.replicaCount` | `1` | Количество реплик сервиса Query |
+| `ingest.replicaCount` | `1` | Количество реплик сервиса Ingest |
+| `query.cache.enabled` | `true` | Включить гибридный кеш диск+память для чтения запросов |
+| `query.engine.walQueryEnabled` | `false` | Включить данные WAL в результаты запросов для доступа в реальном времени |
+| `serviceMonitor.enabled` | `false` | Создать ресурсы Prometheus ServiceMonitor |
+| `migrate.enabled` | `true` | Запустить миграцию схемы как хук Helm |
+
+### Образы контейнеров
+
+| Компонент | Образ |
+|-----------|-------|
+| Query | `ghcr.io/icegatetech/icegate-query` |
+| Ingest | `ghcr.io/icegatetech/icegate-ingest` |
+| Migrate | `ghcr.io/icegatetech/icegate-maintain` |
+
+## Оверлеи Kustomize
+
+Для настройки под конкретное окружение IceGate предоставляет оверлеи Kustomize, которые компонуют Helm chart с зависимостями инфраструктуры.
+
+### Доступные оверлеи
+
+| Оверлей | Описание | Инфраструктура |
+|---------|----------|----------------|
+| `skaffold` | Локальная разработка со Skaffold | MinIO, Nessie, стек наблюдаемости |
+| `orbstack` | Среда выполнения контейнеров OrbStack | MinIO, Nessie, стек наблюдаемости |
+| `aws-glue` | Каталог AWS Glue | Стек наблюдаемости (без MinIO/Nessie) |
+| `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (без MinIO/Nessie) |
+| `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости (без MinIO) |
+
+Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами IceGate и Jaeger для распределённой трассировки.
+
+### Использование
 
 ```bash
-# Запустить полный стек разработки
-make dev
+# Применить оверлей напрямую
+kubectl apply -k config/kustomize/overlays/aws-glue
+
+# Или используйте Skaffold для разработки (см. Окружение для Разработки)
+skaffold dev
 ```
 
-Это запустит все необходимые сервисы, включая MinIO (S3), Nessie (каталог Iceberg), Grafana и сервис запросов IceGate.
+### Настройка оверлея
+
+Каждый оверлей содержит:
+
+- `kustomization.yaml` — объявляет Helm charts и патчи
+- `values-icegate.yaml` — значения Helm IceGate для данного окружения
+- `secret-aws.yaml` — Secret с учётными данными AWS (отредактировать перед применением)
+
+Для создания пользовательского оверлея:
+
+```bash
+cp -r config/kustomize/overlays/orbstack config/kustomize/overlays/my-env
+vi config/kustomize/overlays/my-env/values-icegate.yaml
+vi config/kustomize/overlays/my-env/secret-aws.yaml
+kubectl apply -k config/kustomize/overlays/my-env
+```
+
+## Проверка Установки
+
+```bash
+# Проверить, что поды запущены
+kubectl get pods -n icegate
+
+# Перенаправить порт к сервису Query
+kubectl port-forward -n icegate svc/icegate-query 3100:3100
+
+# Проверить готовность
+curl http://localhost:3100/ready
+```
 
 ## Следующие Шаги
 
-- Перейдите к [Быстрому Старту](quickstart.md) для загрузки первых данных
-- Смотрите [Конфигурацию](configuration.md) для настроек
+- Перейдите к [Быстрому старту](quickstart.md) для загрузки первых данных
+- Смотрите [Конфигурацию](configuration.md) для подробных настроек
+- Настройте [Окружение для разработки](../development/setup.md) для участия в проекте

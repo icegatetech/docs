@@ -37,6 +37,8 @@ items:
 
   - name: Référence API
     items:
+      - name: API d'Ingestion OTLP
+        href: api-reference/otlp.md
       - name: API Loki
         href: api-reference/loki.md
       - name: API Prometheus
@@ -62,12 +64,14 @@ items:
 
   - name: Développement
     items:
+      - name: Environnement de Développement
+        href: development/setup.md
+      - name: Compilation
+        href: development/building.md
       - name: Patterns de Développement
         href: development/patterns.md
       - name: Contribuer
         href: development/contributing.md
-      - name: Compilation
-        href: development/building.md
 
   - name: FAQ
     href: faq.md
