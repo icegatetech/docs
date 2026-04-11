@@ -186,6 +186,7 @@ Pre-built Kustomize overlays are available for common scenarios:
 | `skaffold` | Local development with Skaffold |
 | `orbstack` | OrbStack container runtime |
 | `aws-glue` | AWS Glue catalog integration |
+| `aws-s3tables` | AWS S3 Tables catalog integration |
 | `external-s3` | External S3 storage (not MinIO) |
 
 ```bash

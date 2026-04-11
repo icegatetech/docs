@@ -395,7 +395,7 @@ tracing:
 
 Lorsque `engine.wal_query_enabled` est `true`, le service query lit à la fois les données Iceberg validées et les segments WAL non validés. Cela permet d'interroger des données vieilles de quelques secondes seulement, avant qu'elles n'aient été transférées vers les tables Iceberg.
 
-**Note :** Les points de terminaison de métadonnées `/labels`, `/label_values` et `/series` lisent toujours uniquement depuis Iceberg, quel que soit ce paramètre.
+**Note :** Les points de terminaison de métadonnées `/labels`, `/label/{name}/values` et `/series` lisent toujours uniquement depuis Iceberg, quel que soit ce paramètre.
 
 {% endnote %}
 
@@ -476,6 +476,7 @@ tracing:
   service_name: icegate-ingest
   otlp_endpoint: http://jaeger:4317
   sample_ratio: 0.1  # Sample 10% of traces in production
+
 ```
 
 ## Environnement de Développement

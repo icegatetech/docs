@@ -37,6 +37,8 @@ items:
 
   - name: Référence API
     items:
+      - name: API d'Ingestion OTLP
+        href: api-reference/otlp.md
       - name: API Loki
         href: api-reference/loki.md
       - name: API Prometheus

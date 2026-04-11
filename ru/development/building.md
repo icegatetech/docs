@@ -98,7 +98,7 @@ debug = true
 
 IceGate использует Cargo workspace:
 
-```
+```text
 Cargo.toml (workspace)
 ├── crates/
 │   ├── icegate-common/Cargo.toml

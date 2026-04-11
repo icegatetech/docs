@@ -17,9 +17,6 @@ curl http://localhost:3100/ready
 
 # Сервис Ingest
 curl http://localhost:4318/health
-
-# Сервис Maintain
-curl http://localhost:8080/health
 ```
 
 ### Просмотр Логов Сервисов
@@ -28,7 +25,6 @@ curl http://localhost:8080/health
 # Docker Compose
 docker compose logs -f query
 docker compose logs -f ingest
-docker compose logs -f maintain
 ```
 
 ## Проблемы с Подключением

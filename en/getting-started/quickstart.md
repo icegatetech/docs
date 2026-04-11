@@ -147,7 +147,7 @@ IceGate provides a Loki-compatible API on the Query service (port 3100).
 ```bash
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query={service_name="my-service"}' \
-  --data-urlencode 'start='$(date -v-1H +%s) \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s 2>/dev/null || date -v-1H +%s) \
   --data-urlencode 'end='$(date +%s) \
   --data-urlencode 'limit=100' \
   -H "X-Scope-OrgID: demo"
@@ -158,7 +158,7 @@ curl -G http://localhost:3100/loki/api/v1/query_range \
 ```bash
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query={service_name="my-service", severity_text="ERROR"}' \
-  --data-urlencode 'start='$(date -v-1H +%s) \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s 2>/dev/null || date -v-1H +%s) \
   --data-urlencode 'end='$(date +%s) \
   -H "X-Scope-OrgID: demo"
 ```
@@ -168,7 +168,7 @@ curl -G http://localhost:3100/loki/api/v1/query_range \
 ```bash
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query={service_name="my-service"} |= "login"' \
-  --data-urlencode 'start='$(date -v-1H +%s) \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s 2>/dev/null || date -v-1H +%s) \
   --data-urlencode 'end='$(date +%s) \
   -H "X-Scope-OrgID: demo"
 ```
@@ -179,7 +179,7 @@ curl -G http://localhost:3100/loki/api/v1/query_range \
 # Count logs per 5-minute window
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query=count_over_time({service_name="my-service"}[5m])' \
-  --data-urlencode 'start='$(date -v-1H +%s) \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s 2>/dev/null || date -v-1H +%s) \
   --data-urlencode 'end='$(date +%s) \
   --data-urlencode 'step=300' \
   -H "X-Scope-OrgID: demo"
@@ -187,7 +187,7 @@ curl -G http://localhost:3100/loki/api/v1/query_range \
 # Error rate per second
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query=rate({severity_text="ERROR"}[1m])' \
-  --data-urlencode 'start='$(date -v-1H +%s) \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s 2>/dev/null || date -v-1H +%s) \
   --data-urlencode 'end='$(date +%s) \
   --data-urlencode 'step=60' \
   -H "X-Scope-OrgID: demo"

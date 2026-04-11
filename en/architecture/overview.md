@@ -100,14 +100,14 @@ The query service reads from both:
 3. Data read from Iceberg tables and/or WAL
 4. Results formatted and returned
 
-### Compaction Flow
+### Shift (Compaction) Flow
 
-1. Maintain service monitors WAL size
-2. When threshold reached, reads WAL files
-3. Merges and optimizes data
-4. Writes new Iceberg data files
+1. Ingest service's shift process monitors WAL segments
+2. Groups segments into shift tasks
+3. Reads WAL files in parallel, merges and re-partitions data
+4. Writes optimized Iceberg data files
 5. Commits new snapshot to catalog
-6. Deletes processed WAL files
+6. Deletes processed WAL segments
 
 ## Scalability
 

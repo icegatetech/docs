@@ -110,7 +110,7 @@ Lorsque activé, les requêtes lisent depuis les deux sources :
 - **Tables Iceberg** — Données historiques, compactées
 - **Segments WAL** — Données en temps réel pas encore transférées
 
-**Note :** Les points de terminaison de métadonnées `/labels`, `/label_values` et `/series` lisent toujours uniquement depuis Iceberg, quel que soit ce paramètre.
+**Note :** Les points de terminaison de métadonnées `/labels`, `/label/{name}/values` et `/series` lisent toujours uniquement depuis Iceberg, quel que soit ce paramètre.
 
 ## Statut d'Implémentation
 

@@ -160,7 +160,8 @@ ZSTD compression, 64MB row groups.
 - Installation: https://docs.icegate.tech/en/getting-started/installation
 - Quick Start: https://docs.icegate.tech/en/getting-started/quickstart
 - Configuration: https://docs.icegate.tech/en/getting-started/configuration
-- API Reference: https://docs.icegate.tech/en/api-reference/loki
+- OTLP Ingestion API: https://docs.icegate.tech/en/api-reference/otlp
+- Loki Query API: https://docs.icegate.tech/en/api-reference/loki
 - Architecture: https://docs.icegate.tech/en/architecture/overview
 - Data Model: https://docs.icegate.tech/en/architecture/data-model
 - Deployment: https://docs.icegate.tech/en/operations/deployment

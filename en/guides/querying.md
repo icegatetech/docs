@@ -110,7 +110,7 @@ When enabled, queries read from both:
 - **Iceberg tables** — Historical, compacted data
 - **WAL segments** — Real-time data not yet shifted
 
-**Note:** The `/labels`, `/label_values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
+**Note:** The `/labels`, `/label/{name}/values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
 
 ## Implementation Status
 

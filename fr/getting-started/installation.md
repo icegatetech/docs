@@ -39,6 +39,12 @@ helm install icegate ./icegate/config/helm/icegate \
 
 ### Fichier values.yaml minimal
 
+{% note info %}
+
+Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: rest` + `rest.uri`). Le chart traduit ces valeurs dans le format natif de configuration serde tagged enum (`backend: !rest`) attendu par les binaires IceGate. Voir [Configuration](configuration.md) pour la référence de configuration native.
+
+{% endnote %}
+
 Un fichier `values.yaml` minimal pour un catalogue REST (Nessie) avec stockage compatible S3 :
 
 ```yaml

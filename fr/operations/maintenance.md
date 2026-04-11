@@ -64,6 +64,7 @@ shift:
   read:
     max_record_batches_per_task: 1024
     max_input_bytes_per_task: 67108864  # 64 MiB
+
     plan_segment_read_parallelism: 8
     shift_segment_read_parallelism: 8
   write:
@@ -72,6 +73,7 @@ shift:
     table_cache_ttl_secs: 60
   jobsmanager:
     worker_count: 4           # Half of available CPUs by default
+
     poll_interval_ms: 1000
     iteration_interval_millisecs: 30000
 ```
@@ -162,13 +164,13 @@ docker start nessie
 Iceberg supporte les requêtes de voyage dans le temps. Pour récupérer après une suppression accidentelle :
 
 ```sql
--- Lister les snapshots disponibles
+-- List available snapshots
 SELECT * FROM icegate.logs$snapshots;
 
--- Interroger les données à un snapshot spécifique
+-- Query data at a specific snapshot
 SELECT * FROM icegate.logs FOR VERSION AS OF 123456789;
 
--- Revenir à un snapshot précédent
+-- Roll back to a previous snapshot
 CALL icegate.system.rollback_to_snapshot('logs', 123456789);
 ```
 

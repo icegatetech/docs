@@ -17,9 +17,6 @@ curl http://localhost:3100/ready
 
 # Service Ingest
 curl http://localhost:4318/health
-
-# Service Maintain
-curl http://localhost:8080/health
 ```
 
 ### Afficher les Logs des Services

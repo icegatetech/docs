@@ -186,6 +186,7 @@ helm install icegate ./config/helm/icegate \
 | `skaffold` | Локальная разработка со Skaffold |
 | `orbstack` | Среда выполнения контейнеров OrbStack |
 | `aws-glue` | Интеграция с каталогом AWS Glue |
+| `aws-s3tables` | Интеграция каталога AWS S3 Tables |
 | `external-s3` | Внешнее хранилище S3 (не MinIO) |
 
 ```bash

@@ -100,14 +100,14 @@ Le service query lit depuis les deux sources :
 3. Les données sont lues depuis les tables Iceberg et/ou le WAL
 4. Les résultats sont formatés et retournés
 
-### Flux de Compaction
+### Flux de Shift (Compaction)
 
-1. Le service Maintain surveille la taille du WAL
-2. Quand le seuil est atteint, lit les fichiers WAL
-3. Fusionne et optimise les données
-4. Écrit les nouveaux fichiers de données Iceberg
+1. Le processus shift du service Ingest surveille les segments WAL
+2. Regroupe les segments en tâches shift
+3. Lit les fichiers WAL en parallèle, fusionne et re-partitionne les données
+4. Écrit les fichiers de données Iceberg optimisés
 5. Valide un nouveau snapshot dans le catalogue
-6. Supprime les fichiers WAL traités
+6. Supprime les segments WAL traités
 
 ## Évolutivité
 

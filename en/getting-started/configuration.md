@@ -395,7 +395,7 @@ tracing:
 
 When `engine.wal_query_enabled` is `true`, the query service reads both committed Iceberg data and uncommitted WAL segments. This allows querying data that is only seconds old, before it has been shifted to Iceberg tables.
 
-**Note:** The `/labels`, `/label_values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
+**Note:** The `/labels`, `/label/{name}/values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
 
 {% endnote %}
 

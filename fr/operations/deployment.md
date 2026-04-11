@@ -186,6 +186,7 @@ Des overlays Kustomize pré-construits sont disponibles pour les scénarios cour
 | `skaffold` | Développement local avec Skaffold |
 | `orbstack` | Runtime de conteneurs OrbStack |
 | `aws-glue` | Intégration avec le catalogue AWS Glue |
+| `aws-s3tables` | Intégration du catalogue AWS S3 Tables |
 | `external-s3` | Stockage S3 externe (pas MinIO) |
 
 ```bash
@@ -266,6 +267,7 @@ tracing:
   service_name: icegate-query
   otlp_endpoint: http://jaeger:4317
   sample_ratio: 0.1  # 10% sampling in production
+
 ```
 
 ### Journalisation

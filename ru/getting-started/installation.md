@@ -39,6 +39,12 @@ helm install icegate ./icegate/config/helm/icegate \
 
 ### Минимальный values.yaml
 
+{% note info %}
+
+Значения Helm используют camelCase и плоские ключи (например, `backend: rest` + `rest.uri`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !rest`), который ожидают бинарные файлы IceGate. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
+
+{% endnote %}
+
 Минимальный файл `values.yaml` для REST-каталога (Nessie) с S3-совместимым хранилищем:
 
 ```yaml
