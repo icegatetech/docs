@@ -49,7 +49,7 @@ Each language directory has identical structure:
 | **Quick Start** | `getting-started/quickstart.md` | Ingest data, query with LogQL, use Grafana |
 | **Configuration** | `getting-started/configuration.md` | Full parameter reference for all services |
 | **Guides** | `guides/` | Ingestion, querying, multi-tenancy |
-| **API Reference** | `api-reference/` | Loki, Prometheus, Tempo APIs |
+| **API Reference** | `api-reference/` | OTLP, Loki, Prometheus, Tempo APIs |
 | **Architecture** | `architecture/` | System overview, data model |
 | **Operations** | `operations/` | Deployment, maintenance, troubleshooting |
 | **Development** | `development/` | Dev setup (Skaffold), building, patterns, contributing |
@@ -76,7 +76,7 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 - HTML is allowed (`allowHTML: true`)
 - Files must end with newline (MD047 enforced)
 - Line length not enforced (MD013 disabled)
-- Config YAML examples must use serde tagged enum syntax: `backend: !rest`, `backend: !s3`, `backend: !glue`
+- Config YAML examples must use serde tagged enum syntax: `backend: !rest`, `backend: !s3`, `backend: !s3tables`, `backend: !glue`, `backend: !memory`, `backend: !filesystem`
 - Translate code-block comments to the target language in FR/RU docs
 - Keep parameter names, CLI commands, and code syntax in English across all language translations
 

@@ -53,7 +53,7 @@ catalog:
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | Yes | `memory` | Catalog backend type (see below) |
+| `backend` | enum | No | `memory` | Catalog backend type (see below) |
 | `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
 | `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |

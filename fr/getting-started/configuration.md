@@ -475,7 +475,7 @@ tracing:
   enabled: true
   service_name: icegate-ingest
   otlp_endpoint: http://jaeger:4317
-  sample_ratio: 0.1  # Sample 10% of traces in production
+  sample_ratio: 0.1  # 10 % des traces en production
 
 ```
 

@@ -288,7 +288,7 @@ tracing:
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
 | `shift.read.max_record_batches_per_task` | integer | `1024` | Макс. групп строк на задачу shift |
-| `shift.read.max_input_bytes_per_task` | integer | `67108864` | Макс. входных байт (64 MiB) на задачу shift |
+| `shift.read.max_input_bytes_per_task` | integer | `67108864` | Макс. входных байтов (64 MiB) на задачу shift |
 | `shift.read.plan_segment_read_parallelism` | integer | `8` | Параллельное чтение сегментов WAL при планировании |
 | `shift.read.shift_segment_read_parallelism` | integer | `8` | Параллельное чтение сегментов WAL при shift |
 | `shift.write.row_group_size` | integer | `8192` | Строк в группе строк Parquet для Iceberg |
@@ -475,7 +475,7 @@ tracing:
   enabled: true
   service_name: icegate-ingest
   otlp_endpoint: http://jaeger:4317
-  sample_ratio: 0.1  # Sample 10% of traces in production
+  sample_ratio: 0.1  # Отбирать 10% трасс в продакшене
 ```
 
 ## Среда Разработки
