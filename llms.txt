@@ -1,0 +1,167 @@
+# IceGate Documentation
+
+> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki, Prometheus, and Tempo-compatible APIs.
+
+## Key Links
+
+- Documentation: https://docs.icegate.tech
+- Repository: https://github.com/icegatetech/icegate
+- License: Apache 2.0
+- Status: Alpha (v0.1.0)
+
+## Installation (Production)
+
+Deploy on Kubernetes with Helm:
+
+```bash
+helm install icegate oci://ghcr.io/icegatetech/charts/icegate \
+  --version 0.1.0 \
+  --namespace icegate \
+  --create-namespace \
+  -f values.yaml
+```
+
+Supported catalog backends: REST (Nessie), AWS S3 Tables, AWS Glue.
+Kustomize overlays available for: skaffold, orbstack, aws-glue, aws-s3tables, external-s3.
+
+## Configuration
+
+IceGate uses YAML or TOML config files (auto-detected by extension).
+
+### Services
+
+- **Ingest** (`ingest run -c config.yaml`): OTLP HTTP (4318), OTLP gRPC (4317), WAL queue, shift (WAL→Iceberg)
+- **Query** (`query run -c config.yaml`): Loki (3100), Prometheus (9090), Tempo (3200), DataFusion engine
+- **Maintain** (`maintain migrate create/upgrade -c config.yaml`): Schema migration
+
+### Catalog Backends
+
+```yaml
+# REST (Nessie)
+catalog:
+  backend: !rest
+    uri: http://nessie:19120/iceberg
+  warehouse: s3://warehouse/
+
+# AWS Glue
+catalog:
+  backend: !glue
+    catalog_id: "123456789012"
+  warehouse: s3://bucket/warehouse/
+
+# AWS S3 Tables
+catalog:
+  backend: !s3tables
+    table_bucket_arn: arn:aws:s3tables:region:account:bucket/name
+  warehouse: s3://warehouse/
+```
+
+### Storage
+
+```yaml
+storage:
+  backend: !s3
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://minio:9000  # optional, for S3-compatible
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `AWS_ACCESS_KEY_ID` | S3 access key |
+| `AWS_SECRET_ACCESS_KEY` | S3 secret key |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Tracing endpoint fallback |
+| `RUST_LOG` | Log level (e.g., `info`, `debug`) |
+
+## Usage
+
+### Ingest Data (OTLP)
+
+```bash
+# Logs
+curl -X POST http://localhost:4318/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "X-Scope-OrgID: my-tenant" \
+  -d '{"resourceLogs":[...]}'
+
+# Traces
+curl -X POST http://localhost:4318/v1/traces \
+  -H "Content-Type: application/json" \
+  -H "X-Scope-OrgID: my-tenant" \
+  -d '{"resourceSpans":[...]}'
+
+# Metrics
+curl -X POST http://localhost:4318/v1/metrics \
+  -H "Content-Type: application/json" \
+  -H "X-Scope-OrgID: my-tenant" \
+  -d '{"resourceMetrics":[...]}'
+```
+
+### Query (Loki API)
+
+```bash
+# Range query
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="api"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# Instant query
+curl -G http://localhost:3100/loki/api/v1/query \
+  --data-urlencode 'query=count_over_time({service_name="api"}[5m])' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# Labels
+curl http://localhost:3100/loki/api/v1/labels -H "X-Scope-OrgID: my-tenant"
+
+# Label values
+curl http://localhost:3100/loki/api/v1/label/service_name/values -H "X-Scope-OrgID: my-tenant"
+```
+
+### LogQL
+
+```logql
+{service_name="api"}                              # Select by label
+{service_name="api"} |= "error"                   # Line filter
+{service_name="api"} |~ "status=[45]\\d{2}"       # Regex filter
+count_over_time({service_name="api"}[5m])          # Count
+rate({severity_text="ERROR"}[1m])                  # Rate
+sum by (service_name) (rate({job="app"}[5m]))      # Aggregation
+```
+
+### Multi-Tenancy
+
+Tenant isolation via `X-Scope-OrgID` header. Data physically partitioned by tenant_id.
+
+### Grafana Integration
+
+Add IceGate as a Loki data source: URL `http://icegate-query:3100`, header `X-Scope-OrgID: <tenant>`.
+
+## Architecture
+
+- Compute-storage separation (S3 + Kubernetes)
+- Apache Iceberg tables with DataFusion query engine
+- Apache Arrow/Parquet for in-memory and on-disk formats
+- WAL (Write-Ahead Log) for real-time data access
+- Shift process for WAL→Iceberg compaction
+
+## Data Model
+
+Four Iceberg tables: `logs`, `spans`, `events`, `metrics`.
+Partitioned by `tenant_id`, `account_id`, `day(timestamp)`.
+ZSTD compression, 64MB row groups.
+
+## Full Documentation
+
+- llms-full.txt: https://docs.icegate.tech/llms-full.txt
+- Installation: https://docs.icegate.tech/en/getting-started/installation
+- Quick Start: https://docs.icegate.tech/en/getting-started/quickstart
+- Configuration: https://docs.icegate.tech/en/getting-started/configuration
+- API Reference: https://docs.icegate.tech/en/api-reference/loki
+- Architecture: https://docs.icegate.tech/en/architecture/overview
+- Data Model: https://docs.icegate.tech/en/architecture/data-model
+- Deployment: https://docs.icegate.tech/en/operations/deployment
+- Development Setup: https://docs.icegate.tech/en/development/setup

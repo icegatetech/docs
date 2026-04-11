@@ -107,8 +107,9 @@ docker compose logs -f maintain
 
    ```yaml
    catalog:
-     type: rest
-     uri: http://nessie:19120/api/v1
+     backend: !rest
+       uri: http://nessie:19120/iceberg
+     warehouse: s3://warehouse/
    ```
 
 ## Query Issues

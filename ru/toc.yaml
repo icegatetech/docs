@@ -62,12 +62,14 @@ items:
 
   - name: Разработка
     items:
+      - name: Окружение для Разработки
+        href: development/setup.md
+      - name: Сборка
+        href: development/building.md
       - name: Паттерны Разработки
         href: development/patterns.md
       - name: Участие в Проекте
         href: development/contributing.md
-      - name: Сборка
-        href: development/building.md
 
   - name: FAQ
     href: faq.md

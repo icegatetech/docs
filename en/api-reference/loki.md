@@ -23,6 +23,29 @@ X-Scope-OrgID: my-tenant
 
 ## Endpoints
 
+### Instant Query
+
+Query logs or metrics at a single point in time.
+
+**Endpoint:** `GET /loki/api/v1/query` or `POST /loki/api/v1/query`
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | LogQL query |
+| `time` | int | No | Evaluation timestamp (Unix seconds or nanoseconds). Default: current time |
+| `limit` | int | No | Maximum number of entries (default: 100) |
+| `direction` | string | No | `forward` or `backward` (default: backward) |
+
+**Example:**
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query \
+  --data-urlencode 'query=count_over_time({service_name="api-service"}[5m])' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
 ### Query Range
 
 Query logs or metrics over a time range.

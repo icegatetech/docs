@@ -95,6 +95,23 @@ avg(rate({service_name=~".*"}[1m]))
 sum by (service_name) (bytes_rate({job="app"}[5m]))
 ```
 
+## Real-Time Queries (WAL)
+
+By default, the query service reads only committed Iceberg data. To also query data that has not yet been shifted to Iceberg (seconds-old WAL data), enable WAL queries in the query service configuration:
+
+```yaml
+engine:
+  wal_query_enabled: true
+  wal_metadata_size_hint: 65536  # Bytes for WAL footer reads
+```
+
+When enabled, queries read from both:
+
+- **Iceberg tables** — Historical, compacted data
+- **WAL segments** — Real-time data not yet shifted
+
+**Note:** The `/labels`, `/label_values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
+
 ## Implementation Status
 
 | Feature | Status |

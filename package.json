@@ -4,7 +4,7 @@
   "description": "IceGate Documentation",
   "private": true,
   "scripts": {
-    "build": "yfm -i . -o ./build",
+    "build": "yfm -i . -o ./build && cp llms.txt llms-full.txt ./build/ 2>/dev/null || true",
     "build:en": "yfm -i ./en -o ./build/en",
     "build:fr": "yfm -i ./fr -o ./build/fr",
     "build:ru": "yfm -i ./ru -o ./build/ru",

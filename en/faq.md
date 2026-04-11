@@ -133,7 +133,7 @@ Typical sub-second response for filtered queries over recent data.
 
 ### How is data compacted?
 
-The Maintain service automatically compacts WAL files into optimized Iceberg tables with larger file sizes and better statistics.
+The Ingest service's built-in shift process automatically compacts WAL files into optimized Iceberg tables with larger file sizes and better statistics.
 
 ## Operations
 

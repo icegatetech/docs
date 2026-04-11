@@ -7,37 +7,76 @@ description: Maintain IceGate for optimal performance
 
 This guide covers routine maintenance operations for IceGate.
 
-## Data Compaction
+## Schema Migration
 
-The Maintain service automatically compacts WAL files into optimized Iceberg tables.
+### Initial Setup
 
-### Compaction Process
-
-1. Monitor WAL file count and size
-2. When threshold reached, read WAL files
-3. Sort and merge data by partition keys
-4. Write new Iceberg data files with optimal row group sizes
-5. Commit new snapshot to catalog
-6. Delete processed WAL files
-
-### Compaction Configuration
-
-```yaml
-maintain:
-  compaction:
-    interval: 5m
-    min_files: 10
-    min_size_bytes: 104857600  # 100 MB
-    target_file_size: 134217728  # 128 MB
-```
-
-### Manual Compaction
-
-Trigger compaction via CLI:
+Create all Iceberg tables for the first time:
 
 ```bash
-icegate-maintain compact --table logs
+maintain migrate create -c maintain.yaml
 ```
+
+### Schema Upgrades
+
+Upgrade existing table schemas when updating IceGate:
+
+```bash
+maintain migrate upgrade -c maintain.yaml
+```
+
+### Dry Run
+
+Preview what would be done without executing:
+
+```bash
+maintain migrate create -c maintain.yaml --dry-run
+maintain migrate upgrade -c maintain.yaml --dry-run
+```
+
+### Migration Process
+
+1. Connect to Iceberg catalog
+2. Check existing table schemas
+3. Create missing tables (or alter existing ones)
+4. Report migration status
+
+## Data Compaction (Shift)
+
+The Ingest service automatically shifts WAL data into optimized Iceberg tables via the built-in shift process.
+
+### How Shift Works
+
+1. Job manager monitors WAL segments
+2. Groups segments into shift tasks
+3. Reads WAL Parquet files in parallel
+4. Merges and re-partitions data
+5. Writes optimized Iceberg data files
+6. Commits new snapshot to catalog
+7. Deletes processed WAL segments
+
+### Tuning Shift Performance
+
+Key configuration parameters in the Ingest service config:
+
+```yaml
+shift:
+  read:
+    max_record_batches_per_task: 1024
+    max_input_bytes_per_task: 67108864  # 64 MiB
+    plan_segment_read_parallelism: 8
+    shift_segment_read_parallelism: 8
+  write:
+    row_group_size: 8192
+    max_file_size_mb: 64
+    table_cache_ttl_secs: 60
+  jobsmanager:
+    worker_count: 4           # Half of available CPUs by default
+    poll_interval_ms: 1000
+    iteration_interval_millisecs: 30000
+```
+
+See [Configuration](../getting-started/configuration.md#shift-wal--iceberg-configuration) for full parameter reference.
 
 ## Table Optimization
 
@@ -67,40 +106,7 @@ ALTER TABLE icegate.logs
 EXECUTE remove_orphan_files(retention_threshold => '1d');
 ```
 
-## Schema Migration
-
-### Running Migrations
-
-Initialize or migrate table schemas:
-
-```bash
-icegate-maintain migrate --catalog-uri http://nessie:19120/api/v1
-```
-
-### Migration Process
-
-1. Connect to Iceberg catalog
-2. Check existing table schemas
-3. Create missing tables
-4. Alter existing tables for schema changes
-5. Report migration status
-
 ## Data Retention
-
-### TTL Configuration
-
-Configure data retention per table:
-
-```yaml
-maintain:
-  retention:
-    logs:
-      days: 30
-    spans:
-      days: 14
-    metrics:
-      days: 90
-```
 
 ### Manual Deletion
 
@@ -115,23 +121,23 @@ WHERE timestamp < TIMESTAMP '2024-01-01 00:00:00 UTC';
 
 ### Key Metrics
 
-Monitor these metrics for maintenance health:
+Monitor these metrics for maintenance health (available at `http://ingest:9091/metrics`):
 
 | Metric | Description | Alert Threshold |
 |--------|-------------|-----------------|
-| `wal_files_count` | Number of WAL files | > 1000 |
-| `wal_size_bytes` | Total WAL size | > 10 GB |
-| `compaction_duration_seconds` | Compaction time | > 300s |
-| `snapshot_count` | Active snapshots | > 100 |
+| WAL file count | Number of unprocessed WAL files | > 1000 |
+| WAL total size | Total WAL size in bytes | > 10 GB |
+| Shift duration | Time to complete a shift task | > 300s |
+| Snapshot count | Active Iceberg snapshots | > 100 |
 
 ### Health Checks
 
 ```bash
-# Check maintenance service health
-curl http://maintain:8080/health
+# Check query service readiness
+curl http://localhost:3100/ready
 
-# Check compaction status
-curl http://maintain:8080/status/compaction
+# Check ingest service health
+curl http://localhost:4318/health
 ```
 
 ## Backup and Recovery
@@ -180,21 +186,23 @@ aws s3api put-bucket-versioning \
 
 ### Query Performance
 
-- Ensure partitions are properly pruned (filter on tenant_id, timestamp)
+- Ensure partitions are properly pruned (filter on `tenant_id`, `timestamp`)
 - Monitor query plan with `/loki/api/v1/explain`
 - Increase query service memory for complex aggregations
+- Enable catalog cache for production query services
 
 ### Write Performance
 
 - Scale Ingest service replicas for higher throughput
-- Tune batch sizes and flush intervals
+- Tune `queue.write.flush_interval_ms` and `queue.write.max_bytes_per_flush`
+- Choose appropriate compression codec (ZSTD for best ratio, Snappy for speed)
 - Monitor WAL write latency
 
 ### Compaction Performance
 
-- Adjust compaction thresholds based on workload
-- Schedule heavy compaction during low-traffic periods
-- Monitor compaction queue depth
+- Increase `shift.read.plan_segment_read_parallelism` for faster reads
+- Increase `shift.jobsmanager.worker_count` for more concurrent tasks
+- Adjust `shift.jobsmanager.iteration_interval_millisecs` for more frequent shifts
 
 ## Next Steps
 
