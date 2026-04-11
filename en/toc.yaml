@@ -32,8 +32,14 @@ items:
         href: guides/ingestion.md
       - name: Querying Data
         href: guides/querying.md
+      - name: Grafana Integration
+        href: guides/grafana-integration.md
       - name: Multi-Tenancy
         href: guides/multi-tenancy.md
+      - name: Performance Tuning
+        href: guides/performance-tuning.md
+      - name: Data Retention
+        href: guides/data-retention.md
 
   - name: API Reference
     items:
@@ -52,6 +58,15 @@ items:
         href: architecture/overview.md
       - name: Data Model
         href: architecture/data-model.md
+
+  - name: Cookbooks
+    items:
+      - name: Centralized Logging
+        href: cookbooks/centralized-logging.md
+      - name: Distributed Tracing
+        href: cookbooks/traces-end-to-end.md
+      - name: Cross-Signal Correlation
+        href: cookbooks/observability-correlation.md
 
   - name: Operations
     items:

@@ -32,8 +32,14 @@ items:
         href: guides/ingestion.md
       - name: Запросы к Данным
         href: guides/querying.md
+      - name: Интеграция с Grafana
+        href: guides/grafana-integration.md
       - name: Мультитенантность
         href: guides/multi-tenancy.md
+      - name: Оптимизация Производительности
+        href: guides/performance-tuning.md
+      - name: Хранение Данных
+        href: guides/data-retention.md
 
   - name: Справочник API
     items:
@@ -52,6 +58,15 @@ items:
         href: architecture/overview.md
       - name: Модель Данных
         href: architecture/data-model.md
+
+  - name: Практические Руководства
+    items:
+      - name: Централизованное Логирование
+        href: cookbooks/centralized-logging.md
+      - name: Распределённая Трассировка
+        href: cookbooks/traces-end-to-end.md
+      - name: Корреляция Сигналов
+        href: cookbooks/observability-correlation.md
 
   - name: Эксплуатация
     items:

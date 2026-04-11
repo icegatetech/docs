@@ -193,12 +193,10 @@ curl http://localhost:3100/ready
 - See [Configuration](configuration.md) for detailed configuration options
 - Set up a [Development Environment](../development/setup.md) for contributing
 
----
-
 
 # Configuration
 
-IceGate uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
+{{product_name}} uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
 
 ## CLI Usage
 
@@ -246,7 +244,7 @@ catalog:
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | Yes | `memory` | Catalog backend type (see below) |
+| `backend` | enum | No | `memory` | Catalog backend type (see below) |
 | `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
 | `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
@@ -703,8 +701,6 @@ export AWS_REGION=us-east-1
 - Explore [Querying](../guides/querying.md) capabilities
 - Set up [Multi-Tenancy](../guides/multi-tenancy.md)
 
----
-
 
 # Quick Start
 
@@ -1013,8 +1009,6 @@ See [Multi-Tenancy](../guides/multi-tenancy.md) for details.
 - Configure [data ingestion](../guides/ingestion.md) pipelines
 - Understand the [data model](../architecture/data-model.md)
 
----
-
 
 # Data Ingestion
 
@@ -1175,8 +1169,6 @@ IceGate provides **exactly-once delivery** semantics:
 - Learn how to [Query Data](querying.md)
 - Set up [Multi-Tenancy](multi-tenancy.md)
 - Explore the [Loki API](../api-reference/loki.md) for querying
-
----
 
 
 # Querying Data
@@ -1359,7 +1351,293 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 - Set up [Multi-Tenancy](multi-tenancy.md)
 - Learn about the [Data Model](../architecture/data-model.md)
 
----
+
+# Grafana Integration
+
+This guide covers connecting Grafana to all three {{product_name}} query APIs: Loki (logs), Tempo (traces), and Prometheus (metrics).
+
+## Prerequisites
+
+- {{product_name}} Query service running (see [Installation](../getting-started/installation.md))
+- Grafana 10+ ([grafana.com/oss](https://grafana.com/oss/grafana/))
+
+## Verify Query Service Health
+
+Before configuring Grafana, verify that the Query service is ready:
+
+```bash
+# Check Loki API (port 3100)
+curl http://localhost:3100/ready
+
+# Check Tempo API (port 3200)
+curl http://localhost:3200/ready
+
+# Check Prometheus API (port 9090)
+curl http://localhost:9090/-/ready
+```
+
+All endpoints should return HTTP 200.
+
+## Add Data Sources
+
+### Loki Data Source (Logs)
+
+{{product_name}} implements the Grafana Loki API on port **3100**.
+
+1. Go to **Connections** > **Data sources** > **Add data source**
+2. Select **Loki**
+3. Configure:
+   - **URL:** `http://icegate-query:3100`
+   - Under **HTTP Headers**, add:
+     - Header: `X-Scope-OrgID`
+     - Value: your tenant ID (e.g., `default`)
+4. Click **Save & Test**
+
+#### Provisioning YAML
+
+```yaml
+# grafana/provisioning/datasources/icegate-loki.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Logs
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: default
+    isDefault: true
+```
+
+### Tempo Data Source (Traces)
+
+{{product_name}} implements the Grafana Tempo API on port **3200**.
+
+{% note warning %}
+
+The Tempo API provides basic trace retrieval and search. TraceQL support is planned for future releases.
+
+{% endnote %}
+
+1. Go to **Connections** > **Data sources** > **Add data source**
+2. Select **Tempo**
+3. Configure:
+   - **URL:** `http://icegate-query:3200`
+   - Under **HTTP Headers**, add:
+     - Header: `X-Scope-OrgID`
+     - Value: your tenant ID
+4. Click **Save & Test**
+
+#### Provisioning YAML
+
+```yaml
+# grafana/provisioning/datasources/icegate-tempo.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Traces
+    type: tempo
+    access: proxy
+    url: http://icegate-query:3200
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+      tracesToLogs:
+        datasourceUid: icegate-loki
+        tags: ['service.name']
+        mappedTags: [{ key: 'service.name', value: 'service_name' }]
+        mapTagNamesEnabled: true
+        filterByTraceID: true
+        filterBySpanID: false
+    secureJsonData:
+      httpHeaderValue1: default
+    uid: icegate-tempo
+```
+
+### Prometheus Data Source (Metrics)
+
+{{product_name}} implements the Grafana Prometheus API on port **9090**.
+
+{% note warning %}
+
+The Prometheus query API is currently under development. Metadata endpoints (labels, series) are available, but PromQL queries are not yet supported. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
+
+{% endnote %}
+
+1. Go to **Connections** > **Data sources** > **Add data source**
+2. Select **Prometheus**
+3. Configure:
+   - **URL:** `http://icegate-query:9090`
+   - Under **HTTP Headers**, add:
+     - Header: `X-Scope-OrgID`
+     - Value: your tenant ID
+4. Click **Save & Test**
+
+#### Provisioning YAML
+
+```yaml
+# grafana/provisioning/datasources/icegate-prometheus.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Metrics
+    type: prometheus
+    access: proxy
+    url: http://icegate-query:9090
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: default
+    uid: icegate-prometheus
+```
+
+## Complete Provisioning Example
+
+Deploy all three data sources at once:
+
+```yaml
+# grafana/provisioning/datasources/icegate.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Logs
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: default
+    isDefault: true
+    uid: icegate-loki
+
+  - name: IceGate Traces
+    type: tempo
+    access: proxy
+    url: http://icegate-query:3200
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+      tracesToLogs:
+        datasourceUid: icegate-loki
+        tags: ['service.name']
+        mappedTags: [{ key: 'service.name', value: 'service_name' }]
+        mapTagNamesEnabled: true
+        filterByTraceID: true
+    secureJsonData:
+      httpHeaderValue1: default
+    uid: icegate-tempo
+
+  - name: IceGate Metrics
+    type: prometheus
+    access: proxy
+    url: http://icegate-query:9090
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: default
+    uid: icegate-prometheus
+```
+
+## Cross-Signal Navigation
+
+### Logs to Traces
+
+{{product_name}} stores `trace_id` and `span_id` fields in log records. Configure Grafana to link from log lines to traces:
+
+1. In the Loki data source settings, go to **Derived fields**
+2. Add a derived field:
+   - **Name:** `TraceID`
+   - **Regex:** `"trace_id":"([a-fA-F0-9]+)"`
+   - **URL:** (leave empty)
+   - **Internal link:** Enable, select `IceGate Traces`
+
+Now clicking a trace ID in log results opens the trace view.
+
+### Traces to Logs
+
+In the Tempo data source settings, the `tracesToLogs` configuration (shown in the provisioning YAML above) adds a "Logs for this span" button to the trace view.
+
+## Multi-Tenant Configuration
+
+For environments with multiple tenants, configure separate data sources per tenant:
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: Logs (Team A)
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: team-a
+
+  - name: Logs (Team B)
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: team-b
+```
+
+For dynamic per-user tenancy, see [Multi-Tenancy](multi-tenancy.md#per-user-tenancy).
+
+## Dashboard Examples
+
+### Log Explorer Dashboard
+
+Create a dashboard with three panels:
+
+1. **Logs panel** — shows raw log entries:
+   - Query: `{service_name="my-service"}`
+   - Visualization: Logs
+
+2. **Error rate time series** — tracks error frequency:
+   - Query: `sum by (service_name) (rate({severity_text="ERROR"}[5m]))`
+   - Visualization: Time series
+
+3. **Log volume stat** — shows total log count:
+   - Query: `sum(count_over_time({service_name="my-service"}[1h]))`
+   - Visualization: Stat
+
+### Trace Explorer
+
+1. Navigate to **Explore** > select **IceGate Traces**
+2. Search by service name: enter `service.name=my-service` in the tags field
+3. Filter by minimum duration: set `minDuration` to `100ms`
+4. Click a trace to view its span waterfall
+
+## Using IceGate as a Drop-In for Existing Grafana
+
+If you have an existing Grafana setup with Loki, you can point it at {{product_name}} by changing only the data source URL:
+
+1. Go to **Connections** > **Data sources**
+2. Edit your existing Loki data source
+3. Change **URL** from your Loki instance to `http://icegate-query:3100`
+4. Add the `X-Scope-OrgID` header if not already present
+5. Click **Save & Test**
+
+Your existing dashboards, alerting rules, and saved queries will continue to work because {{product_name}} implements the same Loki API.
+
+{% note info %}
+
+LogQL metric queries (`rate()`, `count_over_time()`, `sum by()`, etc.) are supported. See the [LogQL implementation status](querying.md) for the full compatibility matrix.
+
+{% endnote %}
+
+## Port Reference
+
+| API | Port | Grafana Data Source Type | Status |
+|-----|------|--------------------------|--------|
+| Loki (logs) | 3100 | Loki | Fully implemented |
+| Tempo (traces) | 3200 | Tempo | Basic retrieval and search (TraceQL planned) |
+| Prometheus (metrics) | 9090 | Prometheus | Metadata only (PromQL planned) |
+
+## Next Steps
+
+- Learn [LogQL querying](querying.md) for advanced log analysis
+- Explore [cross-signal correlation](../cookbooks/observability-correlation.md) across logs and traces
+- Set up [multi-tenancy](multi-tenancy.md) for team isolation
 
 
 # Multi-Tenancy
@@ -1448,17 +1726,115 @@ datasources:
       httpHeaderValue1: $__user.orgId
 ```
 
+## Architecture: Multi-Tenant Deployment
+
+A multi-tenant {{product_name}} deployment uses a single cluster shared by all tenants. Data isolation is enforced at the storage layer:
+
+```
+Tenant A ──┐                          ┌── Iceberg partition: tenant_id="tenant-a"
+Tenant B ──┤── Ingest (shared) ──WAL──┤── Iceberg partition: tenant_id="tenant-b"
+Tenant C ──┘                          └── Iceberg partition: tenant_id="tenant-c"
+                                            │
+                                      Query (shared) ── partition pruning by tenant_id
+```
+
+Key design properties:
+
+- **Shared compute**: All tenants share the same Ingest and Query services
+- **Isolated storage**: Data is physically partitioned by `tenant_id` in Iceberg tables
+- **Query isolation**: Partition pruning ensures queries only scan data for the requesting tenant
+- **No cross-tenant leakage**: The `X-Scope-OrgID` header is required and validated on every request
+
+### Storage Cost Optimization
+
+Sharing Iceberg tables across tenants reduces storage overhead:
+
+- **Single table schema** for all tenants (no per-tenant table management)
+- **Partition pruning** skips data files not matching the tenant filter
+- **Shared compaction**: The shift process optimizes files across all tenants
+- **ZSTD compression** applied uniformly for best compression ratio
+
+Compare to dedicated-table approaches:
+
+| Approach | Storage Overhead | Operational Complexity | Isolation |
+|----------|-----------------|----------------------|-----------|
+| Shared tables + partition | Low | Low (single cluster) | Logical (partition pruning) |
+| Separate tables per tenant | Medium | High (schema management per tenant) | Physical |
+| Separate clusters per tenant | High | Very high | Full |
+
+{{product_name}} uses the shared tables approach, which is optimal for SaaS and platform use cases where many tenants share similar data shapes.
+
+## Concrete Example: Three Tenants
+
+### Ingest from Three Teams
+
+```bash
+# Platform team
+curl -X POST http://localhost:4318/v1/logs \
+  -H "X-Scope-OrgID: team-platform" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resourceLogs": [{
+      "resource": {"attributes": [{"key": "service.name", "value": {"stringValue": "gateway"}}]},
+      "scopeLogs": [{"logRecords": [{"timeUnixNano": "1704067200000000000", "body": {"stringValue": "Request received"}, "severityText": "INFO", "severityNumber": 9}]}]
+    }]
+  }'
+
+# Backend team
+curl -X POST http://localhost:4318/v1/logs \
+  -H "X-Scope-OrgID: team-backend" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resourceLogs": [{
+      "resource": {"attributes": [{"key": "service.name", "value": {"stringValue": "order-service"}}]},
+      "scopeLogs": [{"logRecords": [{"timeUnixNano": "1704067200000000000", "body": {"stringValue": "Order created"}, "severityText": "INFO", "severityNumber": 9}]}]
+    }]
+  }'
+
+# Data team
+curl -X POST http://localhost:4318/v1/logs \
+  -H "X-Scope-OrgID: team-data" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resourceLogs": [{
+      "resource": {"attributes": [{"key": "service.name", "value": {"stringValue": "pipeline"}}]},
+      "scopeLogs": [{"logRecords": [{"timeUnixNano": "1704067200000000000", "body": {"stringValue": "ETL batch complete"}, "severityText": "INFO", "severityNumber": 9}]}]
+    }]
+  }'
+```
+
+### Query Per Team
+
+Each team only sees their own data:
+
+```bash
+# Platform team queries — sees only gateway logs
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name=~".+"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  -H "X-Scope-OrgID: team-platform"
+
+# Backend team queries — sees only order-service logs
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name=~".+"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  -H "X-Scope-OrgID: team-backend"
+```
+
 ## Best Practices
 
 ### Tenant Naming
 
-- Use consistent, predictable tenant IDs
-- Avoid special characters
+- Use consistent, predictable tenant IDs (e.g., `team-platform`, `org-acme`)
+- Allowed characters: ASCII alphanumeric, hyphens (`-`), underscores (`_`)
+- Default tenant ID is `default` when no header is provided
 - Consider using UUIDs for programmatic access
 
-### Monitoring
+### Monitoring Per-Tenant Usage
 
-Monitor per-tenant usage:
+Track log volume by tenant:
 
 ```logql
 sum by (tenant_id) (
@@ -1466,21 +1842,1407 @@ sum by (tenant_id) (
 )
 ```
 
+Monitor per-tenant error rates:
+
+```logql
+sum by (tenant_id) (
+  rate({severity_text="ERROR"}[5m])
+)
+```
+
+Set up per-tenant Grafana dashboards using separate data sources (see [Grafana Integration](grafana-integration.md#multi-tenant-configuration)).
+
 ### Resource Limits
 
 Consider implementing per-tenant limits:
 
-- Query rate limiting
-- Storage quotas
-- Retention policies
+- Query rate limiting (via reverse proxy)
+- Storage quotas (monitor with per-tenant log volume metrics)
+- Retention policies (see [Data Retention](data-retention.md))
 
 ## Next Steps
 
+- Configure [Grafana](grafana-integration.md) with per-tenant data sources
+- Set up [data retention](data-retention.md) policies per tenant
 - Learn about [Deployment](../operations/deployment.md) options
 - Explore the [Data Model](../architecture/data-model.md)
-- See [Troubleshooting](../operations/troubleshooting.md) for common issues
 
----
+
+# Performance Tuning
+
+This guide covers tuning {{product_name}} for high-volume workloads across ingestion, compaction, and query paths.
+
+## Architecture Overview
+
+Data flows through three stages, each with independent tuning parameters:
+
+1. **Ingest** — receives OTLP data, writes to WAL (Write-Ahead Log)
+2. **Shift** — compacts WAL segments into optimized Iceberg Parquet files
+3. **Query** — reads from Iceberg tables (and optionally WAL) via DataFusion
+
+## Ingestion Tuning
+
+### WAL Write Configuration
+
+The WAL queue buffers incoming data before writing to object storage. Key parameters:
+
+```yaml
+queue:
+  common:
+    channel_capacity: 1024       # In-memory buffer size (records)
+    max_row_group_size: 8192     # Rows per Parquet row group
+  write:
+    flush_interval_ms: 200       # Flush frequency (ms)
+    max_bytes_per_flush: 67108864  # Max flush size (64 MiB)
+    records_per_flush_multiplier: 1  # Multiplier for flush batch
+    compression: zstd            # none|snappy|gzip|lzo|brotli|lz4|zstd
+    write_retries: 5             # Retry count on write failure
+```
+
+#### High-Throughput Configuration
+
+For high-volume ingestion (>10k events/sec per replica):
+
+```yaml
+queue:
+  common:
+    channel_capacity: 4096       # Larger buffer for burst absorption
+    max_row_group_size: 16384    # Larger row groups for better compression
+  write:
+    flush_interval_ms: 500       # Less frequent flushes, larger batches
+    max_bytes_per_flush: 134217728  # 128 MiB per flush
+    records_per_flush_multiplier: 2
+    compression: zstd
+```
+
+#### Low-Latency Configuration
+
+For near-real-time data availability:
+
+```yaml
+queue:
+  common:
+    channel_capacity: 512
+    max_row_group_size: 4096
+  write:
+    flush_interval_ms: 100       # Flush every 100ms
+    max_bytes_per_flush: 33554432  # 32 MiB
+    compression: lz4             # Faster compression
+```
+
+### Horizontal Scaling
+
+The Ingest service is stateless — scale replicas to increase throughput:
+
+```yaml
+# Helm values.yaml
+ingest:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "2"
+      memory: 4Gi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+```
+
+All replicas write to the same WAL location in object storage. No coordination is needed.
+
+### OTLP Protocol Selection
+
+| Protocol | Best For | Trade-off |
+|----------|----------|-----------|
+| gRPC (4317) | High throughput, SDK-native | Lower per-message overhead |
+| HTTP Protobuf (4318) | Load balancer compatibility | Efficient encoding |
+| HTTP JSON (4318) | Debugging, testing | 2-3x larger payloads |
+
+Use protobuf encoding in production for best throughput:
+
+```yaml
+# OpenTelemetry Collector exporter config
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: my-tenant
+```
+
+## Shift (Compaction) Tuning
+
+The shift process converts WAL segments into optimized Iceberg Parquet files.
+
+### Key Parameters
+
+```yaml
+shift:
+  read:
+    max_record_batches_per_task: 128    # Batches per shift task
+    max_input_bytes_per_task: 67108864  # 64 MiB input limit per task
+    plan_segment_read_parallelism: 8    # Parallel segment planning
+    shift_segment_read_parallelism: 8   # Parallel segment reading
+  write:
+    row_group_size: 8192         # Rows per output row group
+    max_file_size_mb: 64         # Max output Parquet file size
+    table_cache_ttl_secs: 60     # Iceberg table metadata cache TTL
+  jobsmanager:
+    worker_count: 4              # Concurrent shift workers
+    poll_interval_ms: 1000       # Job polling interval
+    iteration_interval_millisecs: 30000  # Shift cycle interval (30s)
+```
+
+### High-Throughput Shift
+
+When WAL segments accumulate faster than they can be shifted:
+
+```yaml
+shift:
+  read:
+    max_record_batches_per_task: 256
+    max_input_bytes_per_task: 134217728  # 128 MiB
+    plan_segment_read_parallelism: 16
+    shift_segment_read_parallelism: 16
+  write:
+    row_group_size: 16384
+    max_file_size_mb: 128
+  jobsmanager:
+    worker_count: 8              # More concurrent workers
+    iteration_interval_millisecs: 10000  # Shift every 10s
+```
+
+### Monitoring Shift Health
+
+Watch these metrics at `http://ingest:9091/metrics`:
+
+| Metric | Healthy | Action If Unhealthy |
+|--------|---------|---------------------|
+| WAL file count | < 1000 | Increase `worker_count` |
+| WAL total size | < 10 GB | Increase `iteration_interval_millisecs` frequency |
+| Shift duration | < 300s | Reduce `max_input_bytes_per_task` |
+
+## Query Tuning
+
+### DataFusion Engine Configuration
+
+```yaml
+engine:
+  batch_size: 8192               # Arrow batch size for query execution
+  target_partitions: 4           # Parallel query partitions
+  refresh_interval_secs: 15      # Catalog metadata refresh interval
+  max_age_secs: 30               # Catalog cache staleness threshold
+  wal_query_enabled: false       # Include WAL data in query results
+  wal_metadata_size_hint: 65536  # WAL metadata buffer size (64 KB)
+```
+
+### High-Concurrency Configuration
+
+For many concurrent queries:
+
+```yaml
+engine:
+  batch_size: 4096               # Smaller batches = lower memory per query
+  target_partitions: 8           # More parallelism per query
+  refresh_interval_secs: 30      # Less frequent metadata refreshes
+
+# Helm values.yaml
+query:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "4"
+      memory: 8Gi
+    limits:
+      cpu: "8"
+      memory: 16Gi
+```
+
+### Real-Time Query Configuration
+
+To include WAL data in query results (data not yet shifted to Iceberg):
+
+```yaml
+engine:
+  wal_query_enabled: true        # Enable WAL querying
+  wal_metadata_size_hint: 131072 # 128 KB buffer for WAL metadata
+  refresh_interval_secs: 5       # Frequent catalog refreshes
+  max_age_secs: 10               # Short cache TTL
+```
+
+{% note info %}
+
+Enabling WAL querying adds latency to queries because the engine must scan both Iceberg tables and WAL segments. Use only when near-real-time data access is required.
+
+{% endnote %}
+
+### Cache Configuration
+
+Enable the IO cache for production query services to reduce object storage reads:
+
+```yaml
+catalog:
+  cache:
+    enabled: true
+    memory_size_mb: 1024         # In-memory cache (1 GB)
+    disk_dir: /tmp/icegate/cache
+    disk_size_mb: 4096           # On-disk cache (4 GB)
+    stat_ttl_secs: 300           # Cache stat/HEAD responses for 5 min
+    max_write_cache_size_mb: 2   # Write buffer
+    prefetch:
+      enabled: true              # Prefetch metadata
+```
+
+### Query Optimization Tips
+
+1. **Filter on partition keys first**: Always include `tenant_id` and `timestamp` range in queries. This enables Iceberg partition pruning.
+
+   ```logql
+   # Good: timestamp range is specified via API parameters
+   {service_name="api"} |= "error"
+
+   # The Loki API start/end parameters drive partition pruning
+   curl -G http://localhost:3100/loki/api/v1/query_range \
+     --data-urlencode 'query={service_name="api"}' \
+     --data-urlencode 'start=1704067200' \
+     --data-urlencode 'end=1704153600' \
+     -H "X-Scope-OrgID: my-tenant"
+   ```
+
+2. **Use the explain endpoint**: Check query execution plans:
+
+   ```bash
+   curl -G http://localhost:3100/loki/api/v1/explain \
+     --data-urlencode 'query={service_name="api"} |= "error"' \
+     -H "X-Scope-OrgID: my-tenant"
+   ```
+
+3. **Limit result sets**: Use the `limit` parameter to cap results:
+
+   ```bash
+   curl -G http://localhost:3100/loki/api/v1/query_range \
+     --data-urlencode 'query={service_name="api"}' \
+     --data-urlencode 'limit=100' \
+     -H "X-Scope-OrgID: my-tenant"
+   ```
+
+## Resource Sizing Guide
+
+| Workload | Ingest CPU | Ingest RAM | Query CPU | Query RAM |
+|----------|-----------|-----------|----------|----------|
+| Small (<1k events/sec) | 1 core | 2 GB | 2 cores | 4 GB |
+| Medium (1k-10k events/sec) | 2-4 cores | 4-8 GB | 4 cores | 8 GB |
+| Large (10k-100k events/sec) | 4+ cores, 2+ replicas | 8 GB | 4-8 cores, 2+ replicas | 16-32 GB |
+
+## Next Steps
+
+- Configure [data retention](data-retention.md) for storage management
+- Set up [deployment](../operations/deployment.md) for production
+- Monitor health with [maintenance](../operations/maintenance.md) procedures
+
+
+# Data Retention
+
+This guide covers managing the data lifecycle in {{product_name}}, from WAL segments through Iceberg table maintenance.
+
+## Data Lifecycle
+
+Data in {{product_name}} moves through three stages:
+
+1. **WAL (Write-Ahead Log)** — temporary Parquet files in object storage, written by Ingest
+2. **Iceberg tables** — optimized, partitioned Parquet files managed by Apache Iceberg
+3. **Snapshots** — Iceberg metadata tracking table versions over time
+
+Each stage has independent retention controls.
+
+## WAL Retention
+
+WAL segments are automatically deleted after the shift process compacts them into Iceberg tables. For the queue bucket, configure an object storage lifecycle rule as a safety net:
+
+### MinIO Lifecycle Rule
+
+```bash
+# Set 1-day TTL on queue bucket
+mc ilm rule add --expire-days 1 myminio/queue
+```
+
+### AWS S3 Lifecycle Rule
+
+```bash
+aws s3api put-bucket-lifecycle-configuration \
+  --bucket icegate-queue \
+  --lifecycle-configuration '{
+    "Rules": [{
+      "ID": "expire-wal-segments",
+      "Status": "Enabled",
+      "Filter": {},
+      "Expiration": {
+        "Days": 1
+      }
+    }]
+  }'
+```
+
+### Shift Frequency
+
+Control how often WAL data is compacted into Iceberg:
+
+```yaml
+shift:
+  jobsmanager:
+    iteration_interval_millisecs: 30000  # Shift cycle every 30s (default)
+    worker_count: 4                      # Concurrent shift workers
+```
+
+Lower `iteration_interval_millisecs` reduces the time data spends in WAL.
+
+## Iceberg Data Retention
+
+### Delete by Time Range
+
+Remove data older than a specific date using SQL:
+
+```sql
+-- Delete logs older than 30 days
+DELETE FROM icegate.logs
+WHERE timestamp < TIMESTAMP '2024-12-01 00:00:00 UTC';
+
+-- Delete traces older than 7 days
+DELETE FROM icegate.spans
+WHERE start_timestamp < TIMESTAMP '2025-01-04 00:00:00 UTC';
+
+-- Delete metrics older than 90 days
+DELETE FROM icegate.metrics
+WHERE timestamp < TIMESTAMP '2024-10-13 00:00:00 UTC';
+```
+
+### Delete by Tenant
+
+Remove all data for a specific tenant:
+
+```sql
+DELETE FROM icegate.logs
+WHERE tenant_id = 'old-tenant';
+```
+
+{% note info %}
+
+Iceberg DELETE operations create new snapshots. The old data files are not physically removed until you expire snapshots and remove orphan files (see below).
+
+{% endnote %}
+
+## Snapshot Management
+
+Iceberg maintains a history of table snapshots. Each write operation (shift, delete) creates a new snapshot.
+
+### List Snapshots
+
+```sql
+SELECT * FROM icegate.logs$snapshots;
+```
+
+### Expire Old Snapshots
+
+Remove snapshots older than a threshold to reclaim metadata storage:
+
+```sql
+-- Keep only snapshots from the last 7 days
+ALTER TABLE icegate.logs
+EXECUTE expire_snapshots(retention_threshold => '7d');
+
+ALTER TABLE icegate.spans
+EXECUTE expire_snapshots(retention_threshold => '7d');
+
+ALTER TABLE icegate.metrics
+EXECUTE expire_snapshots(retention_threshold => '7d');
+```
+
+### Remove Orphan Files
+
+After expiring snapshots, delete unreferenced Parquet files:
+
+```sql
+ALTER TABLE icegate.logs
+EXECUTE remove_orphan_files(retention_threshold => '1d');
+
+ALTER TABLE icegate.spans
+EXECUTE remove_orphan_files(retention_threshold => '1d');
+
+ALTER TABLE icegate.metrics
+EXECUTE remove_orphan_files(retention_threshold => '1d');
+```
+
+### Optimize File Sizes
+
+Rewrite small files into larger, more efficient files:
+
+```sql
+ALTER TABLE icegate.logs EXECUTE optimize;
+ALTER TABLE icegate.spans EXECUTE optimize;
+ALTER TABLE icegate.metrics EXECUTE optimize;
+```
+
+## Retention Strategy Examples
+
+### Short-Term Operational (7 Days)
+
+For active debugging and incident response:
+
+```sql
+-- Run daily via cron or scheduled job
+DELETE FROM icegate.logs WHERE timestamp < NOW() - INTERVAL '7' DAY;
+DELETE FROM icegate.spans WHERE start_timestamp < NOW() - INTERVAL '7' DAY;
+
+ALTER TABLE icegate.logs EXECUTE expire_snapshots(retention_threshold => '1d');
+ALTER TABLE icegate.spans EXECUTE expire_snapshots(retention_threshold => '1d');
+
+ALTER TABLE icegate.logs EXECUTE remove_orphan_files(retention_threshold => '1d');
+ALTER TABLE icegate.spans EXECUTE remove_orphan_files(retention_threshold => '1d');
+```
+
+### Long-Term Forensic (90 Days)
+
+For compliance and historical analysis:
+
+```sql
+-- Run weekly
+DELETE FROM icegate.logs WHERE timestamp < NOW() - INTERVAL '90' DAY;
+DELETE FROM icegate.spans WHERE start_timestamp < NOW() - INTERVAL '90' DAY;
+DELETE FROM icegate.metrics WHERE timestamp < NOW() - INTERVAL '90' DAY;
+
+ALTER TABLE icegate.logs EXECUTE expire_snapshots(retention_threshold => '7d');
+ALTER TABLE icegate.logs EXECUTE remove_orphan_files(retention_threshold => '1d');
+ALTER TABLE icegate.logs EXECUTE optimize;
+```
+
+### Tiered Retention
+
+Different retention per data type:
+
+| Data Type | Retention | Rationale |
+|-----------|-----------|-----------|
+| Logs | 30 days | High volume, operational use |
+| Traces | 14 days | Debugging, usually short-lived |
+| Metrics | 90 days | Trend analysis, capacity planning |
+
+## Backup and Recovery
+
+### Time-Travel Queries
+
+Iceberg supports querying historical data by snapshot:
+
+```sql
+-- Query data as it existed at a specific snapshot
+SELECT * FROM iceberg.logs FOR VERSION AS OF 123456789;
+```
+
+### Rollback to Previous State
+
+Restore a table to a previous snapshot:
+
+```sql
+CALL icegate.system.rollback_to_snapshot('logs', 123456789);
+```
+
+### Object Storage Versioning
+
+Enable S3 versioning for point-in-time recovery of the warehouse bucket:
+
+```bash
+aws s3api put-bucket-versioning \
+  --bucket icegate-warehouse \
+  --versioning-configuration Status=Enabled
+```
+
+### Catalog Backup
+
+Back up the Nessie catalog (RocksDB storage):
+
+```bash
+# Stop Nessie
+docker stop nessie
+
+# Backup data directory
+tar -czf nessie-backup-$(date +%Y%m%d).tar.gz /data/nessie
+
+# Restart Nessie
+docker start nessie
+```
+
+## Storage Cost Optimization
+
+1. **Use ZSTD compression** (default) — best compression ratio for observability data
+2. **Partition pruning** — queries skip irrelevant partitions when filtering by `tenant_id` and `timestamp`
+3. **Regular compaction** — run `optimize` to merge small files and improve read performance
+4. **Aggressive snapshot expiry** — old snapshots reference data files that cannot be cleaned up
+5. **Object storage lifecycle rules** — set expiration policies on the queue bucket
+
+## Next Steps
+
+- Set up [performance tuning](performance-tuning.md) for high-throughput workloads
+- Review [maintenance](../operations/maintenance.md) procedures
+- Understand the [data model](../architecture/data-model.md) and partitioning strategy
+
+
+# Centralized Logging for Microservices
+
+This cookbook walks through setting up centralized log collection from multiple microservices into {{product_name}} using the OpenTelemetry Collector.
+
+## Architecture
+
+```
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  Service A   │  │  Service B   │  │  Service C   │
+│  (Python)    │  │  (Go)        │  │  (Node.js)   │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       │    OTLP gRPC    │    OTLP gRPC    │
+       ▼                 ▼                 ▼
+┌─────────────────────────────────────────────────┐
+│           OpenTelemetry Collector                │
+│   receivers: [otlp]                              │
+│   processors: [batch, resource]                  │
+│   exporters: [otlp/icegate]                      │
+└──────────────────────┬──────────────────────────┘
+                       │  OTLP gRPC (port 4317)
+                       ▼
+              ┌────────────────┐
+              │  IceGate       │
+              │  Ingest (4317) │
+              └────────┬───────┘
+                       │  WAL → Shift
+                       ▼
+              ┌────────────────┐
+              │  IceGate       │
+              │  Query (3100)  │◄── Grafana
+              └────────────────┘
+```
+
+## Step 1: Deploy the OpenTelemetry Collector
+
+The Collector acts as a central aggregation point, decoupling your services from {{product_name}}.
+
+```yaml
+# otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+    timeout: 5s
+  resource:
+    attributes:
+      - key: environment
+        value: production
+        action: upsert
+
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: my-tenant
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 30s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlp/icegate]
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlp/icegate]
+```
+
+### Deploy with Docker Compose
+
+```yaml
+# docker-compose.yml
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel/config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+```
+
+## Step 2: Instrument Your Services
+
+### Python (with OpenTelemetry SDK)
+
+```python
+import logging
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.sdk.resources import Resource
+
+# Configure OpenTelemetry
+resource = Resource.create({
+    "service.name": "order-service",
+    "service.version": "1.2.0",
+    "deployment.environment": "production",
+})
+
+provider = LoggerProvider(resource=resource)
+provider.add_log_record_processor(
+    BatchLogRecordProcessor(
+        OTLPLogExporter(
+            endpoint="otel-collector:4317",
+            insecure=True,
+        )
+    )
+)
+
+# Use standard Python logging — bridged to OTLP
+logger = logging.getLogger("order-service")
+logger.info("Order created", extra={"order.id": "ORD-12345", "user.id": "usr-42"})
+```
+
+### Go (with OpenTelemetry SDK)
+
+```go
+import (
+    "go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+    "go.opentelemetry.io/otel/sdk/resource"
+    semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+)
+
+res := resource.NewWithAttributes(
+    semconv.SchemaURL,
+    semconv.ServiceNameKey.String("payment-service"),
+    semconv.ServiceVersionKey.String("2.0.1"),
+)
+
+exporter, _ := otlploggrpc.New(ctx,
+    otlploggrpc.WithEndpoint("otel-collector:4317"),
+    otlploggrpc.WithInsecure(),
+)
+```
+
+### Direct Ingestion (without Collector)
+
+For simple setups, send logs directly to {{product_name}}:
+
+```bash
+curl -X POST http://localhost:4318/v1/logs \
+  -H "Content-Type: application/json" \
+  -H "X-Scope-OrgID: my-tenant" \
+  -d '{
+    "resourceLogs": [{
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "order-service"}},
+          {"key": "deployment.environment", "value": {"stringValue": "production"}}
+        ]
+      },
+      "scopeLogs": [{
+        "logRecords": [{
+          "timeUnixNano": "1704067200000000000",
+          "body": {"stringValue": "Order ORD-12345 created for user usr-42"},
+          "severityText": "INFO",
+          "severityNumber": 9,
+          "attributes": [
+            {"key": "order.id", "value": {"stringValue": "ORD-12345"}},
+            {"key": "user.id", "value": {"stringValue": "usr-42"}}
+          ]
+        }]
+      }]
+    }]
+  }'
+```
+
+## Step 3: Query Logs Across Services
+
+### Find Errors Across All Services
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={severity_text="ERROR"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  --data-urlencode 'limit=100' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Filter by Service
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="order-service"} |= "error"' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Error Rate by Service
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query=sum by (service_name) (rate({severity_text="ERROR"}[5m]))' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  --data-urlencode 'step=300' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Search by Custom Attribute
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="order-service"} |= "ORD-12345"' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704153600' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### List All Services Sending Logs
+
+```bash
+curl http://localhost:3100/loki/api/v1/label/service_name/values \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Step 4: Set Up Grafana
+
+Add {{product_name}} as a Loki data source in Grafana:
+
+```yaml
+# grafana/provisioning/datasources/icegate.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Logs
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: my-tenant
+    isDefault: true
+```
+
+See [Grafana Integration](../guides/grafana-integration.md) for dashboards and advanced configuration.
+
+## Step 5: Per-Team Isolation
+
+Use `X-Scope-OrgID` to isolate logs by team or environment:
+
+```yaml
+# Team A collector config
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: team-platform
+
+# Team B collector config
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: team-backend
+```
+
+Each team queries only their own data. See [Multi-Tenancy](../guides/multi-tenancy.md) for details.
+
+## Next Steps
+
+- Add [distributed tracing](traces-end-to-end.md) to correlate logs with traces
+- Set up [cross-signal correlation](observability-correlation.md) between logs and traces
+- Configure [data retention](../guides/data-retention.md) policies
+
+
+# End-to-End Distributed Tracing
+
+This cookbook walks through instrumenting services with OpenTelemetry, sending trace data to {{product_name}} via OTLP, and retrieving traces via the Tempo-compatible API.
+
+{% note warning %}
+
+The Tempo API is currently under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language support is planned for future releases.
+
+{% endnote %}
+
+## Architecture
+
+```
+┌──────────────┐         ┌──────────────┐
+│  Frontend    │──HTTP──▶│  API Gateway │
+│  (browser)   │         │  (service A) │
+└──────────────┘         └──────┬───────┘
+                                │ gRPC
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+           ┌──────────────┐       ┌──────────────┐
+           │  Order Svc   │       │  User Svc    │
+           │  (service B) │       │  (service C) │
+           └──────┬───────┘       └──────────────┘
+                  │
+                  ▼ OTLP (4317)
+           ┌──────────────┐
+           │  IceGate     │
+           │  Ingest      │
+           └──────┬───────┘
+                  ▼
+           ┌──────────────┐
+           │  IceGate     │
+           │  Query       │◄── Tempo API (3200)
+           └──────────────┘
+```
+
+## Step 1: Instrument Services
+
+### Python (OpenTelemetry SDK)
+
+```python
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+
+# Configure tracing
+resource = Resource.create({
+    "service.name": "order-service",
+    "service.version": "1.0.0",
+})
+
+provider = TracerProvider(resource=resource)
+provider.add_span_processor(
+    BatchSpanProcessor(
+        OTLPSpanExporter(
+            endpoint="icegate-ingest:4317",
+            headers={"X-Scope-OrgID": "my-tenant"},
+            insecure=True,
+        )
+    )
+)
+trace.set_tracer_provider(provider)
+tracer = trace.get_tracer("order-service")
+
+# Create spans
+with tracer.start_as_current_span("process-order") as span:
+    span.set_attribute("order.id", "ORD-12345")
+    span.set_attribute("http.method", "POST")
+    span.set_attribute("http.status_code", 200)
+    # ... business logic ...
+```
+
+### Go (OpenTelemetry SDK)
+
+```go
+import (
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+    "go.opentelemetry.io/otel/sdk/resource"
+    sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+)
+
+exporter, _ := otlptracegrpc.New(ctx,
+    otlptracegrpc.WithEndpoint("icegate-ingest:4317"),
+    otlptracegrpc.WithInsecure(),
+    otlptracegrpc.WithHeaders(map[string]string{
+        "X-Scope-OrgID": "my-tenant",
+    }),
+)
+
+res := resource.NewWithAttributes(
+    semconv.SchemaURL,
+    semconv.ServiceNameKey.String("api-gateway"),
+)
+
+tp := sdktrace.NewTracerProvider(
+    sdktrace.WithBatcher(exporter),
+    sdktrace.WithResource(res),
+)
+otel.SetTracerProvider(tp)
+```
+
+### OpenTelemetry Collector
+
+For production, route traces through the OpenTelemetry Collector:
+
+```yaml
+# otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: my-tenant
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/icegate]
+```
+
+## Step 2: Send Test Traces
+
+Send a sample trace via curl to verify the setup:
+
+```bash
+curl -X POST http://localhost:4318/v1/traces \
+  -H "Content-Type: application/json" \
+  -H "X-Scope-OrgID: my-tenant" \
+  -d '{
+    "resourceSpans": [{
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-gateway"}}
+        ]
+      },
+      "scopeSpans": [{
+        "spans": [
+          {
+            "traceId": "5B8EFFF798038103D269B633813FC60C",
+            "spanId": "EEE19B7EC3C1B174",
+            "name": "GET /api/orders",
+            "kind": 2,
+            "startTimeUnixNano": "1704067200000000000",
+            "endTimeUnixNano": "1704067200150000000",
+            "status": {"code": 1},
+            "attributes": [
+              {"key": "http.method", "value": {"stringValue": "GET"}},
+              {"key": "http.status_code", "value": {"intValue": "200"}},
+              {"key": "http.url", "value": {"stringValue": "/api/orders"}}
+            ]
+          },
+          {
+            "traceId": "5B8EFFF798038103D269B633813FC60C",
+            "spanId": "AABB19B7EC3C1B22",
+            "parentSpanId": "EEE19B7EC3C1B174",
+            "name": "SELECT orders",
+            "kind": 3,
+            "startTimeUnixNano": "1704067200050000000",
+            "endTimeUnixNano": "1704067200120000000",
+            "status": {"code": 1},
+            "attributes": [
+              {"key": "db.system", "value": {"stringValue": "postgresql"}},
+              {"key": "db.statement", "value": {"stringValue": "SELECT * FROM orders WHERE user_id = $1"}}
+            ]
+          }
+        ]
+      }]
+    }]
+  }'
+```
+
+## Step 3: Retrieve Traces
+
+### Get a Trace by ID
+
+```bash
+curl http://localhost:3200/api/traces/5B8EFFF798038103D269B633813FC60C \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+Response contains all spans for the trace:
+
+```json
+{
+  "batches": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-gateway"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "5B8EFFF798038103D269B633813FC60C",
+              "spanId": "EEE19B7EC3C1B174",
+              "name": "GET /api/orders",
+              "kind": 2,
+              "startTimeUnixNano": "1704067200000000000",
+              "endTimeUnixNano": "1704067200150000000",
+              "status": {"code": 1}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Search Traces by Service
+
+```bash
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=api-gateway' \
+  --data-urlencode 'limit=10' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Search by Duration
+
+Find slow traces (>500ms):
+
+```bash
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=api-gateway' \
+  --data-urlencode 'minDuration=500ms' \
+  --data-urlencode 'limit=10' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### List Available Tags
+
+```bash
+curl http://localhost:3200/api/search/tags \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Get Tag Values
+
+```bash
+curl http://localhost:3200/api/search/tag/service.name/values \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Step 4: View in Grafana
+
+Configure the Tempo data source:
+
+```yaml
+# grafana/provisioning/datasources/icegate-tempo.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Traces
+    type: tempo
+    access: proxy
+    url: http://icegate-query:3200
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: my-tenant
+```
+
+Then in Grafana:
+
+1. Go to **Explore** > select **IceGate Traces**
+2. Enter a service name in the search field
+3. Click a trace to view its span waterfall diagram
+4. Inspect individual spans for attributes and timing
+
+See [Grafana Integration](../guides/grafana-integration.md) for cross-signal linking between traces and logs.
+
+## Span Data Model
+
+Spans stored in {{product_name}} include:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `trace_id` | bytes | 16-byte trace identifier |
+| `span_id` | bytes | 8-byte span identifier |
+| `parent_span_id` | bytes | Parent span (empty for root) |
+| `name` | string | Operation name |
+| `kind` | int | 0=Unspecified, 1=Internal, 2=Server, 3=Client, 4=Producer, 5=Consumer |
+| `start_timestamp` | timestamp | Span start time |
+| `end_timestamp` | timestamp | Span end time |
+| `duration_micros` | long | Duration in microseconds |
+| `status_code` | int | 0=Unset, 1=OK, 2=Error |
+| `attributes` | map | Merged resource/scope/span attributes |
+
+## Next Steps
+
+- Set up [cross-signal correlation](observability-correlation.md) to link traces with logs
+- Configure [centralized logging](centralized-logging.md) alongside traces
+- Review the [Tempo API reference](../api-reference/tempo.md) for all endpoints
+
+
+# Cross-Signal Correlation
+
+This cookbook shows how to correlate data across logs, traces, and metrics in {{product_name}} to quickly move from an alert to a root cause.
+
+{% note warning %}
+
+This guide uses the Loki API (fully implemented) and the Tempo API (basic trace retrieval and search available; TraceQL planned). The Prometheus API is under development — use LogQL metric queries as an alternative for log-based metrics.
+
+{% endnote %}
+
+## How Correlation Works
+
+{{product_name}} stores all observability signals in Apache Iceberg tables with shared fields that enable cross-signal linking:
+
+| Field | Present In | Purpose |
+|-------|-----------|---------|
+| `trace_id` | logs, spans | Links logs to the trace they belong to |
+| `span_id` | logs, spans | Links logs to a specific span |
+| `service_name` | logs, spans, metrics | Identifies the originating service |
+| `tenant_id` | all tables | Isolates data per tenant |
+| `timestamp` | all tables | Time correlation |
+
+## Workflow: Alert → Logs → Traces → Root Cause
+
+### 1. Detect an Issue via Log Metrics
+
+Use LogQL to detect error spikes:
+
+```bash
+# Error rate per service over the last hour
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query=sum by (service_name) (rate({severity_text="ERROR"}[5m]))' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  --data-urlencode 'step=300' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### 2. Investigate Error Logs
+
+Drill into the failing service:
+
+```bash
+# Get error logs from the affected service
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="order-service", severity_text="ERROR"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  --data-urlencode 'limit=50' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+The response includes log entries with `trace_id` in the attributes:
+
+```json
+{
+  "streams": [{
+    "stream": {
+      "service_name": "order-service",
+      "severity_text": "ERROR"
+    },
+    "values": [
+      ["1704068100000000000", "Payment timeout for order ORD-789"],
+      ["1704068200000000000", "Database connection pool exhausted"]
+    ]
+  }]
+}
+```
+
+### 3. Find Logs with a Specific Trace ID
+
+Search for all logs associated with a request:
+
+```bash
+# Find logs by trace ID
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name=~".+"} |= "5B8EFFF798038103D269B633813FC60C"' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+This returns logs from **all services** that participated in the same trace — showing the complete request path.
+
+### 4. Retrieve the Full Trace
+
+Use the trace ID to get the complete span tree via the Tempo API:
+
+```bash
+curl http://localhost:3200/api/traces/5B8EFFF798038103D269B633813FC60C \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+The response shows the request's journey through all services with timing for each span.
+
+### 5. Find Slow Operations
+
+Search for traces with high latency:
+
+```bash
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=order-service' \
+  --data-urlencode 'minDuration=1s' \
+  --data-urlencode 'limit=10' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Grafana Cross-Signal Navigation
+
+### Link Logs → Traces
+
+Configure Grafana to make trace IDs in log results clickable:
+
+```yaml
+# grafana/provisioning/datasources/icegate.yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Logs
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+      derivedFields:
+        - datasourceUid: icegate-tempo
+          matcherRegex: '"trace_id":"([a-fA-F0-9]+)"'
+          name: TraceID
+          url: '$${__value.raw}'
+    secureJsonData:
+      httpHeaderValue1: my-tenant
+    uid: icegate-loki
+
+  - name: IceGate Traces
+    type: tempo
+    access: proxy
+    url: http://icegate-query:3200
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+      tracesToLogs:
+        datasourceUid: icegate-loki
+        tags: ['service.name']
+        mappedTags: [{ key: 'service.name', value: 'service_name' }]
+        mapTagNamesEnabled: true
+        filterByTraceID: true
+    secureJsonData:
+      httpHeaderValue1: my-tenant
+    uid: icegate-tempo
+```
+
+With this configuration:
+
+- In **Explore > Loki**: trace IDs in log lines become clickable links to the trace view
+- In **Explore > Tempo**: each span shows a "Logs for this span" button that filters logs by trace and span ID
+
+### Build a Correlation Dashboard
+
+Create a dashboard with linked panels:
+
+**Error rate panel** (Loki, Time series):
+
+```logql
+sum by (service_name) (rate({severity_text="ERROR"}[5m]))
+```
+
+**Error logs panel** (Loki, Logs):
+
+```logql
+{severity_text="ERROR"}
+```
+
+Enable derived fields for trace ID linking.
+
+**Trace search panel** (Tempo, Table): Filter by service name and minimum duration.
+
+## API-Level Correlation Patterns
+
+### Find All Signals for a Request
+
+Given a trace ID, retrieve data from both APIs:
+
+```bash
+# 1. Get the trace (all spans)
+curl http://localhost:3200/api/traces/5B8EFFF798038103D269B633813FC60C \
+  -H "X-Scope-OrgID: my-tenant"
+
+# 2. Get all logs for this trace
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name=~".+"} |= "5B8EFFF798038103D269B633813FC60C"' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Correlate by Time Window
+
+When you don't have a trace ID, correlate by timestamp:
+
+```bash
+# 1. Find the error time window
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query=count_over_time({severity_text="ERROR"}[1m])' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  --data-urlencode 'step=60' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# 2. Search traces in the same time window
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=order-service' \
+  --data-urlencode 'start=1704068100' \
+  --data-urlencode 'end=1704068200' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Correlate by Service
+
+Find all signals for a specific service:
+
+```bash
+# Logs from the service
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="order-service"}' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# Traces from the service
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=order-service' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# Labels for the service
+curl http://localhost:3100/loki/api/v1/label/service_name/values \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Best Practices
+
+1. **Always include trace context in logs**: Configure OpenTelemetry SDKs to inject `trace_id` and `span_id` into log records automatically
+2. **Use consistent service names**: The `service.name` resource attribute should match across logs, traces, and metrics for the same service
+3. **Set timestamp ranges**: Always specify `start` and `end` in queries to enable Iceberg partition pruning
+4. **Start broad, then narrow**: Begin with error rate metrics, filter to specific error logs, then follow trace IDs to the root cause
+
+## Next Steps
+
+- Set up [centralized logging](centralized-logging.md) for your microservices
+- Configure [end-to-end tracing](traces-end-to-end.md) with instrumentation examples
+- Review the [data model](../architecture/data-model.md) for field details
 
 
 # OTLP Ingestion API
@@ -1849,8 +3611,6 @@ otel-log-generator otel \
 - Learn about the [Data Model](../architecture/data-model.md)
 - Configure [ingestion](../guides/ingestion.md) pipelines
 
----
-
 
 # Loki API Reference
 
@@ -2121,8 +3881,6 @@ All errors return a JSON response:
 - Explore the [Prometheus API](prometheus.md)
 - See [Tempo API](tempo.md) for traces
 
----
-
 
 # Prometheus API Reference
 
@@ -2243,8 +4001,6 @@ IceGate stores all OpenTelemetry metric types:
 - Learn about [Data Ingestion](../guides/ingestion.md)
 - Explore the [Loki API](loki.md) for logs
 - See [Tempo API](tempo.md) for traces
-
----
 
 
 # Tempo API Reference
@@ -2403,8 +4159,6 @@ Spans stored in IceGate include:
 - Explore the [Loki API](loki.md) for logs
 - See [Prometheus API](prometheus.md) for metrics
 
----
-
 
 # Architecture Overview
 
@@ -2531,8 +4285,6 @@ The query service reads from both:
 - Learn about the [Data Model](data-model.md)
 - Explore [Deployment](../operations/deployment.md) options
 - See [Configuration](../getting-started/configuration.md) details
-
----
 
 
 # Data Model
@@ -2839,8 +4591,6 @@ ORDER BY 1;
 - Explore [Querying](../guides/querying.md)
 - See [Deployment](../operations/deployment.md)
 
----
-
 
 # Deployment
 
@@ -3054,28 +4804,107 @@ storage:
     region: us-east-1
 ```
 
-## High Availability
+## Fault Tolerance and High Availability
+
+### Failure Modes
+
+{{product_name}} is designed for resilience through stateless compute and durable object storage:
+
+| Component | Failure Impact | Recovery |
+|-----------|---------------|----------|
+| Ingest replica fails | Reduced write throughput | Kubernetes restarts pod; other replicas continue ingesting |
+| Query replica fails | Reduced query capacity | Load balancer routes to healthy replicas |
+| Maintain/Shift | WAL segments accumulate | Restarts and resumes from last committed snapshot |
+| Object storage (S3) | Service outage | WAL writes fail with 503; clients should retry |
+| Catalog (Nessie) | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
+
+### Durability Guarantees
+
+- **WAL persistence**: All ingested data is written to object storage (S3/MinIO) before acknowledgment. Data survives node failures.
+- **Exactly-once delivery**: The ingest service acknowledges only after WAL write completes.
+- **Immutable segments**: WAL segments are append-only Parquet files. Once written, they cannot be corrupted by subsequent operations.
+- **Iceberg snapshots**: Each shift operation creates an atomic Iceberg snapshot. Failed shifts do not corrupt existing data.
+
+### Stateless Query Service
+
+The Query service has no local state — it reads from object storage and the Iceberg catalog. Any number of replicas can be started and stopped without coordination:
+
+```yaml
+# Helm values.yaml — scale query for HA
+query:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "4"
+      memory: 8Gi
+    limits:
+      cpu: "8"
+      memory: 16Gi
+```
 
 ### Multi-Zone Deployment
 
-Deploy services across multiple availability zones:
+Deploy services across availability zones for zone failure resilience:
 
 ```yaml
-services:
-  query:
-    deploy:
-      replicas: 3
-      placement:
-        constraints:
-          - node.labels.zone != ${ZONE}
+# Helm values.yaml
+query:
+  replicaCount: 3
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values: ["query"]
+            topologyKey: topology.kubernetes.io/zone
+
+ingest:
+  replicaCount: 2
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values: ["ingest"]
+            topologyKey: topology.kubernetes.io/zone
 ```
 
 ### Health Checks
 
-All services expose health endpoints:
+All services expose health endpoints for load balancer integration:
 
-- Ingest: `GET /health` (port 4318)
-- Query: `GET /ready` (port 3100)
+| Service | Endpoint | Port | Use |
+|---------|----------|------|-----|
+| Ingest | `GET /health` | 4318 | Readiness/liveness probe |
+| Query (Loki) | `GET /ready` | 3100 | Readiness/liveness probe |
+| Query (Tempo) | `GET /ready` | 3200 | Readiness/liveness probe |
+| Query (Prometheus) | `GET /-/ready` | 9090 | Readiness/liveness probe |
+
+Kubernetes probe configuration:
+
+```yaml
+# Included in Helm chart by default
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 10
+  periodSeconds: 15
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
 
 ## Monitoring
 
@@ -3142,8 +4971,6 @@ location /loki/ {
 - Configure [Maintenance](maintenance.md) operations
 - Set up [Troubleshooting](troubleshooting.md) procedures
 - Review [Architecture](../architecture/overview.md) for scaling decisions
-
----
 
 
 # Maintenance
@@ -3352,8 +5179,6 @@ aws s3api put-bucket-versioning \
 - Set up [Troubleshooting](troubleshooting.md) procedures
 - Review [Deployment](deployment.md) configuration
 - Understand the [Data Model](../architecture/data-model.md)
-
----
 
 
 # Troubleshooting
@@ -3640,8 +5465,6 @@ If issues persist:
 - Check [Deployment](deployment.md) configuration
 - Understand the [Architecture](../architecture/overview.md)
 
----
-
 
 # Development Setup
 
@@ -3841,8 +5664,6 @@ export AWS_REGION=us-east-1
 - Learn how to [Build from Source](building.md) and run individual services
 - Read [Development Patterns](patterns.md) for coding conventions
 - See [Contributing](contributing.md) for PR guidelines
-
----
 
 
 # Building from Source
@@ -4096,8 +5917,6 @@ docker build -t icegate/query:dev \
 - Set up a [Development Environment](setup.md) with Skaffold or Docker Compose
 - Review [Development Patterns](patterns.md)
 - Start [Contributing](contributing.md)
-
----
 
 
 # Development Patterns
@@ -4416,8 +6235,6 @@ pub fn routes(state: ModuleState) -> Router {
 | Routes | Router builder with state |
 | Servers | `CancellationToken` shutdown |
 
----
-
 
 # Contributing
 
@@ -4634,8 +6451,6 @@ Be respectful and inclusive. We follow the [Rust Code of Conduct](https://www.ru
 - Understand [Development Patterns](patterns.md)
 - Explore the [Architecture](../architecture/overview.md)
 
----
-
 
 # Frequently Asked Questions
 
@@ -4842,5 +6657,3 @@ See [Contributing Guide](development/contributing.md). We welcome:
 ### Where do I report issues?
 
 GitHub Issues: [https://github.com/icegatetech/icegate/issues](https://github.com/icegatetech/icegate/issues)
-
----

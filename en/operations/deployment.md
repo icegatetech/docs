@@ -215,28 +215,107 @@ storage:
     region: us-east-1
 ```
 
-## High Availability
+## Fault Tolerance and High Availability
+
+### Failure Modes
+
+{{product_name}} is designed for resilience through stateless compute and durable object storage:
+
+| Component | Failure Impact | Recovery |
+|-----------|---------------|----------|
+| Ingest replica fails | Reduced write throughput | Kubernetes restarts pod; other replicas continue ingesting |
+| Query replica fails | Reduced query capacity | Load balancer routes to healthy replicas |
+| Maintain/Shift | WAL segments accumulate | Restarts and resumes from last committed snapshot |
+| Object storage (S3) | Service outage | WAL writes fail with 503; clients should retry |
+| Catalog (Nessie) | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
+
+### Durability Guarantees
+
+- **WAL persistence**: All ingested data is written to object storage (S3/MinIO) before acknowledgment. Data survives node failures.
+- **Exactly-once delivery**: The ingest service acknowledges only after WAL write completes.
+- **Immutable segments**: WAL segments are append-only Parquet files. Once written, they cannot be corrupted by subsequent operations.
+- **Iceberg snapshots**: Each shift operation creates an atomic Iceberg snapshot. Failed shifts do not corrupt existing data.
+
+### Stateless Query Service
+
+The Query service has no local state — it reads from object storage and the Iceberg catalog. Any number of replicas can be started and stopped without coordination:
+
+```yaml
+# Helm values.yaml — scale query for HA
+query:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "4"
+      memory: 8Gi
+    limits:
+      cpu: "8"
+      memory: 16Gi
+```
 
 ### Multi-Zone Deployment
 
-Deploy services across multiple availability zones:
+Deploy services across availability zones for zone failure resilience:
 
 ```yaml
-services:
-  query:
-    deploy:
-      replicas: 3
-      placement:
-        constraints:
-          - node.labels.zone != ${ZONE}
+# Helm values.yaml
+query:
+  replicaCount: 3
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values: ["query"]
+            topologyKey: topology.kubernetes.io/zone
+
+ingest:
+  replicaCount: 2
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values: ["ingest"]
+            topologyKey: topology.kubernetes.io/zone
 ```
 
 ### Health Checks
 
-All services expose health endpoints:
+All services expose health endpoints for load balancer integration:
 
-- Ingest: `GET /health` (port 4318)
-- Query: `GET /ready` (port 3100)
+| Service | Endpoint | Port | Use |
+|---------|----------|------|-----|
+| Ingest | `GET /health` | 4318 | Readiness/liveness probe |
+| Query (Loki) | `GET /ready` | 3100 | Readiness/liveness probe |
+| Query (Tempo) | `GET /ready` | 3200 | Readiness/liveness probe |
+| Query (Prometheus) | `GET /-/ready` | 9090 | Readiness/liveness probe |
+
+Kubernetes probe configuration:
+
+```yaml
+# Included in Helm chart by default
+livenessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 10
+  periodSeconds: 15
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3100
+  initialDelaySeconds: 5
+  periodSeconds: 5
+```
 
 ## Monitoring
 

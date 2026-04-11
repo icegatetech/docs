@@ -32,8 +32,14 @@ items:
         href: guides/ingestion.md
       - name: Interrogation des Données
         href: guides/querying.md
+      - name: Intégration Grafana
+        href: guides/grafana-integration.md
       - name: Multi-Tenancy
         href: guides/multi-tenancy.md
+      - name: Optimisation des Performances
+        href: guides/performance-tuning.md
+      - name: Rétention des Données
+        href: guides/data-retention.md
 
   - name: Référence API
     items:
@@ -52,6 +58,15 @@ items:
         href: architecture/overview.md
       - name: Modèle de Données
         href: architecture/data-model.md
+
+  - name: Guides Pratiques
+    items:
+      - name: Journalisation Centralisée
+        href: cookbooks/centralized-logging.md
+      - name: Traçage Distribué
+        href: cookbooks/traces-end-to-end.md
+      - name: Corrélation des Signaux
+        href: cookbooks/observability-correlation.md
 
   - name: Opérations
     items:

@@ -9,9 +9,18 @@
 - License: Apache 2.0
 - Status: Alpha (v0.1.0)
 
-## Installation (Production)
+## Port Reference
 
-Deploy on Kubernetes with Helm:
+| Service | Port | Protocol | API Compatibility |
+|---------|------|----------|-------------------|
+| OTLP HTTP (Ingest) | 4318 | HTTP | OpenTelemetry Collector |
+| OTLP gRPC (Ingest) | 4317 | gRPC | OpenTelemetry Collector |
+| Loki (Query) | 3100 | HTTP | Grafana Loki |
+| Prometheus (Query) | 9090 | HTTP | Grafana Prometheus (under development) |
+| Tempo (Query) | 3200 | HTTP | Grafana Tempo (basic retrieval, TraceQL planned) |
+| Metrics | 9091 | HTTP | Prometheus scrape target |
+
+## Installation (Kubernetes with Helm)
 
 ```bash
 helm install icegate oci://ghcr.io/icegatetech/charts/icegate \
@@ -75,70 +84,395 @@ storage:
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | Tracing endpoint fallback |
 | `RUST_LOG` | Log level (e.g., `info`, `debug`) |
 
-## Usage
+## Ingest Data (OTLP)
 
-### Ingest Data (OTLP)
+### Send Logs via OTLP HTTP
 
 ```bash
-# Logs
 curl -X POST http://localhost:4318/v1/logs \
   -H "Content-Type: application/json" \
   -H "X-Scope-OrgID: my-tenant" \
-  -d '{"resourceLogs":[...]}'
+  -d '{
+    "resourceLogs": [{
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-service"}}
+        ]
+      },
+      "scopeLogs": [{
+        "logRecords": [{
+          "timeUnixNano": "1704067200000000000",
+          "body": {"stringValue": "Request processed successfully"},
+          "severityText": "INFO",
+          "severityNumber": 9,
+          "attributes": [
+            {"key": "http.method", "value": {"stringValue": "GET"}},
+            {"key": "http.status_code", "value": {"intValue": "200"}}
+          ]
+        }]
+      }]
+    }]
+  }'
+```
 
-# Traces
+### Send Traces via OTLP HTTP
+
+```bash
 curl -X POST http://localhost:4318/v1/traces \
   -H "Content-Type: application/json" \
   -H "X-Scope-OrgID: my-tenant" \
-  -d '{"resourceSpans":[...]}'
+  -d '{
+    "resourceSpans": [{
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-service"}}
+        ]
+      },
+      "scopeSpans": [{
+        "spans": [{
+          "traceId": "5B8EFFF798038103D269B633813FC60C",
+          "spanId": "EEE19B7EC3C1B174",
+          "name": "GET /api/users",
+          "kind": 2,
+          "startTimeUnixNano": "1704067200000000000",
+          "endTimeUnixNano": "1704067200100000000",
+          "status": {"code": 1}
+        }]
+      }]
+    }]
+  }'
+```
 
-# Metrics
+### Send Metrics via OTLP HTTP
+
+```bash
 curl -X POST http://localhost:4318/v1/metrics \
   -H "Content-Type: application/json" \
   -H "X-Scope-OrgID: my-tenant" \
-  -d '{"resourceMetrics":[...]}'
+  -d '{
+    "resourceMetrics": [{
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-service"}}
+        ]
+      },
+      "scopeMetrics": [{
+        "metrics": [{
+          "name": "http_requests_total",
+          "sum": {
+            "dataPoints": [{
+              "startTimeUnixNano": "1704067200000000000",
+              "timeUnixNano": "1704067260000000000",
+              "asInt": "1234"
+            }],
+            "aggregationTemporality": 2,
+            "isMonotonic": true
+          }
+        }]
+      }]
+    }]
+  }'
 ```
 
-### Query (Loki API)
+### Send via OpenTelemetry Collector
+
+```yaml
+# otel-collector-config.yaml
+exporters:
+  otlp/icegate:
+    endpoint: icegate-ingest:4317
+    tls:
+      insecure: true
+    headers:
+      X-Scope-OrgID: my-tenant
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      exporters: [otlp/icegate]
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/icegate]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp/icegate]
+```
+
+### Python SDK Example
+
+```python
+from opentelemetry.sdk._logs import LoggerProvider
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+
+provider = LoggerProvider()
+provider.add_log_record_processor(
+    BatchLogRecordProcessor(
+        OTLPLogExporter(
+            endpoint="localhost:4317",
+            headers={"X-Scope-OrgID": "my-tenant"},
+            insecure=True,
+        )
+    )
+)
+```
+
+## Query Logs (Loki API — Port 3100)
+
+### Loki API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/loki/api/v1/query_range` | Range query with LogQL |
+| GET | `/loki/api/v1/query` | Instant query |
+| GET | `/loki/api/v1/labels` | List label names |
+| GET | `/loki/api/v1/label/{name}/values` | Get label values |
+| GET/POST | `/loki/api/v1/series` | Series metadata |
+| GET | `/loki/api/v1/explain` | Query execution plan |
+| GET | `/ready` | Health check |
+
+### Range Query
 
 ```bash
-# Range query
 curl -G http://localhost:3100/loki/api/v1/query_range \
-  --data-urlencode 'query={service_name="api"}' \
+  --data-urlencode 'query={service_name="api-service"}' \
   --data-urlencode 'start=1704067200' \
   --data-urlencode 'end=1704153600' \
+  --data-urlencode 'limit=100' \
   -H "X-Scope-OrgID: my-tenant"
-
-# Instant query
-curl -G http://localhost:3100/loki/api/v1/query \
-  --data-urlencode 'query=count_over_time({service_name="api"}[5m])' \
-  -H "X-Scope-OrgID: my-tenant"
-
-# Labels
-curl http://localhost:3100/loki/api/v1/labels -H "X-Scope-OrgID: my-tenant"
-
-# Label values
-curl http://localhost:3100/loki/api/v1/label/service_name/values -H "X-Scope-OrgID: my-tenant"
 ```
 
-### LogQL
+### LogQL Cheat Sheet
 
 ```logql
+# Stream selectors
 {service_name="api"}                              # Select by label
-{service_name="api"} |= "error"                   # Line filter
-{service_name="api"} |~ "status=[45]\\d{2}"       # Regex filter
-count_over_time({service_name="api"}[5m])          # Count
-rate({severity_text="ERROR"}[1m])                  # Rate
-sum by (service_name) (rate({job="app"}[5m]))      # Aggregation
+{service_name=~"api|web"}                          # Regex match
+{service_name!="internal"}                         # Not equal
+
+# Line filters
+{service_name="api"} |= "error"                   # Contains
+{service_name="api"} != "debug"                    # Not contains
+{service_name="api"} |~ "status=[45]\\d{2}"        # Regex match
+{service_name="api"} !~ "health|ready"             # Regex not match
+
+# Label filters
+{service_name="api"} | severity_number >= 17       # Numeric comparison
+
+# Metric queries
+count_over_time({service_name="api"}[5m])           # Count per window
+rate({severity_text="ERROR"}[1m])                   # Rate per second
+bytes_rate({service_name="api"}[5m])                # Bytes rate
+
+# Aggregations
+sum by (service_name) (rate({job="app"}[5m]))       # Sum by label
+avg_over_time({service_name="api"} | unwrap duration [5m])  # Average
 ```
 
-### Multi-Tenancy
+### Discover Labels
 
-Tenant isolation via `X-Scope-OrgID` header. Data physically partitioned by tenant_id.
+```bash
+# List all label names
+curl http://localhost:3100/loki/api/v1/labels \
+  -H "X-Scope-OrgID: my-tenant"
 
-### Grafana Integration
+# Get values for a specific label
+curl http://localhost:3100/loki/api/v1/label/service_name/values \
+  -H "X-Scope-OrgID: my-tenant"
+```
 
-Add IceGate as a Loki data source: URL `http://icegate-query:3100`, header `X-Scope-OrgID: <tenant>`.
+## Query Traces (Tempo API — Port 3200)
+
+The Tempo API is under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language is planned for future releases.
+
+### Tempo API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/traces/{traceID}` | Get trace by ID |
+| GET | `/api/search` | Search traces |
+| GET | `/api/search/tags` | Available tag names |
+| GET | `/api/search/tag/{tag}/values` | Tag values |
+| GET | `/ready` | Health check |
+
+### Get a Trace by ID
+
+```bash
+curl http://localhost:3200/api/traces/5B8EFFF798038103D269B633813FC60C \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+### Search Traces
+
+```bash
+# By service name
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=api-service' \
+  --data-urlencode 'limit=10' \
+  -H "X-Scope-OrgID: my-tenant"
+
+# By minimum duration (slow traces)
+curl -G http://localhost:3200/api/search \
+  --data-urlencode 'tags=service.name=api-service' \
+  --data-urlencode 'minDuration=500ms' \
+  --data-urlencode 'limit=10' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Prometheus API (Port 9090) — Under Development
+
+The Prometheus query API is under development. Metadata endpoints (labels, series) are available. PromQL queries are not yet supported. Use LogQL metric queries (rate, count_over_time, sum by) as an alternative for log-based metrics.
+
+## Multi-Tenancy
+
+Tenant isolation via `X-Scope-OrgID` header. Data is physically partitioned by `tenant_id` in Iceberg tables. Default tenant ID is `default` when no header is provided.
+
+Allowed tenant ID characters: ASCII alphanumeric, hyphens (`-`), underscores (`_`).
+
+```bash
+# Ingest for a specific tenant
+curl -X POST http://localhost:4318/v1/logs \
+  -H "X-Scope-OrgID: team-backend" \
+  -H "Content-Type: application/json" \
+  -d '...'
+
+# Query only sees that tenant's data
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="api"}' \
+  -H "X-Scope-OrgID: team-backend"
+```
+
+## Grafana Integration
+
+### Loki Data Source (Logs)
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Logs
+    type: loki
+    access: proxy
+    url: http://icegate-query:3100
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: default
+    isDefault: true
+```
+
+### Tempo Data Source (Traces)
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: IceGate Traces
+    type: tempo
+    access: proxy
+    url: http://icegate-query:3200
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+      tracesToLogs:
+        datasourceUid: icegate-loki
+        tags: ['service.name']
+        filterByTraceID: true
+    secureJsonData:
+      httpHeaderValue1: default
+```
+
+### Drop-In Replacement for Loki
+
+If you have an existing Grafana+Loki setup, change only the data source URL from your Loki instance to `http://icegate-query:3100`. Existing dashboards, alerting rules, and LogQL queries continue to work.
+
+## Cross-Signal Correlation
+
+### Logs → Traces
+
+Log records include `trace_id` and `span_id` fields. Search logs by trace ID:
+
+```bash
+curl -G http://localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name=~".+"} |= "5B8EFFF798038103D269B633813FC60C"' \
+  --data-urlencode 'start=1704067200' \
+  --data-urlencode 'end=1704070800' \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+Then retrieve the full trace:
+
+```bash
+curl http://localhost:3200/api/traces/5B8EFFF798038103D269B633813FC60C \
+  -H "X-Scope-OrgID: my-tenant"
+```
+
+## Performance Tuning
+
+### High-Throughput Ingestion
+
+```yaml
+queue:
+  common:
+    channel_capacity: 4096
+    max_row_group_size: 16384
+  write:
+    flush_interval_ms: 500
+    max_bytes_per_flush: 134217728  # 128 MiB
+    compression: zstd
+```
+
+### Query Cache
+
+```yaml
+catalog:
+  cache:
+    enabled: true
+    memory_size_mb: 1024
+    disk_dir: /tmp/icegate/cache
+    disk_size_mb: 4096
+    stat_ttl_secs: 300
+```
+
+### Horizontal Scaling
+
+Ingest and Query services are stateless — scale replicas independently:
+
+```yaml
+ingest:
+  replicaCount: 3
+query:
+  replicaCount: 3
+```
+
+## Data Retention
+
+### Delete Old Data
+
+```sql
+DELETE FROM icegate.logs
+WHERE timestamp < TIMESTAMP '2024-12-01 00:00:00 UTC';
+```
+
+### Expire Snapshots
+
+```sql
+ALTER TABLE icegate.logs
+EXECUTE expire_snapshots(retention_threshold => '7d');
+```
+
+### Remove Orphan Files
+
+```sql
+ALTER TABLE icegate.logs
+EXECUTE remove_orphan_files(retention_threshold => '1d');
+```
+
+## Fault Tolerance
+
+- **WAL durability**: All data written to S3/MinIO before acknowledgment
+- **Stateless query**: Any replica can serve any query; no coordination needed
+- **Immutable WAL segments**: Once written, cannot be corrupted
+- **Iceberg snapshots**: Atomic commits; failed shifts don't corrupt data
+- **Horizontal scaling**: Add Ingest/Query replicas without downtime
 
 ## Architecture
 
@@ -154,6 +488,24 @@ Four Iceberg tables: `logs`, `spans`, `events`, `metrics`.
 Partitioned by `tenant_id`, `account_id`, `day(timestamp)`.
 ZSTD compression, 64MB row groups.
 
+Shared fields for correlation: `trace_id`, `span_id`, `service_name`, `tenant_id`.
+
+## Health Check Endpoints
+
+```bash
+# Ingest service
+curl http://localhost:4318/health
+
+# Query service (Loki)
+curl http://localhost:3100/ready
+
+# Query service (Tempo)
+curl http://localhost:3200/ready
+
+# Query service (Prometheus)
+curl http://localhost:9090/-/ready
+```
+
 ## Full Documentation
 
 - llms-full.txt: https://docs.icegate.tech/llms-full.txt
@@ -162,6 +514,14 @@ ZSTD compression, 64MB row groups.
 - Configuration: https://docs.icegate.tech/en/getting-started/configuration
 - OTLP Ingestion API: https://docs.icegate.tech/en/api-reference/otlp
 - Loki Query API: https://docs.icegate.tech/en/api-reference/loki
+- Tempo API: https://docs.icegate.tech/en/api-reference/tempo
+- Grafana Integration: https://docs.icegate.tech/en/guides/grafana-integration
+- Performance Tuning: https://docs.icegate.tech/en/guides/performance-tuning
+- Data Retention: https://docs.icegate.tech/en/guides/data-retention
+- Multi-Tenancy: https://docs.icegate.tech/en/guides/multi-tenancy
+- Centralized Logging: https://docs.icegate.tech/en/cookbooks/centralized-logging
+- Distributed Tracing: https://docs.icegate.tech/en/cookbooks/traces-end-to-end
+- Cross-Signal Correlation: https://docs.icegate.tech/en/cookbooks/observability-correlation
 - Architecture: https://docs.icegate.tech/en/architecture/overview
 - Data Model: https://docs.icegate.tech/en/architecture/data-model
 - Deployment: https://docs.icegate.tech/en/operations/deployment
