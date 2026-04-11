@@ -77,7 +77,8 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 - Files must end with newline (MD047 enforced)
 - Line length not enforced (MD013 disabled)
 - Config YAML examples must use serde tagged enum syntax: `backend: !rest`, `backend: !s3`, `backend: !glue`
-- Keep code blocks, parameter names, and CLI commands in English across all language translations
+- Translate code-block comments to the target language in FR/RU docs
+- Keep parameter names, CLI commands, and code syntax in English across all language translations
 
 ## Key Technical Details
 

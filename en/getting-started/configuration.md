@@ -5,7 +5,7 @@ description: Configure IceGate components
 
 # Configuration
 
-IceGate uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
+{{product_name}} uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
 
 ## CLI Usage
 
