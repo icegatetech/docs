@@ -1,8 +1,10 @@
 # IceGate — Complete Documentation
 
 > IceGate is an Observability Data Lake engine built on Apache Iceberg, DataFusion, Arrow, and Parquet. It ingests logs, traces, metrics, and events via OpenTelemetry Protocol (OTLP) and provides Loki, Prometheus, and Tempo-compatible query APIs.
-> 
+>
 > Version: 0.1.0 (Alpha) | License: Apache 2.0 | Repository: https://github.com/icegatetech/icegate
+>
+> Website: https://icegate.tech | Built by TripleCloud (https://triplecloud.tech), whose LLM observability platform IceGate powers | Engineering blog: https://blog.triplecloud.tech
 
 
 

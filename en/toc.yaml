@@ -10,9 +10,15 @@ navigation:
       - text: "Documentation"
         type: "link"
         url: "/en"
+      - text: "Website"
+        type: "link"
+        url: "https://icegate.tech"
       - text: "GitHub"
         type: "link"
         url: "https://github.com/icegatetech/icegate"
+      - text: "Blog"
+        type: "link"
+        url: "https://blog.triplecloud.tech"
     rightItems:
       - type: controls
 items:
