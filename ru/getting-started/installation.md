@@ -41,7 +41,7 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Значения Helm используют camelCase и плоские ключи (например, `backend: s3` + `s3.warehouse`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !s3`), который ожидают бинарные файлы IceGate. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
+Значения Helm используют camelCase и плоские ключи (например, `backend: s3` + `s3.warehouse`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !s3`), который ожидают бинарные файлы {{product_name}}. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
 
 {% endnote %}
 

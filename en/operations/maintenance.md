@@ -151,6 +151,8 @@ On the default S3 catalog the metadata is `root.json` plus the table metadata fi
 aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
 ```
 
+`sync` is not an atomic snapshot: it lists, then copies, and commits landing in between can leave the copy mixing catalog generations. For a point-in-time copy, use bucket versioning (below) and read a single version, or take the copy while writes are quiesced. Verify any backup by restoring it to a scratch prefix and listing the tables before relying on it.
+
 If you run the REST catalog backend instead, back up Nessie's RocksDB data:
 
 ```bash
@@ -185,7 +187,7 @@ Enable versioning on your S3 bucket for point-in-time recovery:
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 

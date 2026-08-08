@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-{{product_name}} stocke les données d'observabilité dans quatre tables Apache Iceberg.
+{{product_name}} stocke les données d'observabilité dans cinq tables Apache Iceberg par tenant — logs, spans, events, metrics et operations — plus une table de référence globale, prices.
 
 ## Vue d'Ensemble des Tables
 
@@ -22,13 +22,13 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 | `events` | Événements sémantiques | Événements métier |
 | `metrics` | Tous types de métriques | Monitoring de performance |
 | `operations` | Opérations LLM et agents | Usage de tokens, coût, capture des prompts et complétions |
-| `prices` | Grille tarifaire LLM globale (sans `tenant_id`) | Attribution des coûts pour `operations` |
+| `prices` | Grille tarifaire LLM globale (sans `tenant_id`) | Tarifs de référence pour chiffrer `operations` |
 
 ## Patterns Communs
 
 ### Multi-Tenancy
 
-Toutes les tables utilisent le partitionnement par `tenant_id`.
+Les cinq tables par tenant utilisent le partitionnement par identité sur `tenant_id`. `prices` est une donnée de référence partagée par tous les tenants : elle ne porte pas de `tenant_id` et est partitionnée différemment.
 
 ### Stockage des Attributs
 

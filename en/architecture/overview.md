@@ -138,11 +138,13 @@ Steps 1-7 are the write path, acknowledged once the WAL segment lands. Steps 8-1
 
 Shift never deletes WAL segments. They are reclaimed by an object lifecycle rule on the queue bucket, and the offset in the snapshot summary is what lets shift resume where it left off.
 
+That makes the lifecycle expiration a durability parameter, not housekeeping: a segment has to outlive the commit that covers it. If shift is delayed or failing when the rule fires, segments whose offsets were never committed are deleted and the data is gone. See [Data Retention](../guides/data-retention.md) for sizing.
+
 ### Maintenance Flow
 
 ![Maintenance Sequence](../../assets/c4/structurizr-MaintenanceFlow.png)
 
-Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work from its own job-state prefix in object storage, so they never contend with one another.
+Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work under its own job-state prefix, so the loops never fight over task ownership. They still share the tables underneath — compaction commits rewrite snapshots while GC deletes unreferenced objects — which is why GC only removes files older than its grace period and commits use optimistic concurrency, retrying on conflict.
 
 ## Scalability
 

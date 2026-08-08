@@ -224,7 +224,7 @@ Enable S3 versioning for point-in-time recovery of the warehouse bucket:
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 
@@ -236,7 +236,7 @@ On the default S3 catalog there is no service to stop and no database to dump �
 aws s3 sync s3://warehouse/catalog/ ./catalog-backup-$(date +%Y%m%d)/
 ```
 
-Because `root.json` is replaced by compare-and-swap, a copy taken mid-commit is still a consistent earlier version rather than a torn write.
+Each object is replaced atomically — `root.json` by compare-and-swap, metadata files never in place — so no single object is ever copied half-written. The *set* is a different matter: `sync` lists and then copies, so commits landing during the run can leave the copy mixing catalog generations. For a point-in-time copy, read a single version from the versioned bucket, or take the copy while writes are quiesced, and verify it by restoring to a scratch prefix before relying on it.
 
 If you run the REST catalog backend instead, back up Nessie's RocksDB storage:
 

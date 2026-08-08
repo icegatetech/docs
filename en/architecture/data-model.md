@@ -5,7 +5,7 @@ description: {{product_name}} Iceberg table schemas for observability data
 
 # Data Model
 
-{{product_name}} stores observability data in four Apache Iceberg tables: logs, spans, events, and metrics.
+{{product_name}} stores observability data in five tenant-scoped Apache Iceberg tables — logs, spans, events, metrics, and operations — plus one global reference table, prices.
 
 ## Table Overview
 
@@ -16,13 +16,13 @@ description: {{product_name}} Iceberg table schemas for observability data
 | `events` | Semantic events | Business events, alerts |
 | `metrics` | All metric types | Performance monitoring |
 | `operations` | LLM and agent operations | Token usage, cost, prompt and completion capture |
-| `prices` | Global LLM rate card (no `tenant_id`) | Cost attribution for `operations` |
+| `prices` | Global LLM rate card (no `tenant_id`) | Reference rates for costing `operations` |
 
 ## Common Design Patterns
 
 ### Multi-Tenancy
 
-All tables use identity partitioning on `tenant_id`:
+The five tenant-scoped tables use identity partitioning on `tenant_id`. `prices` is reference data shared by every tenant, so it carries no `tenant_id` and is partitioned differently:
 
 ```sql
 partitioning = ARRAY['tenant_id', 'account_id', 'day(timestamp)']
@@ -374,6 +374,16 @@ Unlike the five telemetry tables it carries **no `tenant_id`** — rates are ref
 **Key:** `(provider, model, service_tier, region, min_input_tokens, valid_from)`
 
 Context tiers and service tiers live in the key rather than in extra columns, so the rate columns stay flat as the card grows. Rate columns are `DECIMAL(38, 10)` rather than floating point — money has to be exact, and binary `f64` cannot represent a value like `0.075` or sum it without drift.
+
+### Joining Prices to Operations
+
+The query engine exposes a derived view, `prices_effective`, which adds `valid_to` — the next revision's `valid_from` for the same key, `NULL` for the row currently in effect. It is a DataFusion object, so the Loki, Tempo, and Flight SQL paths see it; Trino reads the Iceberg catalog directly and does not, which is why the raw table stays self-sufficient.
+
+{% note warning %}
+
+{{product_name}} does not compute cost, and `operations` does not carry the full pricing key. It records `provider_name` and `request_model`, which line up with `prices.provider` and `prices.model`, but nothing for `service_tier`, `region`, or `min_input_tokens`. A cost query has to supply those three from deployment knowledge — a fixed tier and region per account, say. Treat such a join as an estimate parameterised by your own assumptions, not a derivation the schema guarantees.
+
+{% endnote %}
 
 ## Query Examples
 

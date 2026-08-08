@@ -41,7 +41,7 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: s3` + `s3.warehouse`). Le chart traduit ces valeurs dans le format natif de configuration serde tagged enum (`backend: !s3`) attendu par les binaires IceGate. Voir [Configuration](configuration.md) pour la référence de configuration native.
+Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: s3` + `s3.warehouse`). Le chart traduit ces valeurs dans le format natif de configuration serde tagged enum (`backend: !s3`) attendu par les binaires {{product_name}}. Voir [Configuration](configuration.md) pour la référence de configuration native.
 
 {% endnote %}
 

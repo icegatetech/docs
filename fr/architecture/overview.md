@@ -138,11 +138,13 @@ Les étapes 1 à 7 constituent le chemin d'écriture, acquitté dès que le segm
 
 Le shift ne supprime jamais les segments WAL. Ils sont récupérés par une règle de cycle de vie objet sur le bucket de la queue, et c'est l'offset du résumé du snapshot qui permet au shift de reprendre là où il s'était arrêté.
 
+L'expiration du cycle de vie est donc un paramètre de durabilité, pas une simple tâche d'entretien : un segment doit survivre au commit qui le couvre. Si le shift est retardé ou en échec au moment où la règle s'applique, les segments dont l'offset n'a jamais été validé sont supprimés et les données sont perdues. Voir [Rétention des Données](../guides/data-retention.md) pour le dimensionnement.
+
 ### Flux de Maintenance
 
 ![Séquence de Maintenance](../../assets/c4/structurizr-MaintenanceFlow.png)
 
-La migration est un job unique. La compaction, le GC des orphelins et le crawler de tarifs sont des boucles indépendantes suivant leurs propres cadences — les numéros d'étape ordonnent chaque boucle, pas les boucles entre elles. Chacune réserve son travail sous son propre préfixe d'état de jobs dans le stockage objet, elles n'entrent donc jamais en contention.
+La migration est un job unique. La compaction, le GC des orphelins et le crawler de tarifs sont des boucles indépendantes suivant leurs propres cadences — les numéros d'étape ordonnent chaque boucle, pas les boucles entre elles. Chacune réserve son travail sous son propre préfixe d'état de jobs : les boucles ne se disputent donc jamais la propriété des tâches. Elles partagent malgré tout les tables sous-jacentes — la compaction valide des snapshots de réécriture pendant que le GC supprime des objets non référencés — d'où le fait que le GC ne supprime que les fichiers plus anciens que son délai de grâce et que les commits utilisent la concurrence optimiste, avec réessai en cas de conflit.
 
 ## Évolutivité
 

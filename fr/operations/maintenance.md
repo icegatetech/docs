@@ -153,6 +153,8 @@ Avec le catalogue S3 par défaut, les métadonnées sont `root.json` et les fich
 aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
 ```
 
+`sync` n'est pas un instantané atomique : il liste puis copie, et des commits survenant entre-temps peuvent produire une copie mélangeant plusieurs générations du catalogue. Pour une copie à un instant donné, utilisez le versioning du bucket (ci-dessous) en lisant une seule version, ou effectuez la copie pendant que les écritures sont suspendues. Vérifiez toute sauvegarde en la restaurant sur un préfixe de test et en listant les tables avant de vous y fier.
+
 Si vous utilisez le backend de catalogue REST, sauvegardez les données RocksDB de Nessie :
 
 ```bash
@@ -187,7 +189,7 @@ Activez le versioning sur votre bucket S3 pour la récupération à un point dan
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 
