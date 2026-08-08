@@ -26,7 +26,7 @@ les autres marques appartiennent à leurs titulaires respectifs.
 
 Lorsque cette documentation décrit une API comme compatible Loki ou Tempo, cela signifie que
 {{product_name}} implémente un sous-ensemble de l'API HTTP de lecture du projet concerné — de quoi
-servir les points de terminaison documentés dans la [référence des API](api-reference/loki.md), et
+servir les points de terminaison documentés dans les références [Loki](api-reference/loki.md) et [Tempo](api-reference/tempo.md), et
 non une réimplémentation complète.
 
 L’API compatible Prometheus est **prévue, pas implémentée** : toutes ses routes renvoient

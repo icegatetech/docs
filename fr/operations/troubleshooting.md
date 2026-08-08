@@ -66,7 +66,7 @@ docker compose logs -f maintain
 
 **Solutions :**
 
-1. Vérifiez que le stockage objet est en cours d'exécution :
+1. Sur un déploiement RustFS local, vérifiez que le stockage objet fonctionne. Le chemin de disponibilité est propre à RustFS — sur AWS S3 ou un autre fournisseur, passez directement à l'étape 3 :
 
    ```bash
    curl http://localhost:9000/health/ready
@@ -79,7 +79,7 @@ docker compose logs -f maintain
    echo $AWS_SECRET_ACCESS_KEY
    ```
 
-3. Testez la connexion S3 :
+3. Testez la connexion S3. Retirez `--endpoint-url` si le backend est le vrai AWS S3 :
 
    ```bash
    aws s3 ls --endpoint-url http://localhost:9000
@@ -94,19 +94,31 @@ docker compose logs -f maintain
 
 **Solutions :**
 
-1. Vérifiez que Nessie est en cours d'exécution :
+1. Avec le catalogue S3 par défaut, vérifiez que l'objet d'état du catalogue est lisible — il n'y a aucun service de catalogue à contrôler :
 
    ```bash
-   curl http://localhost:19120/api/v1/trees
+   aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json
    ```
+
+   Un `root.json` absent signifie que la migration n'a jamais été exécutée. Lancez `maintain migrate create` avant toute autre chose.
 
 2. Vérifiez la configuration du catalogue :
 
    ```yaml
    catalog:
-     backend: !rest
-       uri: http://nessie:19120/iceberg
+     backend: !s3
+       warehouse: catalog
      warehouse: s3://warehouse/
+     properties:
+       bucket: warehouse
+       region: us-east-1
+       endpoint: http://rustfs:9000
+   ```
+
+3. Uniquement avec le backend REST, vérifiez que Nessie est en cours d'exécution :
+
+   ```bash
+   curl http://localhost:19120/api/v1/trees
    ```
 
 ## Problèmes de Requêtes

@@ -147,7 +147,13 @@ curl http://localhost:4318/health
 
 ### Sauvegarde du Catalogue
 
-Nessie stocke les métadonnées du catalogue. Sauvegardez les données RocksDB :
+Avec le catalogue S3 par défaut, les métadonnées sont `root.json` et les fichiers de métadonnées de table dans le bucket warehouse : une sauvegarde est donc une copie de ce préfixe, sans service à arrêter :
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+Si vous utilisez le backend de catalogue REST, sauvegardez les données RocksDB de Nessie :
 
 ```bash
 # Arrêter Nessie

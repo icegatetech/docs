@@ -145,7 +145,13 @@ curl http://localhost:4318/health
 
 ### Catalog Backup
 
-Nessie stores catalog metadata. Back up the RocksDB data:
+On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix — there is no service to stop:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB data:
 
 ```bash
 # Stop Nessie

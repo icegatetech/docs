@@ -21,6 +21,8 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 | `spans` | Spans de traces distribuées | Traçage des requêtes |
 | `events` | Événements sémantiques | Événements métier |
 | `metrics` | Tous types de métriques | Monitoring de performance |
+| `operations` | Opérations LLM et agents | Usage de tokens, coût, capture des prompts et complétions |
+| `prices` | Grille tarifaire LLM globale (sans `tenant_id`) | Attribution des coûts pour `operations` |
 
 ## Patterns Communs
 

@@ -42,23 +42,47 @@ query version
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 ```
 
 ### Параметры Каталога
 
 | Параметр | Тип | Обязательный | По умолчанию | Описание |
 |----------|-----|--------------|--------------|----------|
-| `backend` | enum | Да | `memory` | Тип бэкенда каталога (см. ниже) |
+| `backend` | enum | Да | — | Тип бэкенда каталога (см. ниже). Значения по умолчанию нет — поле обязательное |
 | `warehouse` | string | Да | — | Расположение хранилища (например, `s3://warehouse/`) |
 | `properties` | map | Нет | `{}` | Дополнительные свойства каталога |
 | `cache` | object | Нет | — | Конфигурация IO-кэша (см. [Конфигурация Кэша](#конфигурация-кэша)) |
 
 ### Бэкенды Каталога
+
+#### S3-каталог (по умолчанию)
+
+Собственный каталог {{product_name}}. Состояние каталога — объект `root.json` в объектном хранилище, обновляемый через compare-and-swap, поэтому внешний сервис каталога не требуется.
+
+```yaml
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
+```
+
+| Параметр | Тип | Обязательный | Описание |
+|----------|-----|--------------|----------|
+| `warehouse` (внутри `!s3`) | string | Да | Префикс ключей объектного хранилища с состоянием каталога |
+| `properties.bucket` | string | Да | Бакет с состоянием каталога |
+| `properties.region` | string | Да | Регион S3-клиента каталога |
+| `properties.endpoint` | string | Нет | Пользовательский эндпоинт для S3-совместимого хранилища. Опустить для настоящего AWS S3 |
 
 #### REST Каталог (Nessie)
 
@@ -115,9 +139,13 @@ catalog:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -184,11 +212,13 @@ storage:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
@@ -322,11 +352,13 @@ Job manager хранит состояние задач shift в отдельно
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -406,7 +438,7 @@ tracing:
 | `loki.enabled` | bool | `true` | Включить Loki-совместимый API запросов логов |
 | `loki.host` | string | `0.0.0.0` | Адрес привязки |
 | `loki.port` | integer | `3100` | Порт Loki API |
-| `prometheus.enabled` | bool | `true` | Включить Prometheus-совместимый API метрик |
+| `prometheus.enabled` | bool | `true` | Отдавать API запросов Prometheus. Маршруты зарегистрированы, но все обработчики, кроме `/-/ready`, возвращают `501 Not Implemented` — PromQL пока не реализован. Это не эндпоинт метрик: им является блок `metrics` на порту 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Адрес привязки |
 | `prometheus.port` | integer | `9090` | Порт Prometheus API |
 | `tempo.enabled` | bool | `true` | Включить Tempo-совместимый API трейсов |
@@ -419,11 +451,13 @@ tracing:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3

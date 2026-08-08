@@ -65,7 +65,7 @@ docker compose logs -f ingest
 
 **Решения:**
 
-1. Проверьте, что объектное хранилище запущено:
+1. В локальном развёртывании RustFS проверьте, что объектное хранилище работает. Путь готовности специфичен для RustFS — на AWS S3 или у другого провайдера сразу переходите к шагу 3:
 
    ```bash
    curl http://localhost:9000/health/ready
@@ -78,7 +78,7 @@ docker compose logs -f ingest
    echo $AWS_SECRET_ACCESS_KEY
    ```
 
-3. Протестируйте подключение к S3:
+3. Протестируйте подключение к S3. Уберите `--endpoint-url`, если бэкенд — настоящий AWS S3:
 
    ```bash
    aws s3 ls --endpoint-url http://localhost:9000
@@ -93,19 +93,31 @@ docker compose logs -f ingest
 
 **Решения:**
 
-1. Проверьте, что Nessie запущен:
+1. В S3-каталоге по умолчанию убедитесь, что объект состояния каталога читается, — отдельного сервиса каталога здесь нет:
 
    ```bash
-   curl http://localhost:19120/api/v1/trees
+   aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json
    ```
+
+   Отсутствие `root.json` означает, что миграция не выполнялась. Сначала запустите `maintain migrate create`.
 
 2. Проверьте конфигурацию каталога:
 
    ```yaml
    catalog:
-     backend: !rest
-       uri: http://nessie:19120/iceberg
+     backend: !s3
+       warehouse: catalog
      warehouse: s3://warehouse/
+     properties:
+       bucket: warehouse
+       region: us-east-1
+       endpoint: http://rustfs:9000
+   ```
+
+3. Только для REST-бэкенда проверьте, что Nessie запущен:
+
+   ```bash
+   curl http://localhost:19120/api/v1/trees
    ```
 
 ## Проблемы с Запросами

@@ -21,12 +21,20 @@ Each stage has independent retention controls.
 
 Shift does not delete WAL segments after committing them to Iceberg — a lifecycle rule on the queue bucket is what reclaims them, so configure one:
 
+{% note warning %}
+
+Size the expiration from your worst-case unshifted-WAL window, not for convenience. A segment is only safe to expire once shift has committed it and recorded its offset in an Iceberg snapshot. If shift is stopped, backlogged, or recovering for longer than the expiration, the rule deletes segments whose offsets were never committed. The snapshot offset only tells shift where to resume — it cannot rebuild a deleted segment, so that is acknowledged data lost. One day suits the demo stack; choose yours from how long ingest can plausibly run without a successful shift commit, and alert on shift lag rather than relying on the rule to stay ahead of it.
+
+{% endnote %}
+
+The bucket in both commands below is the one from `queue.common.base_path` (`s3://queue/` by default). Substitute your own if you changed it — a rule applied to the wrong bucket leaves the real WAL bucket unmanaged.
+
 ### RustFS (and other S3-compatible stores)
 
 RustFS speaks the S3 API, so the same `aws s3api` call the project's own bootstrap uses works against it:
 
 ```bash
-# Set 1-day TTL on queue bucket
+# Set 1-day TTL on the queue bucket
 aws --endpoint-url http://localhost:9000 s3api put-bucket-lifecycle-configuration \
   --bucket queue \
   --lifecycle-configuration '{"Rules":[{"ID":"expire-1d","Status":"Enabled","Filter":{"Prefix":""},"Expiration":{"Days":1}}]}'
@@ -36,7 +44,7 @@ aws --endpoint-url http://localhost:9000 s3api put-bucket-lifecycle-configuratio
 
 ```bash
 aws s3api put-bucket-lifecycle-configuration \
-  --bucket icegate-queue \
+  --bucket queue \
   --lifecycle-configuration '{
     "Rules": [{
       "ID": "expire-wal-segments",
@@ -222,7 +230,15 @@ aws s3api put-bucket-versioning \
 
 ### Catalog Backup
 
-Back up the Nessie catalog (RocksDB storage):
+On the default S3 catalog there is no service to stop and no database to dump — the catalog is `root.json` plus the table metadata files, in the warehouse bucket. Enabling versioning on that bucket (above) already gives point-in-time recovery. For an off-site copy, sync the catalog prefix:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup-$(date +%Y%m%d)/
+```
+
+Because `root.json` is replaced by compare-and-swap, a copy taken mid-commit is still a consistent earlier version rather than a torn write.
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB storage:
 
 ```bash
 # Stop Nessie

@@ -42,23 +42,47 @@ La section `catalog` configure le catalogue Apache Iceberg. Elle est partagée p
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 ```
 
 ### Paramètres du Catalogue
 
 | Paramètre | Type | Requis | Défaut | Description |
 |-----------|------|--------|--------|-------------|
-| `backend` | enum | Oui | `memory` | Type de backend du catalogue (voir ci-dessous) |
+| `backend` | enum | Oui | — | Type de backend du catalogue (voir ci-dessous). Pas de valeur par défaut : le champ est requis |
 | `warehouse` | string | Oui | — | Emplacement de l'entrepôt (ex. `s3://warehouse/`) |
 | `properties` | map | Non | `{}` | Propriétés supplémentaires spécifiques au catalogue |
 | `cache` | object | Non | — | Configuration du cache IO (voir [Configuration du Cache](#configuration-du-cache)) |
 
 ### Backends du Catalogue
+
+#### Catalogue S3 (par défaut)
+
+Le catalogue propre à {{product_name}}. L'état du catalogue est un objet `root.json` dans le stockage objet, mis à jour par compare-and-swap : aucun service de catalogue externe n'est requis.
+
+```yaml
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
+```
+
+| Paramètre | Type | Requis | Description |
+|-----------|------|--------|-------------|
+| `warehouse` (dans `!s3`) | string | Oui | Préfixe de clé du stockage objet contenant l'état du catalogue |
+| `properties.bucket` | string | Oui | Bucket contenant l'état du catalogue |
+| `properties.region` | string | Oui | Région du client S3 du catalogue |
+| `properties.endpoint` | string | Non | Endpoint personnalisé pour un stockage compatible S3. Omettre pour le vrai AWS S3 |
 
 #### REST Catalog (Nessie)
 
@@ -115,9 +139,13 @@ La section optionnelle `cache` active un cache hybride foyer (mémoire + disque)
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -184,11 +212,13 @@ Référence complète pour le service Ingest (`ingest run -c ingest.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
@@ -322,11 +352,13 @@ Référence complète pour le service Query (`query run -c query.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -406,7 +438,7 @@ Lorsque `engine.wal_query_enabled` est `true`, le service query lit à la fois l
 | `loki.enabled` | bool | `true` | Activer l'API de requête de logs compatible Loki |
 | `loki.host` | string | `0.0.0.0` | Adresse d'écoute |
 | `loki.port` | integer | `3100` | Port de l'API Loki |
-| `prometheus.enabled` | bool | `true` | Activer l'API de métriques compatible Prometheus |
+| `prometheus.enabled` | bool | `true` | Servir l'API de requêtes Prometheus. Les routes sont enregistrées, mais tout handler sauf `/-/ready` retourne `501 Not Implemented` — PromQL n'est pas encore implémenté. Ce n'est pas l'endpoint de métriques : celui-ci est le bloc `metrics` sur le port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Adresse d'écoute |
 | `prometheus.port` | integer | `9090` | Port de l'API Prometheus |
 | `tempo.enabled` | bool | `true` | Activer l'API de traces compatible Tempo |
@@ -419,11 +451,13 @@ Le service Maintain nécessite uniquement la configuration du catalogue et du st
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3

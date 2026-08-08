@@ -42,23 +42,47 @@ The `catalog` section configures the Apache Iceberg catalog. It is shared by all
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 ```
 
 ### Catalog Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | No | `memory` | Catalog backend type (see below) |
+| `backend` | enum | Yes | — | Catalog backend type (see below). No default — the field is required |
 | `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
 | `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
 
 ### Catalog Backends
+
+#### S3 Catalog (Default)
+
+{{product_name}}'s own catalog. Catalog state is a `root.json` object in object storage, updated by compare-and-swap, so no external catalog service is required:
+
+```yaml
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `warehouse` (inside `!s3`) | string | Yes | Object-storage key prefix holding the catalog state |
+| `properties.bucket` | string | Yes | Bucket holding the catalog state |
+| `properties.region` | string | Yes | Region for the catalog's S3 client |
+| `properties.endpoint` | string | No | Custom endpoint for S3-compatible storage. Omit for real AWS S3 |
 
 #### REST Catalog (Nessie)
 
@@ -115,9 +139,13 @@ The optional `cache` section enables a foyer hybrid cache (memory + disk) to red
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -184,11 +212,13 @@ Full reference for the Ingest service (`ingest run -c ingest.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
@@ -322,11 +352,13 @@ Full reference for the Query service (`query run -c query.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -406,7 +438,7 @@ When `engine.wal_query_enabled` is `true`, the query service reads both committe
 | `loki.enabled` | bool | `true` | Enable Loki-compatible log query API |
 | `loki.host` | string | `0.0.0.0` | Bind address |
 | `loki.port` | integer | `3100` | Loki API port |
-| `prometheus.enabled` | bool | `true` | Enable Prometheus-compatible metrics API |
+| `prometheus.enabled` | bool | `true` | Serve the Prometheus query API. Routes are registered, but every handler except `/-/ready` returns `501 Not Implemented` — PromQL is not implemented yet. This is not the metrics endpoint; that is the `metrics` block on port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Bind address |
 | `prometheus.port` | integer | `9090` | Prometheus API port |
 | `tempo.enabled` | bool | `true` | Enable Tempo-compatible trace API |
@@ -419,11 +451,13 @@ The Maintain service only requires catalog and storage configuration:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3

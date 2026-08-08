@@ -41,11 +41,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that {{product_name}} binaries expect. See [Configuration](configuration.md) for the native config reference.
+Helm values use camelCase and flat keys (e.g., `backend: s3` + `s3.warehouse`). The chart translates these into the native serde tagged enum config format (`backend: !s3`) that {{product_name}} binaries expect. See [Configuration](configuration.md) for the native config reference.
 
 {% endnote %}
 
-A minimal `values.yaml` for a REST catalog (Nessie) with S3-compatible storage:
+A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved — the catalog state is a `root.json` object in the warehouse bucket:
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### REST Catalog (Nessie)
+
+Use this only if you already run a Nessie or other Iceberg REST catalog — it adds an external service the default deployment does not need:
 
 ```yaml
 catalog:
@@ -59,10 +85,6 @@ storage:
     bucket: warehouse
     region: us-east-1
     endpoint: "http://rustfs:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
 
 aws:
   existingSecret: icegate-aws-credentials

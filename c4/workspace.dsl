@@ -83,6 +83,16 @@ workspace "IceGate" "Observability Data Lake Engine" {
         otelCollector -> icegate.ingestService "Sends OTLP logs, spans and metrics" "HTTP :4318 / gRPC :4317"
         grafana -> icegate.queryService "Queries logs and traces, tenant from X-Scope-OrgID" "HTTP :3100 / :3200"
         sqlClients -> icegate.queryService "Runs read-only SQL" "Arrow Flight SQL :8815"
+
+        # The same edges at component granularity, so the component and dynamic
+        # views show where a request actually lands. Structurizr keeps the
+        # container-level relationship above for the container and context
+        # views rather than drawing a second arrow.
+        otelCollector -> icegate.ingestService.otlpHttpHandler "Sends OTLP data" "HTTP :4318"
+        otelCollector -> icegate.ingestService.otlpGrpcHandler "Sends OTLP data" "gRPC :4317"
+        grafana -> icegate.queryService.lokiApi "Queries logs" "HTTP :3100"
+        grafana -> icegate.queryService.tempoApi "Queries traces" "HTTP :3200"
+        sqlClients -> icegate.queryService.flightSqlServer "Runs read-only SQL" "Arrow Flight SQL :8815"
         prometheusServer -> icegate.ingestService "Scrapes metrics" "HTTP :9091"
         prometheusServer -> icegate.queryService "Scrapes metrics" "HTTP :9091"
         prometheusServer -> icegate.maintainService "Scrapes metrics" "HTTP :9091"
@@ -203,6 +213,77 @@ workspace "IceGate" "Observability Data Lake Engine" {
         component icegate.s3Catalog "CatalogComponents" "S3 Catalog components" {
             include *
             autoLayout
+        }
+
+        # Process views. Each renders as a UML sequence diagram rather than the
+        # default numbered box layout — `plantuml.sequenceDiagram` is what
+        # switches the exporter over, and the box layout turns into unreadable
+        # long-arc spaghetti once a flow passes ten steps. `autoLayout` stays as
+        # the fallback for anyone who turns the property off.
+        # A dynamic view may reuse a model relationship with a step-specific
+        # description, but the relationship itself must already exist in the
+        # model — the DSL fails the build otherwise.
+        dynamic icegate.ingestService "IngestionFlow" "Ingestion: from an OTLP request to a committed Iceberg snapshot" {
+            otelCollector -> icegate.ingestService.otlpHttpHandler "Posts an OTLP export request"
+            icegate.ingestService.otlpHttpHandler -> icegate.ingestService.recordTransformer "Decoded resource/scope/record tree"
+            icegate.ingestService.recordTransformer -> icegate.ingestService.walWriter "One Arrow RecordBatch per signal"
+            icegate.ingestService.walWriter -> icegate.queueLib.queueChannel "Row groups sorted by the table sort order"
+            icegate.queueLib.queueChannel -> icegate.queueLib.queueAccumulator "Write request, or a retryable 429 when full"
+            icegate.queueLib.queueAccumulator -> icegate.queueLib.queueWriter "Batch, at the flush size or interval"
+            icegate.queueLib.queueWriter -> icegate.queueStorage "Writes the segment with If-None-Match, then the request is acknowledged"
+            icegate.ingestService.shiftPlanner -> icegate.queueLib.queueReader "Lists segments past the last committed offset"
+            icegate.ingestService.shiftPlanner -> icegate.jobStore "Claims a shift task by compare-and-swap"
+            icegate.ingestService.shiftPlanner -> icegate.ingestService.shiftExecutor "Dispatches the shift task"
+            icegate.ingestService.shiftExecutor -> icegate.queueLib.queueReader "Reads the task's sorted row groups"
+            icegate.ingestService.shiftExecutor -> icegate.icebergStorage "Writes k-way merged Iceberg data files"
+            icegate.ingestService.shiftExecutor -> icegate.ingestService.commitRunner "Hands over the written data files"
+            icegate.ingestService.commitRunner -> icegate.s3Catalog.catalogService "Commits a snapshot recording the WAL offset"
+            autoLayout
+            properties {
+                "plantuml.sequenceDiagram" "true"
+            }
+        }
+
+        dynamic icegate.queryService "QueryFlow" "Query: from a LogQL request to a merged WAL and Iceberg result" {
+            grafana -> icegate.queryService.lokiApi "Sends a LogQL range query with X-Scope-OrgID"
+            icegate.queryService.lokiApi -> icegate.queryService.logqlEngine "Raw LogQL expression"
+            icegate.queryService.logqlEngine -> icegate.queryService.queryEngine "Parsed AST, lowered to a DataFusion plan"
+            icegate.queryService.queryEngine -> icegate.s3Catalog.catalogService "Loads the current table metadata"
+            icegate.s3Catalog.catalogService -> icegate.s3Catalog.catalogCache "Requests the catalog root"
+            icegate.s3Catalog.catalogCache -> icegate.s3Catalog.catalogStorage "Conditional read; Not Modified serves the cached root"
+            icegate.s3Catalog.catalogStorage -> icegate.catalogStore "Reads root.json and table metadata"
+            icegate.queryService.queryEngine -> icegate.icebergStorage "Scans matching data files through the foyer cache"
+            icegate.queryService.queryEngine -> icegate.queueLib.queueReader "Reads WAL segments past the committed offset"
+            icegate.queueLib.queueReader -> icegate.queueStorage "Reads segments; merged with the Iceberg side"
+            autoLayout
+            properties {
+                "plantuml.sequenceDiagram" "true"
+            }
+        }
+
+        # The three loops below are independent and run on their own schedules;
+        # the step numbers order each loop, not the loops against each other.
+        # Structurizr's parallel-block syntax is deliberately not used: the
+        # PlantUML exporters flatten it to duplicate step numbers with no
+        # visual grouping, which reads as a single pipeline — worse than
+        # naming the loop in every step description.
+        dynamic icegate.maintainService "MaintenanceFlow" "Maintenance: a one-shot migration, then three job loops on independent schedules" {
+            icegate.maintainService.migrator -> icegate.s3Catalog.catalogService "Migration (one-shot): creates the icegate tables"
+            icegate.maintainService.dataCompactor -> icegate.jobStore "Compaction loop: claims a task by compare-and-swap"
+            icegate.maintainService.dataCompactor -> icegate.icebergStorage "Compaction loop: rewrites small data files into larger sorted ones"
+            icegate.maintainService.dataCompactor -> icegate.s3Catalog.catalogService "Compaction loop: commits a rewrite snapshot"
+            icegate.maintainService.manifestCompactor -> icegate.icebergStorage "Compaction loop: repacks fragmented manifests"
+            icegate.maintainService.manifestCompactor -> icegate.s3Catalog.catalogService "Compaction loop: commits the rewritten manifest list"
+            icegate.maintainService.orphanGc -> icegate.jobStore "GC loop: claims a sweep task"
+            icegate.maintainService.orphanGc -> icegate.s3Catalog.catalogService "GC loop: reads the set of referenced files"
+            icegate.maintainService.orphanGc -> icegate.icebergStorage "GC loop: deletes unreferenced objects past the grace period"
+            icegate.maintainService.pricingCrawler -> icegate.jobStore "Pricing loop: claims a crawl task"
+            icegate.maintainService.pricingCrawler -> pricingFeeds "Pricing loop: fetches the OpenRouter and LiteLLM rate cards"
+            icegate.maintainService.pricingCrawler -> icegate.s3Catalog.catalogService "Pricing loop: appends changed rates to icegate.prices"
+            autoLayout
+            properties {
+                "plantuml.sequenceDiagram" "true"
+            }
         }
 
         styles {

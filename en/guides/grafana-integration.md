@@ -268,7 +268,7 @@ If you have an existing Grafana setup with Loki, you can point it at {{product_n
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Your existing dashboards, alerting rules, and saved queries will continue to work because {{product_name}} implements the same Loki API.
+Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features {{product_name}} implements — it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
 
 {% note info %}
 

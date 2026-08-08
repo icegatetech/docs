@@ -110,12 +110,18 @@ Une lecture conditionnelle maintient à jour la racine du catalogue en cache ; l
 
 ### Flux d'Ingestion
 
+![Séquence d'Ingestion](../../assets/c4/structurizr-IngestionFlow.png)
+
+Les étapes 1 à 7 constituent le chemin d'écriture, acquitté dès que le segment WAL est écrit. Les étapes 8 à 14 sont le shift, qui s'exécute indépendamment de la requête.
+
 1. Le client envoie des données OTLP au service Ingest
 2. Ingest valide et transforme les données
 3. Les données sont écrites dans le WAL sous forme de fichiers Parquet
 4. L'accusé de réception est envoyé au client (exactly-once)
 
 ### Flux de Requêtes
+
+![Séquence de Requête](../../assets/c4/structurizr-QueryFlow.png)
 
 1. Le client envoie une requête au service Query
 2. La requête est analysée et planifiée par DataFusion
@@ -131,6 +137,12 @@ Une lecture conditionnelle maintient à jour la racine du catalogue en cache ; l
 5. Valide un nouveau snapshot dans le catalogue, en enregistrant le dernier offset WAL validé dans le résumé du snapshot
 
 Le shift ne supprime jamais les segments WAL. Ils sont récupérés par une règle de cycle de vie objet sur le bucket de la queue, et c'est l'offset du résumé du snapshot qui permet au shift de reprendre là où il s'était arrêté.
+
+### Flux de Maintenance
+
+![Séquence de Maintenance](../../assets/c4/structurizr-MaintenanceFlow.png)
+
+La migration est un job unique. La compaction, le GC des orphelins et le crawler de tarifs sont des boucles indépendantes suivant leurs propres cadences — les numéros d'étape ordonnent chaque boucle, pas les boucles entre elles. Chacune réserve son travail sous son propre préfixe d'état de jobs dans le stockage objet, elles n'entrent donc jamais en contention.
 
 ## Évolutivité
 

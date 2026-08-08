@@ -102,7 +102,7 @@ crates/
 ├── icegate-common/      # Shared infrastructure (catalog, storage, metrics, tracing)
 ├── icegate-catalog-s3/  # S3-backed Iceberg catalog (default) and its REST server
 ├── icegate-queue/       # Write-ahead log (Parquet on object storage)
-├── icegate-query/       # Query service (Loki/Prometheus/Tempo/Flight SQL APIs)
+├── icegate-query/       # Query service (Loki/Tempo/Flight SQL; Prometheus routes 501)
 ├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC, WAL, shift)
 └── icegate-maintain/    # Migration, compaction, orphan GC, pricing crawler
 ```

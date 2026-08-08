@@ -110,12 +110,18 @@ A conditional read keeps the cached catalog root fresh; table metadata is immuta
 
 ### Ingestion Flow
 
+![Ingestion Sequence](../../assets/c4/structurizr-IngestionFlow.png)
+
+Steps 1-7 are the write path, acknowledged once the WAL segment lands. Steps 8-14 are shift, which runs independently of the request.
+
 1. Client sends OTLP data to Ingest service
 2. Ingest validates and transforms data
 3. Data written to WAL as Parquet files
 4. Acknowledgment sent to client (exactly-once)
 
 ### Query Flow
+
+![Query Sequence](../../assets/c4/structurizr-QueryFlow.png)
 
 1. Client sends query to Query service
 2. Query parsed and planned by DataFusion
@@ -131,6 +137,12 @@ A conditional read keeps the cached catalog root fresh; table metadata is immuta
 5. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
 
 Shift never deletes WAL segments. They are reclaimed by an object lifecycle rule on the queue bucket, and the offset in the snapshot summary is what lets shift resume where it left off.
+
+### Maintenance Flow
+
+![Maintenance Sequence](../../assets/c4/structurizr-MaintenanceFlow.png)
+
+Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work from its own job-state prefix in object storage, so they never contend with one another.
 
 ## Scalability
 

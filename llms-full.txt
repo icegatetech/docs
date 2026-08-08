@@ -46,11 +46,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
+Helm values use camelCase and flat keys (e.g., `backend: s3` + `s3.warehouse`). The chart translates these into the native serde tagged enum config format (`backend: !s3`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
 
 {% endnote %}
 
-A minimal `values.yaml` for a REST catalog (Nessie) with S3-compatible storage:
+A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved — the catalog state is a `root.json` object in the warehouse bucket:
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### REST Catalog (Nessie)
+
+Use this only if you already run a Nessie or other Iceberg REST catalog — it adds an external service the default deployment does not need:
 
 ```yaml
 catalog:
@@ -64,10 +90,6 @@ storage:
     bucket: warehouse
     region: us-east-1
     endpoint: "http://rustfs:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
 
 aws:
   existingSecret: icegate-aws-credentials
@@ -235,23 +257,47 @@ The `catalog` section configures the Apache Iceberg catalog. It is shared by all
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 ```
 
 ### Catalog Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | No | `memory` | Catalog backend type (see below) |
+| `backend` | enum | Yes | — | Catalog backend type (see below). No default — the field is required |
 | `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
 | `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
 
 ### Catalog Backends
+
+#### S3 Catalog (Default)
+
+IceGate's own catalog. Catalog state is a `root.json` object in object storage, updated by compare-and-swap, so no external catalog service is required:
+
+```yaml
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `warehouse` (inside `!s3`) | string | Yes | Object-storage key prefix holding the catalog state |
+| `properties.bucket` | string | Yes | Bucket holding the catalog state |
+| `properties.region` | string | Yes | Region for the catalog's S3 client |
+| `properties.endpoint` | string | No | Custom endpoint for S3-compatible storage. Omit for real AWS S3 |
 
 #### REST Catalog (Nessie)
 
@@ -308,9 +354,13 @@ The optional `cache` section enables a foyer hybrid cache (memory + disk) to red
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -377,11 +427,13 @@ Full reference for the Ingest service (`ingest run -c ingest.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
@@ -515,11 +567,13 @@ Full reference for the Query service (`query run -c query.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -599,7 +653,7 @@ When `engine.wal_query_enabled` is `true`, the query service reads both committe
 | `loki.enabled` | bool | `true` | Enable Loki-compatible log query API |
 | `loki.host` | string | `0.0.0.0` | Bind address |
 | `loki.port` | integer | `3100` | Loki API port |
-| `prometheus.enabled` | bool | `true` | Enable Prometheus-compatible metrics API |
+| `prometheus.enabled` | bool | `true` | Serve the Prometheus query API. Routes are registered, but every handler except `/-/ready` returns `501 Not Implemented` — PromQL is not implemented yet. This is not the metrics endpoint; that is the `metrics` block on port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Bind address |
 | `prometheus.port` | integer | `9090` | Prometheus API port |
 | `tempo.enabled` | bool | `true` | Enable Tempo-compatible trace API |
@@ -612,11 +666,13 @@ The Maintain service only requires catalog and storage configuration:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
@@ -1619,7 +1675,7 @@ If you have an existing Grafana setup with Loki, you can point it at IceGate by 
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Your existing dashboards, alerting rules, and saved queries will continue to work because IceGate implements the same Loki API.
+Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features IceGate implements — it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
 
 {% note info %}
 
@@ -2161,6 +2217,14 @@ Each stage has independent retention controls.
 
 Shift does not delete WAL segments after committing them to Iceberg — a lifecycle rule on the queue bucket is what reclaims them, so configure one:
 
+{% note warning %}
+
+Size the expiration from your worst-case unshifted-WAL window, not for convenience. A segment is only safe to expire once shift has committed it and recorded its offset in an Iceberg snapshot. If shift is stopped, backlogged, or recovering for longer than the expiration, the rule deletes segments whose offsets were never committed. The snapshot offset only tells shift where to resume — it cannot rebuild a deleted segment, so that is acknowledged data lost. One day suits the demo stack; choose yours from how long ingest can plausibly run without a successful shift commit, and alert on shift lag rather than relying on the rule to stay ahead of it.
+
+{% endnote %}
+
+The bucket in both commands below is the one from `queue.common.base_path` (`s3://queue/` by default). Substitute your own if you changed it — a rule applied to the wrong bucket leaves the real WAL bucket unmanaged.
+
 ### RustFS (and other S3-compatible stores)
 
 RustFS speaks the S3 API, so the same `aws s3api` call the project's own bootstrap uses works against it:
@@ -2176,7 +2240,7 @@ aws --endpoint-url http://localhost:9000 s3api put-bucket-lifecycle-configuratio
 
 ```bash
 aws s3api put-bucket-lifecycle-configuration \
-  --bucket icegate-queue \
+  --bucket queue \
   --lifecycle-configuration '{
     "Rules": [{
       "ID": "expire-wal-segments",
@@ -2362,7 +2426,15 @@ aws s3api put-bucket-versioning \
 
 ### Catalog Backup
 
-Back up the Nessie catalog (RocksDB storage):
+On the default S3 catalog there is no service to stop and no database to dump — the catalog is `root.json` plus the table metadata files, in the warehouse bucket. Enabling versioning on that bucket (above) already gives point-in-time recovery. For an off-site copy, sync the catalog prefix:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup-$(date +%Y%m%d)/
+```
+
+Because `root.json` is replaced by compare-and-swap, a copy taken mid-commit is still a consistent earlier version rather than a torn write.
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB storage:
 
 ```bash
 # Stop Nessie
@@ -4273,12 +4345,18 @@ A conditional read keeps the cached catalog root fresh; table metadata is immuta
 
 ### Ingestion Flow
 
+![Ingestion Sequence](../../assets/c4/structurizr-IngestionFlow.png)
+
+Steps 1-7 are the write path, acknowledged once the WAL segment lands. Steps 8-14 are shift, which runs independently of the request.
+
 1. Client sends OTLP data to Ingest service
 2. Ingest validates and transforms data
 3. Data written to WAL as Parquet files
 4. Acknowledgment sent to client (exactly-once)
 
 ### Query Flow
+
+![Query Sequence](../../assets/c4/structurizr-QueryFlow.png)
 
 1. Client sends query to Query service
 2. Query parsed and planned by DataFusion
@@ -4294,6 +4372,12 @@ A conditional read keeps the cached catalog root fresh; table metadata is immuta
 5. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
 
 Shift never deletes WAL segments. They are reclaimed by an object lifecycle rule on the queue bucket, and the offset in the snapshot summary is what lets shift resume where it left off.
+
+### Maintenance Flow
+
+![Maintenance Sequence](../../assets/c4/structurizr-MaintenanceFlow.png)
+
+Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work from its own job-state prefix in object storage, so they never contend with one another.
 
 ## Scalability
 
@@ -4328,6 +4412,8 @@ IceGate stores observability data in four Apache Iceberg tables: logs, spans, ev
 | `spans` | Distributed trace spans | Request tracing |
 | `events` | Semantic events | Business events, alerts |
 | `metrics` | All metric types | Performance monitoring |
+| `operations` | LLM and agent operations | Token usage, cost, prompt and completion capture |
+| `prices` | Global LLM rate card (no `tenant_id`) | Cost attribution for `operations` |
 
 ## Common Design Patterns
 
@@ -5134,7 +5220,13 @@ curl http://localhost:4318/health
 
 ### Catalog Backup
 
-Nessie stores catalog metadata. Back up the RocksDB data:
+On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix — there is no service to stop:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB data:
 
 ```bash
 # Stop Nessie
@@ -5264,7 +5356,7 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. Verify the object store is running:
+1. On a local RustFS deployment, verify the object store is running. The readiness path is RustFS's own — on AWS S3 or another provider, skip to step 3 instead:
 
    ```bash
    curl http://localhost:9000/health/ready
@@ -5277,7 +5369,7 @@ docker compose logs -f maintain
    echo $AWS_SECRET_ACCESS_KEY
    ```
 
-3. Test S3 connection:
+3. Test the S3 connection. Drop `--endpoint-url` when the backend is real AWS S3:
 
    ```bash
    aws s3 ls --endpoint-url http://localhost:9000
@@ -5292,19 +5384,31 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. Verify Nessie is running:
+1. On the default S3 catalog, confirm the catalog state object is readable — there is no catalog service to check:
 
    ```bash
-   curl http://localhost:19120/api/v1/trees
+   aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json
    ```
+
+   A missing `root.json` means migration never ran. Run `maintain migrate create` before anything else.
 
 2. Check catalog configuration:
 
    ```yaml
    catalog:
-     backend: !rest
-       uri: http://nessie:19120/iceberg
+     backend: !s3
+       warehouse: catalog
      warehouse: s3://warehouse/
+     properties:
+       bucket: warehouse
+       region: us-east-1
+       endpoint: http://rustfs:9000
+   ```
+
+3. On the REST backend only, verify Nessie is running:
+
+   ```bash
+   curl http://localhost:19120/api/v1/trees
    ```
 
 ## Query Issues
@@ -5639,7 +5743,7 @@ make down
 |---------|------|-------------|
 | RustFS | 9000, 9001 | S3-compatible storage + console |
 | Ingest | 4317, 4318 | OTLP gRPC and HTTP receivers |
-| Query | 3100, 9090, 3200, 8815 | Loki, Prometheus, Tempo, Arrow Flight SQL APIs |
+| Query | 3100, 9090, 3200, 8815 | Loki, Tempo, Arrow Flight SQL APIs; Prometheus routes return 501 except `/-/ready` |
 | Grafana | 3000 | Dashboards |
 
 Docker Compose profiles add optional services:
@@ -6353,7 +6457,7 @@ crates/
 ├── icegate-common/      # Shared infrastructure (catalog, storage, metrics, tracing)
 ├── icegate-catalog-s3/  # S3-backed Iceberg catalog (default) and its REST server
 ├── icegate-queue/       # Write-ahead log (Parquet on object storage)
-├── icegate-query/       # Query service (Loki/Prometheus/Tempo/Flight SQL APIs)
+├── icegate-query/       # Query service (Loki/Tempo/Flight SQL; Prometheus routes 501)
 ├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC, WAL, shift)
 └── icegate-maintain/    # Migration, compaction, orphan GC, pricing crawler
 ```

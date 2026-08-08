@@ -156,7 +156,7 @@ make down
 |---------|------|-------------|
 | RustFS | 9000, 9001 | Stockage compatible S3 + console |
 | Ingest | 4317, 4318 | Récepteurs OTLP gRPC et HTTP |
-| Query | 3100, 9090, 3200, 8815 | APIs Loki, Prometheus, Tempo, Arrow Flight SQL |
+| Query | 3100, 9090, 3200, 8815 | APIs Loki, Tempo, Arrow Flight SQL ; les routes Prometheus retournent 501 sauf `/-/ready` |
 | Grafana | 3000 | Tableaux de bord |
 
 Les profils Docker Compose ajoutent des services optionnels :

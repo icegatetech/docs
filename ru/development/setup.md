@@ -156,7 +156,7 @@ make down
 |--------|------|----------|
 | RustFS | 9000, 9001 | S3-совместимое хранилище + консоль |
 | Ingest | 4317, 4318 | Приёмники OTLP gRPC и HTTP |
-| Query | 3100, 9090, 3200, 8815 | API Loki, Prometheus, Tempo, Arrow Flight SQL |
+| Query | 3100, 9090, 3200, 8815 | API Loki, Tempo, Arrow Flight SQL; маршруты Prometheus возвращают 501, кроме `/-/ready` |
 | Grafana | 3000 | Дашборды |
 
 Профили Docker Compose добавляют дополнительные сервисы:

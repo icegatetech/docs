@@ -50,6 +50,9 @@ After running `make png`, the following files are created in `../assets/c4/`:
 | `structurizr-QueueComponents.png` | Queue Library internal components |
 | `structurizr-MaintainComponents.png` | Maintain Service internal components |
 | `structurizr-CatalogComponents.png` | S3 Catalog internal components |
+| `structurizr-IngestionFlow.png` | Ingestion process (sequence) - OTLP request through shift to a committed snapshot |
+| `structurizr-QueryFlow.png` | Query process (sequence) - LogQL request to a merged WAL and Iceberg result |
+| `structurizr-MaintenanceFlow.png` | Maintenance process (sequence) - migration, compaction, orphan GC, pricing crawler |
 
 ## Workspace Structure
 
@@ -69,8 +72,28 @@ workspace.dsl
 └── Views
     ├── SystemContext
     ├── Containers
-    └── Component diagrams (Ingest, Query, Maintain, Queue, Catalog)
+    ├── Component diagrams (Ingest, Query, Maintain, Queue, Catalog)
+    └── Process diagrams (Ingestion, Query, Maintenance)
 ```
+
+## Process Diagrams
+
+The three `*Flow` views are Structurizr [dynamic views](https://docs.structurizr.com/dsl/language#dynamic-view).
+Two things to know before editing them:
+
+- **Every step must correspond to a relationship that already exists in the model.** A dynamic
+  view may give that relationship a step-specific description, but it cannot invent an edge —
+  the DSL fails with `A relationship between X and Y does not exist in model`. When a flow needs
+  a step you have not modelled, add the relationship to the `model` block first.
+- **They render as UML sequence diagrams**, via the per-view
+  `properties { "plantuml.sequenceDiagram" "true" }`. Without it the exporter falls back to the
+  numbered box layout, which turns into unreadable long-arc spaghetti past about ten steps.
+  `autoLayout` is kept on each view as the fallback for that case.
+
+Structurizr's parallel-block syntax (`{ { … } { … } }`) is deliberately unused: both PlantUML
+exporters flatten it into duplicate step numbers with no visual grouping, so concurrent loops
+read as one pipeline. The maintenance view names the owning loop in each step description
+instead.
 
 ## Interactive Editing
 
