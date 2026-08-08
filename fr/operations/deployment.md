@@ -9,8 +9,8 @@ Ce guide couvre le déploiement d'{{product_name}} en environnements de producti
 
 ## Prérequis
 
-- **Stockage Objet :** S3, MinIO ou stockage compatible S3
-- **Catalogue Iceberg :** Nessie (REST), AWS S3 Tables ou AWS Glue
+- **Stockage Objet :** S3, RustFS ou stockage compatible S3
+- **Catalogue Iceberg :** le catalogue S3 intégré (par défaut), ou Nessie (REST), AWS S3 Tables ou AWS Glue
 - **Docker/Kubernetes :** Pour l'orchestration des conteneurs
 
 ## Considérations d'Architecture
@@ -21,7 +21,7 @@ Ce guide couvre le déploiement d'{{product_name}} en environnements de producti
 |-----------|-----------------|-------|
 | Ingest | Horizontale | Mise à l'échelle pour le débit d'écriture |
 | Query | Horizontale | Mise à l'échelle pour la concurrence des requêtes |
-| Maintain | Leader unique | Coordonne la compaction |
+| Maintain | Horizontale | Les workers se coordonnent via l'état des jobs dans le stockage objet (compare-and-swap) |
 
 ### Exigences en Ressources
 
@@ -50,7 +50,7 @@ Ce guide couvre le déploiement d'{{product_name}} en environnements de producti
 Le projet inclut des profils Docker Compose pour différents scénarios de déploiement :
 
 ```bash
-# Services principaux : MinIO, Nessie, Ingest, Query, Maintain
+# Services principaux : RustFS, Ingest, Query, Maintain
 make run-core-release
 
 # Services principaux + générateur de charge pour les tests
@@ -66,26 +66,19 @@ make run-analytics-release
 ```yaml
 # docker-compose.yml
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
-
-  nessie:
-    image: projectnessie/nessie:latest
-    environment:
-      NESSIE_VERSION_STORE_TYPE: ROCKSDB
-    volumes:
-      - nessie-data:/data
-    ports:
-      - "19120:19120"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
 
   ingest:
     image: icegate/ingest:latest
@@ -100,8 +93,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "9091:9091"   # Prometheus metrics
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   query:
     image: icegate/query:latest
@@ -116,9 +108,9 @@ services:
       - "3100:3100"   # Loki API
       - "9090:9090"   # Prometheus API
       - "3200:3200"   # Tempo API
+      - "8815:8815"   # Arrow Flight SQL
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   maintain:
     image: icegate/maintain:latest
@@ -128,12 +120,10 @@ services:
     volumes:
       - ./config/maintain.yaml:/etc/icegate/maintain.yaml:ro
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
 volumes:
-  minio-data:
-  nessie-data:
+  rustfs-data:
   query-cache:
 ```
 
@@ -187,7 +177,7 @@ Des overlays Kustomize pré-construits sont disponibles pour les scénarios cour
 | `orbstack` | Runtime de conteneurs OrbStack |
 | `aws-glue` | Intégration avec le catalogue AWS Glue |
 | `aws-s3tables` | Intégration du catalogue AWS S3 Tables |
-| `external-s3` | Stockage S3 externe (pas MinIO) |
+| `external-s3` | Stockage S3 externe avec un catalogue Nessie |
 
 ```bash
 # Appliquer avec kustomize
@@ -205,13 +195,13 @@ storage:
     region: us-east-1
 ```
 
-### MinIO
+### RustFS (compatible S3)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
     region: us-east-1
 ```
 
@@ -284,7 +274,7 @@ environment:
 ### Sécurité Réseau
 
 - Utilisez TLS pour toutes les connexions externes
-- Restreignez l'accès à MinIO/Nessie au réseau interne uniquement
+- Restreignez l'accès au stockage objet et à tout catalogue externe au réseau interne uniquement
 - Utilisez des politiques réseau dans Kubernetes
 
 ### Authentification

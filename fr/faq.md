@@ -20,7 +20,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 ### Qu'est-ce qui rend {{product_name}} différent ?
 
 - **Standards Ouverts** : Construit sur Apache Iceberg, Arrow, Parquet et OpenTelemetry
-- **Économique** : Utilise le stockage objet (S3/MinIO)
+- **Économique** : Utilise le stockage objet (S3 ou RustFS)
 - **Transactions ACID** : Support complet des transactions
 - **Séparation Calcul-Stockage** : Mise à l'échelle indépendante
 

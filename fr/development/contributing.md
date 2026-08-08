@@ -100,12 +100,14 @@ Cela exécute :
 ```
 crates/
 ├── icegate-common/      # Infrastructure partagée (catalogue, stockage, métriques, traçage)
+├── icegate-catalog-s3/  # Catalogue Iceberg sur S3 (par défaut) et son serveur REST
 ├── icegate-queue/       # Write-ahead log (Parquet sur stockage objet)
-├── icegate-query/       # Service Query (APIs Loki/Prometheus/Tempo)
-├── icegate-ingest/      # Service Ingest (OTLP HTTP/gRPC)
-├── icegate-maintain/    # Opérations de maintenance (migration de schéma)
-└── icegate-jobmanager/  # Gestion de l'état des jobs shift
+├── icegate-query/       # Service Query (APIs Loki/Prometheus/Tempo/Flight SQL)
+├── icegate-ingest/      # Service Ingest (OTLP HTTP/gRPC, WAL, shift)
+└── icegate-maintain/    # Migration, compaction, GC des orphelins, crawler de tarifs
 ```
+
+Le framework de jobs/tâches n'est pas un crate du workspace : il réside dans `icegatetech/jobmanager` et est consommé comme dépendance git épinglée.
 
 Voir l'[Architecture](../architecture/overview.md) pour les détails.
 

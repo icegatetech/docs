@@ -141,21 +141,21 @@ catalog:
 
 Секция `storage` настраивает бэкенд объектного хранилища. Является общей для всех сервисов.
 
-### S3 / S3-Совместимое (MinIO)
+### S3 / S3-Совместимое (RustFS)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 | Параметр | Тип | Обязательный | По умолчанию | Описание |
 |----------|-----|--------------|--------------|----------|
 | `bucket` | string | Да | — | Имя бакета S3 |
 | `region` | string | Да | — | Регион AWS |
-| `endpoint` | string | Нет | — | URL кастомного эндпоинта для S3-совместимого хранилища (MinIO и др.) |
+| `endpoint` | string | Нет | — | URL кастомного эндпоинта для S3-совместимого хранилища (RustFS и др.) |
 
 ### Локальная Файловая Система
 
@@ -194,7 +194,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 queue:
   common:
@@ -223,7 +223,7 @@ shift:
     poll_interval_ms: 1000
     iteration_interval_millisecs: 30000
     storage:
-      endpoint: http://minio:9000
+      endpoint: http://rustfs:9000
       bucket: jobs
       prefix: shifter
       region: us-east-1
@@ -336,7 +336,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 engine:
   batch_size: 8192
@@ -429,7 +429,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 ### CLI Maintain
@@ -499,8 +499,8 @@ make run-analytics-release
 Переменные окружения для локальной разработки:
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 

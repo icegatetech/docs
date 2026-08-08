@@ -58,7 +58,7 @@ chmod +x skaffold && sudo mv skaffold /usr/local/bin/
 ### Запуск со Skaffold
 
 ```bash
-# Профиль по умолчанию (локальный k8s с MinIO + Nessie)
+# Профиль по умолчанию (локальный k8s с RustFS + встроенным S3-каталогом)
 skaffold dev
 
 # Профиль OrbStack
@@ -87,8 +87,7 @@ Skaffold использует оверлеи Kustomize, которые комп�
 
 | Компонент | Описание |
 |-----------|----------|
-| MinIO | S3-совместимое хранилище с бакетами: `warehouse`, `queue`, `jobs` |
-| Nessie | REST-каталог Iceberg с персистентностью RocksDB |
+| RustFS | S3-совместимое хранилище с бакетами: `warehouse`, `queue`, `jobs` |
 
 **Пространство имён наблюдаемости (`observability`):**
 
@@ -102,7 +101,7 @@ Skaffold использует оверлеи Kustomize, которые комп�
 
 | Профиль | Оверлей | Назначение |
 |---------|---------|------------|
-| (по умолчанию) | `skaffold` | Локальная разработка с MinIO + Nessie |
+| (по умолчанию) | `skaffold` | Локальная разработка с RustFS + встроенным S3-каталогом |
 | `orbstack` | `orbstack` | OrbStack Kubernetes (macOS) |
 | `aws-glue` | `aws-glue` | Каталог AWS Glue (отправляет образы) |
 | `k3s-external-s3` | `external-s3` | Внешний S3 + Nessie (отправляет образы) |
@@ -155,10 +154,9 @@ make down
 
 | Сервис | Порт | Описание |
 |--------|------|----------|
-| MinIO | 9000, 9001 | S3-совместимое хранилище + консоль |
-| Nessie | 19120 | REST-каталог Iceberg |
+| RustFS | 9000, 9001 | S3-совместимое хранилище + консоль |
 | Ingest | 4317, 4318 | Приёмники OTLP gRPC и HTTP |
-| Query | 3100, 9090, 3200 | API Loki, Prometheus, Tempo |
+| Query | 3100, 9090, 3200, 8815 | API Loki, Prometheus, Tempo, Arrow Flight SQL |
 | Grafana | 3000 | Дашборды |
 
 Профили Docker Compose добавляют дополнительные сервисы:
@@ -167,7 +165,7 @@ make down
 |---------|---------|
 | `load` | otelgen (генератор нагрузки логов) |
 | `monitoring` | Jaeger (16686), Prometheus (9092), node-exporter, cAdvisor |
-| `analytics` | SQL-движок Trino (8082) |
+| `analytics` | Nessie (19120) и SQL-движок Trino (8082) |
 
 ### Сборка Docker
 
@@ -188,11 +186,11 @@ docker build -t icegate/query:dev \
 
 ## Переменные Окружения
 
-Для локальной разработки с MinIO:
+Для локальной разработки с RustFS:
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 

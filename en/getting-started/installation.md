@@ -10,8 +10,8 @@ description: Install {{product_name}} on Kubernetes with Helm
 ## Prerequisites
 
 - **Kubernetes** >= 1.28 with **Helm 3**
-- **Object Storage:** AWS S3 or S3-compatible (MinIO)
-- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
+- **Object Storage:** AWS S3 or S3-compatible (RustFS)
+- **Iceberg Catalog:** the built-in S3 catalog (default, no external service), or Nessie (REST), AWS S3 Tables, or AWS Glue
 
 ## Helm Chart
 
@@ -58,7 +58,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
+    endpoint: "http://rustfs:9000"
 
 queue:
   common:
@@ -109,9 +109,9 @@ aws:
 
 | Value | Default | Description |
 |-------|---------|-------------|
-| `catalog.backend` | `rest` | Catalog type: `rest`, `s3tables`, or `glue` |
+| `catalog.backend` | `s3` | Catalog type: `s3`, `rest`, `s3tables`, or `glue` |
 | `storage.s3.bucket` | `warehouse` | S3 bucket name |
-| `storage.s3.endpoint` | `""` | Custom S3 endpoint (MinIO). Omit for real AWS S3 |
+| `storage.s3.endpoint` | `""` | Custom S3 endpoint (RustFS). Omit for real AWS S3 |
 | `aws.existingSecret` | `""` | Secret with `aws-access-key-id` and `aws-secret-access-key` keys |
 | `query.replicaCount` | `1` | Query service replicas |
 | `ingest.replicaCount` | `1` | Ingest service replicas |
@@ -136,11 +136,11 @@ For environment-specific customizations, {{product_name}} provides Kustomize ove
 
 | Overlay | Description | Infrastructure |
 |---------|-------------|----------------|
-| `skaffold` | Local development with Skaffold | MinIO, Nessie, observability stack |
-| `orbstack` | OrbStack container runtime | MinIO, Nessie, observability stack |
-| `aws-glue` | AWS Glue catalog | Observability stack (no MinIO/Nessie) |
-| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (no MinIO/Nessie) |
-| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack (no MinIO) |
+| `skaffold` | Local development with Skaffold | RustFS, observability stack |
+| `orbstack` | OrbStack container runtime | RustFS, observability stack |
+| `aws-glue` | AWS Glue catalog | Observability stack (external S3) |
+| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (external S3) |
+| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack |
 
 All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built {{product_name}} dashboards, and Jaeger for distributed tracing.
 

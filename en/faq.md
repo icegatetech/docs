@@ -14,7 +14,7 @@ description: Frequently asked questions about {{product_name}}
 ### What makes {{product_name}} different?
 
 - **Open Standards**: Built entirely on Apache Iceberg, Arrow, Parquet, and OpenTelemetry
-- **Cost-Effective**: Uses object storage (S3/MinIO) instead of expensive databases
+- **Cost-Effective**: Uses object storage (S3 or RustFS) instead of expensive databases
 - **ACID Transactions**: Full transaction support without a dedicated OLTP database
 - **Compute-Storage Separation**: Scale processing and storage independently
 

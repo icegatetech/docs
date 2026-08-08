@@ -9,8 +9,8 @@ This guide covers deploying {{product_name}} in production environments.
 
 ## Prerequisites
 
-- **Object Storage:** S3, MinIO, or S3-compatible storage
-- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
+- **Object Storage:** S3, RustFS, or S3-compatible storage
+- **Iceberg Catalog:** the built-in S3 catalog (default), or Nessie (REST), AWS S3 Tables, or AWS Glue
 - **Docker/Kubernetes:** For container orchestration
 
 ## Architecture Considerations
@@ -21,7 +21,7 @@ This guide covers deploying {{product_name}} in production environments.
 |-----------|---------|-------|
 | Ingest | Horizontal | Scale for write throughput |
 | Query | Horizontal | Scale for query concurrency |
-| Maintain | Single leader | Coordinates compaction |
+| Maintain | Horizontal | Workers coordinate through job state in object storage (compare-and-swap) |
 
 ### Resource Requirements
 
@@ -50,7 +50,7 @@ This guide covers deploying {{product_name}} in production environments.
 The project includes Docker Compose profiles for different deployment scenarios:
 
 ```bash
-# Core services: MinIO, Nessie, Ingest, Query, Maintain
+# Core services: RustFS, Ingest, Query, Maintain
 make run-core-release
 
 # Core + load generator for testing
@@ -66,26 +66,19 @@ make run-analytics-release
 ```yaml
 # docker-compose.yml
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
-
-  nessie:
-    image: projectnessie/nessie:latest
-    environment:
-      NESSIE_VERSION_STORE_TYPE: ROCKSDB
-    volumes:
-      - nessie-data:/data
-    ports:
-      - "19120:19120"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
 
   ingest:
     image: icegate/ingest:latest
@@ -100,8 +93,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "9091:9091"   # Prometheus metrics
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   query:
     image: icegate/query:latest
@@ -116,9 +108,9 @@ services:
       - "3100:3100"   # Loki API
       - "9090:9090"   # Prometheus API
       - "3200:3200"   # Tempo API
+      - "8815:8815"   # Arrow Flight SQL
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   maintain:
     image: icegate/maintain:latest
@@ -128,12 +120,10 @@ services:
     volumes:
       - ./config/maintain.yaml:/etc/icegate/maintain.yaml:ro
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
 volumes:
-  minio-data:
-  nessie-data:
+  rustfs-data:
   query-cache:
 ```
 
@@ -187,7 +177,7 @@ Pre-built Kustomize overlays are available for common scenarios:
 | `orbstack` | OrbStack container runtime |
 | `aws-glue` | AWS Glue catalog integration |
 | `aws-s3tables` | AWS S3 Tables catalog integration |
-| `external-s3` | External S3 storage (not MinIO) |
+| `external-s3` | External S3 storage with a Nessie catalog |
 
 ```bash
 # Apply with kustomize
@@ -205,13 +195,13 @@ storage:
     region: us-east-1
 ```
 
-### MinIO
+### RustFS (S3-compatible)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
     region: us-east-1
 ```
 
@@ -227,11 +217,11 @@ storage:
 | Query replica fails | Reduced query capacity | Load balancer routes to healthy replicas |
 | Maintain/Shift | WAL segments accumulate | Restarts and resumes from last committed snapshot |
 | Object storage (S3) | Service outage | WAL writes fail with 503; clients should retry |
-| Catalog (Nessie) | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
+| Catalog | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
 
 ### Durability Guarantees
 
-- **WAL persistence**: All ingested data is written to object storage (S3/MinIO) before acknowledgment. Data survives node failures.
+- **WAL persistence**: All ingested data is written to object storage (S3 or RustFS) before acknowledgment. Data survives node failures.
 - **Exactly-once delivery**: The ingest service acknowledges only after WAL write completes.
 - **Immutable segments**: WAL segments are append-only Parquet files. Once written, they cannot be corrupted by subsequent operations.
 - **Iceberg snapshots**: Each shift operation creates an atomic Iceberg snapshot. Failed shifts do not corrupt existing data.
@@ -362,7 +352,7 @@ environment:
 ### Network Security
 
 - Use TLS for all external connections
-- Restrict access to MinIO/Nessie from internal network only
+- Restrict access to object storage and any external catalog from internal network only
 - Use network policies in Kubernetes
 
 ### Authentication

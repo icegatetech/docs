@@ -52,8 +52,9 @@ Le service Ingest transfère automatiquement les données WAL vers des tables Ic
 3. Lit les fichiers WAL Parquet en parallèle
 4. Fusionne et re-partitionne les données
 5. Écrit les fichiers de données Iceberg optimisés
-6. Valide un nouveau snapshot dans le catalogue
-7. Supprime les segments WAL traités
+6. Valide un nouveau snapshot dans le catalogue, en enregistrant le dernier offset WAL validé dans le résumé du snapshot
+
+Le shift ne supprime pas les segments WAL. Une règle de cycle de vie objet sur le bucket de la queue les récupère, et c'est l'offset du résumé du snapshot qui permet au shift de reprendre là où il s'était arrêté.
 
 ### Optimisation des Performances du Shift
 

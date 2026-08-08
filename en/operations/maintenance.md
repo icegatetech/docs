@@ -52,8 +52,9 @@ The Ingest service automatically shifts WAL data into optimized Iceberg tables v
 3. Reads WAL Parquet files in parallel
 4. Merges and re-partitions data
 5. Writes optimized Iceberg data files
-6. Commits new snapshot to catalog
-7. Deletes processed WAL segments
+6. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
+
+Shift does not delete WAL segments. An object lifecycle rule on the queue bucket reclaims them, and the offset in the snapshot summary is what lets shift resume where it left off.
 
 ### Tuning Shift Performance
 

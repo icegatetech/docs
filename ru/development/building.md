@@ -102,11 +102,11 @@ debug = true
 Cargo.toml (workspace)
 ├── crates/
 │   ├── icegate-common/Cargo.toml
+│   ├── icegate-catalog-s3/Cargo.toml
 │   ├── icegate-queue/Cargo.toml
 │   ├── icegate-query/Cargo.toml
 │   ├── icegate-ingest/Cargo.toml
-│   ├── icegate-maintain/Cargo.toml
-│   └── icegate-jobmanager/Cargo.toml
+│   └── icegate-maintain/Cargo.toml
 ```
 
 Сборка отдельных крейтов:

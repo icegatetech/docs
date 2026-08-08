@@ -19,13 +19,17 @@ Each stage has independent retention controls.
 
 ## WAL Retention
 
-WAL segments are automatically deleted after the shift process compacts them into Iceberg tables. For the queue bucket, configure an object storage lifecycle rule as a safety net:
+Shift does not delete WAL segments after committing them to Iceberg — a lifecycle rule on the queue bucket is what reclaims them, so configure one:
 
-### MinIO Lifecycle Rule
+### RustFS (and other S3-compatible stores)
+
+RustFS speaks the S3 API, so the same `aws s3api` call the project's own bootstrap uses works against it:
 
 ```bash
 # Set 1-day TTL on queue bucket
-mc ilm rule add --expire-days 1 myminio/queue
+aws --endpoint-url http://localhost:9000 s3api put-bucket-lifecycle-configuration \
+  --bucket queue \
+  --lifecycle-configuration '{"Rules":[{"ID":"expire-1d","Status":"Enabled","Filter":{"Prefix":""},"Expiration":{"Days":1}}]}'
 ```
 
 ### AWS S3 Lifecycle Rule

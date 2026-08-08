@@ -60,15 +60,15 @@ docker compose logs -f ingest
 
 **Симптомы:**
 
-- "Connection refused" к MinIO
+- "Connection refused" к объектному хранилищу
 - Ошибки аутентификации S3
 
 **Решения:**
 
-1. Проверьте, что MinIO запущен:
+1. Проверьте, что объектное хранилище запущено:
 
    ```bash
-   curl http://localhost:9000/minio/health/ready
+   curl http://localhost:9000/health/ready
    ```
 
 2. Проверьте учётные данные:

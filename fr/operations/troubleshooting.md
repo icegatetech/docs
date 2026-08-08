@@ -61,15 +61,15 @@ docker compose logs -f maintain
 
 **Symptômes :**
 
-- "Connection refused" vers MinIO
+- "Connection refused" vers le stockage objet
 - Erreurs d'authentification S3
 
 **Solutions :**
 
-1. Vérifiez que MinIO est en cours d'exécution :
+1. Vérifiez que le stockage objet est en cours d'exécution :
 
    ```bash
-   curl http://localhost:9000/minio/health/ready
+   curl http://localhost:9000/health/ready
    ```
 
 2. Vérifiez les identifiants :

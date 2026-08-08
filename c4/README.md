@@ -44,29 +44,32 @@ After running `make png`, the following files are created in `../assets/c4/`:
 | File | Description |
 |------|-------------|
 | `structurizr-SystemContext.png` | System context - IceGate and external systems |
-| `structurizr-Containers.png` | Container diagram - Services and storage |
+| `structurizr-Containers.png` | Container diagram - Services, libraries and storage |
 | `structurizr-IngestComponents.png` | Ingest Service internal components |
 | `structurizr-QueryComponents.png` | Query Service internal components |
 | `structurizr-QueueComponents.png` | Queue Library internal components |
 | `structurizr-MaintainComponents.png` | Maintain Service internal components |
+| `structurizr-CatalogComponents.png` | S3 Catalog internal components |
 
 ## Workspace Structure
 
 ```
 workspace.dsl
 ├── Model
-│   ├── External Systems (OTel Collector, Grafana, Trino)
+│   ├── External Systems (OTel Collector/SDK, Grafana, BI & SQL clients,
+│   │                     Prometheus, tracing backend, Trino, LLM pricing feeds)
 │   └── IceGate System
-│       ├── Ingest Service (OTLP handlers, compactor)
-│       ├── Query Service (Loki/Prometheus/Tempo APIs)
-│       ├── Maintain Service (schema migrations)
-│       ├── Queue Library (WAL on S3)
-│       ├── Common Library (shared code)
-│       └── Storage (Queue, Iceberg, Catalog)
+│       ├── Ingest Service (OTLP handlers, transform, WAL writer, shift)
+│       ├── Query Service (Loki/Prometheus/Tempo/Flight SQL, LogQL, TraceQL)
+│       ├── Maintain Service (migrate, compaction, orphan GC, pricing crawler)
+│       ├── S3 Catalog (root.json CAS catalog; optional REST server)
+│       ├── Queue Library (Parquet WAL on S3)
+│       ├── Common Library (schemas, storage cache, sort-merge, memory guard)
+│       └── Storage (Queue/WAL, Iceberg, Catalog, Job state)
 └── Views
     ├── SystemContext
     ├── Containers
-    └── Component diagrams (per service)
+    └── Component diagrams (Ingest, Query, Maintain, Queue, Catalog)
 ```
 
 ## Interactive Editing

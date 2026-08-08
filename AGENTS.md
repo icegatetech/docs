@@ -120,7 +120,10 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 - Primary installation method: **Helm chart** (`oci://ghcr.io/icegatetech/charts/icegate`)
 - Development environment: **Skaffold** (`skaffold dev`) with Kustomize overlays
 - Docker Compose available as alternative for local development
-- Rust 1.92.0+ (2024 edition), 6 workspace crates: common, queue, query, ingest, maintain, jobmanager
+- Rust 1.92.0+ (2024 edition), 6 workspace crates: common, catalog-s3, queue, query, ingest, maintain. `jobmanager` is **not** a workspace crate — it lives in `icegatetech/jobmanager` and is consumed as a git-pinned dependency
+- Default catalog backend is IceGate's own S3 catalog (`backend: !s3`, state in `root.json`), not Nessie. Nessie/Glue/S3 Tables are alternatives
+- Default object store is **RustFS** (S3-compatible), not MinIO
+- Shift (WAL → Iceberg) lives in the **ingest** crate; compaction, orphan GC, and the LLM pricing crawler live in **maintain**
 - Metrics port: **9091** (not 9090). Prometheus API port is 9090.
 - Real environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `RUST_LOG`
 

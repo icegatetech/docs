@@ -100,12 +100,14 @@ This runs:
 ```
 crates/
 ├── icegate-common/      # Shared infrastructure (catalog, storage, metrics, tracing)
+├── icegate-catalog-s3/  # S3-backed Iceberg catalog (default) and its REST server
 ├── icegate-queue/       # Write-ahead log (Parquet on object storage)
-├── icegate-query/       # Query service (Loki/Prometheus/Tempo APIs)
-├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC)
-├── icegate-maintain/    # Maintenance operations (schema migration)
-└── icegate-jobmanager/  # Shift job state management
+├── icegate-query/       # Query service (Loki/Prometheus/Tempo/Flight SQL APIs)
+├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC, WAL, shift)
+└── icegate-maintain/    # Migration, compaction, orphan GC, pricing crawler
 ```
+
+The job/task framework is not a workspace crate: it lives in `icegatetech/jobmanager` and is consumed as a git-pinned dependency.
 
 See [Architecture](../architecture/overview.md) for details.
 

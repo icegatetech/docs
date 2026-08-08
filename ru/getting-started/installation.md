@@ -10,8 +10,8 @@ description: Установка {{product_name}} в Kubernetes с помощью
 ## Предварительные Требования
 
 - **Kubernetes** >= 1.28 с **Helm 3**
-- **Объектное хранилище:** AWS S3 или S3-совместимое (MinIO)
-- **Каталог Iceberg:** Nessie (REST), AWS S3 Tables или AWS Glue
+- **Объектное хранилище:** AWS S3 или S3-совместимое (RustFS)
+- **Каталог Iceberg:** встроенный S3-каталог (по умолчанию, без внешнего сервиса), либо Nessie (REST), AWS S3 Tables или AWS Glue
 
 ## Helm Chart
 
@@ -58,7 +58,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
+    endpoint: "http://rustfs:9000"
 
 queue:
   common:
@@ -109,9 +109,9 @@ aws:
 
 | Значение | По умолчанию | Описание |
 |----------|--------------|----------|
-| `catalog.backend` | `rest` | Тип каталога: `rest`, `s3tables` или `glue` |
+| `catalog.backend` | `s3` | Тип каталога: `s3`, `rest`, `s3tables` или `glue` |
 | `storage.s3.bucket` | `warehouse` | Имя S3-бакета |
-| `storage.s3.endpoint` | `""` | Пользовательский S3-эндпоинт (MinIO). Опустить для реального AWS S3 |
+| `storage.s3.endpoint` | `""` | Пользовательский S3-эндпоинт (RustFS). Опустить для реального AWS S3 |
 | `aws.existingSecret` | `""` | Secret с ключами `aws-access-key-id` и `aws-secret-access-key` |
 | `query.replicaCount` | `1` | Количество реплик сервиса Query |
 | `ingest.replicaCount` | `1` | Количество реплик сервиса Ingest |
@@ -136,11 +136,11 @@ aws:
 
 | Оверлей | Описание | Инфраструктура |
 |---------|----------|----------------|
-| `skaffold` | Локальная разработка со Skaffold | MinIO, Nessie, стек наблюдаемости |
-| `orbstack` | Среда выполнения контейнеров OrbStack | MinIO, Nessie, стек наблюдаемости |
-| `aws-glue` | Каталог AWS Glue | Стек наблюдаемости (без MinIO/Nessie) |
-| `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (без MinIO/Nessie) |
-| `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости (без MinIO) |
+| `skaffold` | Локальная разработка со Skaffold | RustFS, стек наблюдаемости |
+| `orbstack` | Среда выполнения контейнеров OrbStack | RustFS, стек наблюдаемости |
+| `aws-glue` | Каталог AWS Glue | Стек наблюдаемости (внешний S3) |
+| `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (внешний S3) |
+| `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости |
 
 Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами {{product_name}} и Jaeger для распределённой трассировки.
 

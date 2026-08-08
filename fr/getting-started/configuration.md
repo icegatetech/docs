@@ -141,21 +141,21 @@ catalog:
 
 La section `storage` configure le backend de stockage objet. Partagée par tous les services.
 
-### S3 / Compatible S3 (MinIO)
+### S3 / Compatible S3 (RustFS)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 | Paramètre | Type | Requis | Défaut | Description |
 |-----------|------|--------|--------|-------------|
 | `bucket` | string | Oui | — | Nom du bucket S3 |
 | `region` | string | Oui | — | Région AWS |
-| `endpoint` | string | Non | — | URL de point de terminaison personnalisée pour le stockage compatible S3 (MinIO, etc.) |
+| `endpoint` | string | Non | — | URL de point de terminaison personnalisée pour le stockage compatible S3 (RustFS, etc.) |
 
 ### Système de Fichiers Local
 
@@ -194,7 +194,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 queue:
   common:
@@ -223,7 +223,7 @@ shift:
     poll_interval_ms: 1000
     iteration_interval_millisecs: 30000
     storage:
-      endpoint: http://minio:9000
+      endpoint: http://rustfs:9000
       bucket: jobs
       prefix: shifter
       region: us-east-1
@@ -336,7 +336,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 engine:
   batch_size: 8192
@@ -429,7 +429,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 ### CLI Maintain
@@ -500,8 +500,8 @@ make run-analytics-release
 Variables d'environnement pour le développement local :
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 
