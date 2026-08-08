@@ -1,6 +1,6 @@
 # IceGate Documentation
 
-> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki, Prometheus, and Tempo-compatible APIs.
+> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki®- and Tempo®-compatible APIs plus Arrow Flight SQL. A Prometheus®-compatible API is planned but NOT implemented — its routes return 501 Not Implemented.
 
 ## Key Links
 
@@ -529,3 +529,8 @@ curl http://localhost:9090/-/ready
 - Data Model: https://docs.icegate.tech/en/architecture/data-model
 - Deployment: https://docs.icegate.tech/en/operations/deployment
 - Development Setup: https://docs.icegate.tech/en/development/setup
+- Trademarks: https://docs.icegate.tech/en/trademarks
+
+## Trademarks
+
+Apache®, Apache Iceberg, Apache Arrow, Apache Parquet, Apache DataFusion, Apache Arrow Flight SQL and associated project logos are either registered trademarks or trademarks of The Apache Software Foundation in the United States and/or other countries. OpenTelemetry® and Prometheus® are registered trademarks of The Linux Foundation. Grafana®, Loki® and Tempo® are registered trademarks of Raintank, Inc. dba Grafana Labs. IceGate is not affiliated with, endorsed by, or sponsored by any of these organizations. All other trademarks are the property of their respective owners.

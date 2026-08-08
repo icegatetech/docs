@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-Ce guide explique comment connecter Grafana aux trois API de requête de {{product_name}} : Loki pour les logs (port 3100), Tempo pour les traces (port 3200) et Prometheus pour les métriques (port 9090). Vous apprendrez à configurer chaque source de données et à vérifier la connectivité.
+Ce guide explique comment connecter Grafana aux API de requête de {{product_name}} : Loki pour les logs (port 3100) et Tempo pour les traces (port 3200), toutes deux implémentées, ainsi que Prometheus pour les métriques (port 9090), qui est prévu mais pas encore fonctionnel — toutes ses routes renvoient `501 Not Implemented`. Vous apprendrez à configurer chaque source de données et à vérifier la connectivité.
 
 ## Étapes Suivantes
 

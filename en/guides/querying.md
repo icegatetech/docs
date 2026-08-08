@@ -5,7 +5,11 @@ description: Query logs, traces, and metrics with LogQL, PromQL, and TraceQL
 
 # Querying Data
 
-IceGate provides Loki, Prometheus, and Tempo-compatible APIs for querying observability data.
+IceGate provides Loki- and Tempo-compatible APIs for querying observability data, plus Arrow Flight
+SQL for general-purpose SQL. The
+[Prometheus-compatible API](../api-reference/prometheus.md) is planned and not implemented yet —
+query metrics through Flight SQL in the meantime. The API reference pages are authoritative on
+which endpoints are served today.
 
 ## LogQL for Logs
 

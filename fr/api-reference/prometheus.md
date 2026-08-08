@@ -1,6 +1,6 @@
 ---
 title: Référence API Prometheus
-description: Points de terminaison HTTP de l'API compatible Prometheus
+description: API compatible Prometheus prévue — pas encore implémentée
 ---
 
 # Référence API Prometheus
@@ -11,7 +11,19 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-IceGate fournit une API HTTP compatible Prometheus pour interroger les métriques.
+{% note warning %}
+
+**Pas encore implémentée.** Les routes ci-dessous sont montées sur le port 9090, mais chacune
+d'elles renvoie `501 Not Implemented` ; seul `/-/ready` répond. Cette page documente la surface
+*prévue* afin que les intégrateurs voient la direction prise — ne développez pas encore dessus.
+
+Pour interroger les métriques aujourd'hui, utilisez
+[Arrow Flight SQL](../guides/querying.md) sur les mêmes données.
+
+{% endnote %}
+
+Voici la forme prévue de l'API HTTP compatible Prometheus® d'IceGate pour interroger les métriques.
+Voir [Marques](../trademarks.md) pour l'attribution.
 
 ## URL de Base
 
@@ -21,7 +33,7 @@ http://localhost:9090
 
 ## État de l'Implémentation
 
-L'API Prometheus est actuellement en développement.
+Aucun de ces points de terminaison n'est implémenté : ils renvoient tous `501 Not Implemented`. Seul `/-/ready` répond.
 
 ## Étapes Suivantes
 

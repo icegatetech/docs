@@ -1,6 +1,6 @@
 ---
 title: Référence API Tempo
-description: Points de terminaison HTTP de l'API compatible Tempo
+description: Points de terminaison HTTP de l'API compatible Tempo servis par IceGate
 ---
 
 # Référence API Tempo
@@ -11,7 +11,12 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-IceGate fournit une API HTTP compatible Tempo pour interroger les traces distribuées.
+IceGate fournit une API HTTP compatible Tempo® pour interroger les traces distribuées, servie sur le
+port 3200. Les points de terminaison documentés ci-dessous sont ceux implémentés — il s'agit d'un
+sous-ensemble de l'API de Tempo, et non d'une réimplémentation complète : tout ce qui n'y figure pas
+doit être considéré comme non implémenté. TraceQL est pris en charge pour `/api/search` ; les
+fonctionnalités TraceQL non encore implémentées renvoient `501 Not Implemented` plutôt que des
+résultats erronés. Voir [Marques](../trademarks.md) pour l'attribution.
 
 ## URL de Base
 

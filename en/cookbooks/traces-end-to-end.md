@@ -9,7 +9,7 @@ This cookbook walks through instrumenting services with OpenTelemetry, sending t
 
 {% note warning %}
 
-The Tempo API is currently under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language support is planned for future releases.
+The Tempo-compatible API implements a subset of Tempo's API: trace retrieval by ID, TraceQL search via `/api/search`, and tag discovery (v1 and v2). TraceQL features that are not yet implemented return `501 Not Implemented` rather than a wrong result. See the [Tempo API reference](../api-reference/tempo.md) for the endpoints served today.
 
 {% endnote %}
 

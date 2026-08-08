@@ -1,11 +1,16 @@
 ---
 title: Tempo API Reference
-description: Tempo-compatible HTTP API endpoints
+description: Tempo-compatible HTTP API endpoints served by IceGate
 ---
 
 # Tempo API Reference
 
-IceGate provides a Tempo-compatible HTTP API for querying distributed traces.
+IceGate provides a Tempo®-compatible HTTP API for querying distributed traces, served on port 3200.
+The endpoints documented below are the ones implemented — this is a subset of Tempo's API, not a
+complete reimplementation, so anything not listed here should be assumed unimplemented. TraceQL is
+supported for `/api/search`; TraceQL features that are not yet implemented return
+`501 Not Implemented` rather than silently returning wrong results. See
+[Trademarks](../trademarks.md) for attribution.
 
 ## Base URL
 
@@ -157,4 +162,4 @@ Spans stored in IceGate include:
 
 - Learn about [Data Ingestion](../guides/ingestion.md)
 - Explore the [Loki API](loki.md) for logs
-- See [Prometheus API](prometheus.md) for metrics
+- See [Prometheus API](prometheus.md) for the planned metrics API (not implemented yet)

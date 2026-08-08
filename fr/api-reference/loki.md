@@ -1,11 +1,14 @@
 ---
 title: Référence API Loki
-description: Points de terminaison HTTP de l'API compatible Loki
+description: Points de terminaison HTTP de l'API compatible Loki servis par IceGate
 ---
 
 # Référence API Loki
 
-IceGate fournit une API HTTP compatible Loki pour interroger les logs.
+IceGate fournit une API HTTP compatible Loki® pour interroger les logs, servie sur le port 3100.
+Les points de terminaison documentés ci-dessous sont ceux implémentés — il s'agit d'un
+sous-ensemble de l'API de Loki, et non d'une réimplémentation complète : tout ce qui n'y figure pas
+doit être considéré comme non implémenté. Voir [Marques](../trademarks.md) pour l'attribution.
 
 ## URL de Base
 
@@ -265,5 +268,5 @@ Toutes les erreurs retournent une réponse JSON :
 ## Étapes Suivantes
 
 - Apprenez le [Requêtage LogQL](../guides/querying.md)
-- Explorez l'[API Prometheus](prometheus.md)
+- Explorez l'[API Prometheus](prometheus.md) — prévue, pas encore implémentée
 - Voir l'[API Tempo](tempo.md) pour les traces

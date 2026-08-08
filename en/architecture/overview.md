@@ -43,8 +43,8 @@ The Write-Ahead Log (WAL) stores data as Parquet files organized for compatibili
 **Purpose:** Execute queries against logs, traces, metrics, and events
 
 - **Engine:** Apache DataFusion + Apache Arrow
-- **APIs:** Loki (3100), Prometheus (9090), Tempo (3200)
-- **Query Languages:** LogQL, PromQL (planned), TraceQL (planned)
+- **APIs:** Loki (3100), Tempo (3200), Arrow Flight SQL (8815); Prometheus (9090) planned
+- **Query Languages:** LogQL, TraceQL, SQL; PromQL planned
 
 The query service reads from both:
 

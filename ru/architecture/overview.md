@@ -43,8 +43,8 @@ Write-Ahead Log (WAL) хранит данные в виде файлов Parquet
 **Назначение:** Выполнение запросов к логам, трейсам, метрикам и событиям
 
 - **Движок:** Apache DataFusion + Apache Arrow
-- **API:** Loki (3100), Prometheus (9090), Tempo (3200)
-- **Языки Запросов:** LogQL, PromQL (планируется), TraceQL (планируется)
+- **API:** Loki (3100), Tempo (3200), Arrow Flight SQL (8815); Prometheus (9090) планируется
+- **Языки Запросов:** LogQL, TraceQL, SQL; PromQL планируется
 
 Сервис запросов читает из двух источников:
 

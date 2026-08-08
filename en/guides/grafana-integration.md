@@ -5,7 +5,7 @@ description: Set up Grafana to query logs, traces, and metrics from IceGate
 
 # Grafana Integration
 
-This guide covers connecting Grafana to all three {{product_name}} query APIs: Loki (logs), Tempo (traces), and Prometheus (metrics).
+This guide covers connecting Grafana to the {{product_name}} query APIs: Loki (logs) and Tempo (traces), both implemented, plus Prometheus (metrics), which is planned and not yet functional.
 
 ## Prerequisites
 
@@ -106,11 +106,11 @@ datasources:
 
 ### Prometheus Data Source (Metrics)
 
-{{product_name}} implements the Grafana Prometheus API on port **9090**.
-
 {% note warning %}
 
-The Prometheus query API is currently under development. Metadata endpoints (labels, series) are available, but PromQL queries are not yet supported. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
+**The Prometheus data source will not work yet.** {{product_name}} mounts the Prometheus API routes on port **9090**, but every one of them — including the metadata endpoints (`labels`, `series`, `label/{name}/values`) — returns `501 Not Implemented`. Only `/-/ready` responds.
+
+Use the Loki data source with LogQL metric queries for log-based metrics, or Arrow Flight SQL for general-purpose SQL over the same data. The steps below are recorded for when the API lands.
 
 {% endnote %}
 

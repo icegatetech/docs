@@ -1,11 +1,22 @@
 ---
 title: Prometheus API Reference
-description: Prometheus-compatible HTTP API endpoints
+description: Planned Prometheus-compatible HTTP API — not yet implemented
 ---
 
 # Prometheus API Reference
 
-IceGate provides a Prometheus-compatible HTTP API for querying metrics.
+{% note warning %}
+
+**Not implemented yet.** The routes below are mounted on port 9090, but every one of them returns
+`501 Not Implemented`; only `/-/ready` responds. This page documents the *planned* surface so that
+integrators can see where it is heading — do not build against it yet.
+
+For metrics queries today, use [Arrow Flight SQL](../guides/querying.md) against the same data.
+
+{% endnote %}
+
+This is the planned shape of IceGate's Prometheus®-compatible HTTP API for querying metrics. See
+[Trademarks](../trademarks.md) for attribution.
 
 ## Base URL
 
@@ -25,7 +36,7 @@ X-Scope-OrgID: my-tenant
 
 {% note warning %}
 
-The Prometheus API is currently under development. Basic endpoints are available but full PromQL support is planned for future releases.
+None of these endpoints are implemented. Every one returns `501 Not Implemented`, including the metadata endpoints; only `/-/ready` responds. PromQL is not parsed at all yet.
 
 {% endnote %}
 

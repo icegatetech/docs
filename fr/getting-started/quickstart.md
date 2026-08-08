@@ -140,7 +140,8 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Interroger les Logs avec LogQL
 
-IceGate fournit une API compatible Loki sur le service de requête (port 3100).
+IceGate fournit une API compatible Loki sur le service de requête (port 3100) — un sous-ensemble de
+l'API de Loki, listé dans la [référence des API](../api-reference/loki.md).
 
 ### Requête de Logs Basique
 

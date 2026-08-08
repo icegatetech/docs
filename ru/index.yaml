@@ -2,7 +2,10 @@ title: Документация IceGate
 description: |
   Движок озера данных для наблюдаемости, разработанный быть быстрым, простым в использовании, экономичным, масштабируемым и отказоустойчивым.
 meta:
-  title: IceGate - Движок Озера Данных для Наблюдаемости
+  # See en/index.yaml for why the product name is dropped here and why `description` is needed.
+  title: Движок Озера Данных для Наблюдаемости
+  # Quoted: a bare `: ` inside a YAML scalar is parsed as a mapping and fails the build.
+  description: "Документация IceGate — движка озера данных для наблюдаемости с открытым исходным кодом. Установка, запросы и эксплуатация на Apache Iceberg, Arrow и Parquet."
 links:
   - title: Начало Работы
     description: Установите IceGate и выполните первые запросы за несколько минут
@@ -11,7 +14,7 @@ links:
     description: Узнайте как загружать данные, делать запросы к логам и настраивать мультитенантность
     href: guides/ingestion.md
   - title: Справочник API
-    description: API совместимые с Loki, Prometheus и Tempo
+    description: API, совместимые с Loki® и Tempo® (Prometheus® планируется)
     href: api-reference/loki.md
   - title: Архитектура
     description: Понимание архитектуры разделения вычислений и хранения IceGate

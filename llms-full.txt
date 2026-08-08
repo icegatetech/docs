@@ -6659,3 +6659,11 @@ See [Contributing Guide](development/contributing.md). We welcome:
 ### Where do I report issues?
 
 GitHub Issues: [https://github.com/icegatetech/icegate/issues](https://github.com/icegatetech/icegate/issues)
+
+---
+
+## Trademarks
+
+Apache®, Apache Iceberg, Apache Arrow, Apache Parquet, Apache DataFusion, Apache Arrow Flight SQL and associated project logos are either registered trademarks or trademarks of The Apache Software Foundation in the United States and/or other countries. OpenTelemetry® and Prometheus® are registered trademarks of The Linux Foundation. Grafana®, Loki® and Tempo® are registered trademarks of Raintank, Inc. dba Grafana Labs. IceGate is not affiliated with, endorsed by, or sponsored by any of these organizations. All other trademarks are the property of their respective owners.
+
+Where this documentation describes an API as Loki- or Tempo-compatible, IceGate implements a subset of that project's HTTP read API sufficient for the documented endpoints — not a complete reimplementation. The Prometheus-compatible API is planned but NOT implemented: its routes return 501 Not Implemented, and its reference page documents an intended surface rather than a working one. The API reference pages state what is supported today.

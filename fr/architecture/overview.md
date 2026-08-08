@@ -43,8 +43,8 @@ Le Write-Ahead Log (WAL) stocke les données sous forme de fichiers Parquet orga
 **Objectif :** Exécuter des requêtes sur les logs, traces, métriques et événements
 
 - **Moteur :** Apache DataFusion + Apache Arrow
-- **APIs :** Loki (3100), Prometheus (9090), Tempo (3200)
-- **Langages de Requête :** LogQL, PromQL (planifié), TraceQL (planifié)
+- **APIs :** Loki (3100), Tempo (3200), Arrow Flight SQL (8815) ; Prometheus (9090) planifié
+- **Langages de Requête :** LogQL, TraceQL, SQL ; PromQL planifié
 
 Le service query lit depuis les deux sources :
 

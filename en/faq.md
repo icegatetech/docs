@@ -9,7 +9,7 @@ description: Frequently asked questions about IceGate
 
 ### What is IceGate?
 
-IceGate is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki, Prometheus, and Tempo-compatible APIs for querying.
+IceGate is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki- and Tempo-compatible APIs for querying, plus Arrow Flight SQL. A Prometheus-compatible API is planned but not implemented yet — see the [API reference](api-reference/loki.md) for what is served today.
 
 ### What makes IceGate different?
 
@@ -97,7 +97,7 @@ Not yet implemented:
 
 ### Can I use Grafana?
 
-Yes! IceGate provides Loki-compatible APIs that work with Grafana's Loki data source.
+Yes. IceGate provides Loki-compatible APIs that work with Grafana's Loki data source, and Tempo-compatible APIs for the Tempo data source. Both implement a subset of the upstream API, so check the [API reference](api-reference/loki.md) if a panel depends on a specific endpoint. The Prometheus data source will not work yet — that API is planned.
 
 ## Multi-Tenancy
 

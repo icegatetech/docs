@@ -24,6 +24,16 @@ npm run build:fr   # Build French only
 npm run build:ru   # Build Russian only
 ```
 
+**Do not drop `--static-content` from the build scripts.** Its help text ("allow loading custom
+resources into statically generated pages") undersells it: without the flag Diplodoc ships every
+page as an empty `<div id="root">` with the real content parked in a `diplodoc-state` JSON blob,
+so a crawler that does not run JavaScript sees ~4 words, no `<h1>`, and — because the TOC is
+rendered client-side too — no links to follow. Ahrefs found 4 of this site's pages for exactly
+that reason. With the flag, pages ship prerendered (~670 words and a real `<h1>` on a typical
+page) and the client bundle still hydrates on top, so nothing about the reading experience
+changes. Removing it breaks search and AI-crawler visibility site-wide, silently and with a
+green build.
+
 ## Project Structure
 
 ```
