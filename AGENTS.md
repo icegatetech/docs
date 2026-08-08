@@ -42,6 +42,7 @@ green build.
 ├── ru/                    # Russian documentation
 ├── llms.txt               # LLM context file — overview with key examples
 ├── llms-full.txt          # LLM context file — complete documentation content
+├── robots.txt             # Crawler policy; copied to the build root by `npm run build`
 ├── presets.yaml           # Build presets (default, development, production)
 ├── .yfm                   # Diplodoc configuration (vars, langs, settings)
 └── .yfmlint               # Linter rules configuration
