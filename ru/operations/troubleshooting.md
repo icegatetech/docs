@@ -1,6 +1,6 @@
 ---
 title: Устранение Неполадок
-description: Диагностика и решение распространённых проблем IceGate
+description: Диагностика и решение распространённых проблем {{product_name}}
 ---
 
 # Устранение Неполадок
@@ -272,10 +272,10 @@ docker compose logs -f ingest
    docker stats > stats.txt
    ```
 
-2. Обратитесь к [GitHub Issues](https://github.com/icegatetech/icegate/issues)
+2. Обратитесь к [GitHub Issues]({{repo_url}}/issues)
 
 3. Включите:
-   - Версию IceGate
+   - Версию {{product_name}}
    - Конфигурацию (очищенную от секретов)
    - Сообщения об ошибках
    - Шаги для воспроизведения

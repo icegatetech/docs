@@ -1,15 +1,15 @@
 ---
 title: Development Setup
-description: Set up a local IceGate development environment
+description: Set up a local {{product_name}} development environment
 ---
 
 # Development Setup
 
-This guide covers setting up a local IceGate development environment for contributing code, running tests, and debugging.
+This guide covers setting up a local {{product_name}} development environment for contributing code, running tests, and debugging.
 
 ## Prerequisites
 
-- **Rust** >= 1.92.0 (Rust 2024 edition)
+- **Rust** >= {{rust_version}} (Rust 2024 edition)
 - **Docker** (for building container images)
 - **Git**
 - A local Kubernetes cluster (for Skaffold)
@@ -75,7 +75,7 @@ skaffold dev -p k3s-external-s3
 
 Skaffold uses Kustomize overlays that compose multiple Helm charts:
 
-**IceGate namespace (`icegate`):**
+**{{product_name}} namespace (`icegate`):**
 
 | Component | Description |
 |-----------|-------------|
@@ -95,8 +95,8 @@ Skaffold uses Kustomize overlays that compose multiple Helm charts:
 | Component | Description |
 |-----------|-------------|
 | Prometheus | Metrics collection (kube-prometheus-stack) |
-| Grafana | Dashboards with pre-built IceGate Ingest and Query panels |
-| Jaeger | Distributed tracing for IceGate services |
+| Grafana | Dashboards with pre-built {{product_name}} Ingest and Query panels |
+| Jaeger | Distributed tracing for {{product_name}} services |
 
 ### Skaffold Profiles
 

@@ -82,7 +82,31 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 
 ## Writing Documentation
 
-- Use variables from `.yfm` vars section: `{{product_name}}`, `{{version}}`, `{{repo_url}}`
+- **Use the `.yfm` vars in prose** — every mention outside code. The corpus is converted, so a
+  rename or version bump is a one-line edit in `.yfm` rather than a find-and-replace across
+  three languages. In use today: `{{product_name}}` (266 sites), `{{rust_version}}` (15),
+  `{{repo_url}}` (5), `{{license}}` (4).
+- **Adding a var is only worth it when the value appears in prose.** Measure before you add:
+  ports are the cautionary case — `3100` appears 37 times in prose but 131 times inside code
+  blocks, and since code must stay literal, a `{{loki_port}}` var would let prose and the
+  adjacent `curl` command disagree after a change. That is strictly worse than a literal,
+  because it *looks* single-sourced. Same verdict for `{{version}}` and the Helm OCI ref: code
+  only, so they stay defined but unused. `{{product_description}}` is title-case and every
+  prose site is mid-sentence lowercase, so it does not fit either.
+- **Never substitute inside code.** Fenced blocks, inline code, link targets and HTML
+  attributes keep the literal name — commands, image tags, hostnames (`icegate-query`),
+  datasource UIDs and `github.com/icegatetech/icegate` are identifiers, not prose, and a reader
+  copy-pasting `{{product_name}}` into a shell gets nothing useful.
+- **`llms.txt` and `llms-full.txt` must contain the literal name, never a variable.** The build
+  `cp`s them into `./build` verbatim, so yfm never renders them — a `{{product_name}}` there
+  ships raw to the LLM consumers the files exist for. 23 of them were doing exactly that.
+- The per-language scripts pass `-c ./.yfm`, and **the `./` is load-bearing**. `--help` says
+  relative config paths resolve from the execution directory and "other" paths from `--input`;
+  a bare `.yfm` counts as "other", so it resolves to `en/.yfm`, silently finds nothing, and the
+  build emits 121 "Variable not found" warnings while shipping raw `{{product_name}}` to disk.
+  `./.yfm` resolves from the repo root and works. `../.yfm` fails outright (ENOENT one
+  directory above the repo). Verify a change here by grepping the output for `{{`, not by
+  trusting the exit code — a config that fails to load is a warning, not an error.
 - HTML is allowed (`allowHTML: true`)
 - Files must end with newline (MD047 enforced)
 - Line length not enforced (MD013 disabled)

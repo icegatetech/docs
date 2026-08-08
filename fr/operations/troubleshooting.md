@@ -1,6 +1,6 @@
 ---
 title: Dépannage
-description: Diagnostiquer et résoudre les problèmes courants IceGate
+description: Diagnostiquer et résoudre les problèmes courants {{product_name}}
 ---
 
 # Dépannage
@@ -273,10 +273,10 @@ Si les problèmes persistent :
    docker stats > stats.txt
    ```
 
-2. Consultez les [GitHub Issues](https://github.com/icegatetech/icegate/issues)
+2. Consultez les [GitHub Issues]({{repo_url}}/issues)
 
 3. Incluez :
-   - Version d'IceGate
+   - Version d'{{product_name}}
    - Configuration (nettoyée)
    - Messages d'erreur
    - Étapes pour reproduire

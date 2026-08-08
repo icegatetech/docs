@@ -1,6 +1,6 @@
 ---
 title: Rétention des Données
-description: Configurer le cycle de vie des données, les politiques de rétention et la gestion du stockage dans IceGate
+description: Configurer le cycle de vie des données, les politiques de rétention et la gestion du stockage dans {{product_name}}
 ---
 
 # Rétention des Données

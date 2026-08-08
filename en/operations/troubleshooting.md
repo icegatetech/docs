@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Diagnose and resolve common IceGate issues
+description: Diagnose and resolve common {{product_name}} issues
 ---
 
 # Troubleshooting
@@ -273,10 +273,10 @@ If issues persist:
    docker stats > stats.txt
    ```
 
-2. Check [GitHub Issues](https://github.com/icegatetech/icegate/issues)
+2. Check [GitHub Issues]({{repo_url}}/issues)
 
 3. Include:
-   - IceGate version
+   - {{product_name}} version
    - Configuration (sanitized)
    - Error messages
    - Steps to reproduce

@@ -22,7 +22,7 @@ Pour interroger les métriques aujourd'hui, utilisez
 
 {% endnote %}
 
-Voici la forme prévue de l'API HTTP compatible Prometheus® d'IceGate pour interroger les métriques.
+Voici la forme prévue de l'API HTTP compatible Prometheus® d'{{product_name}} pour interroger les métriques.
 Voir [Marques](../trademarks.md) pour l'attribution.
 
 ## URL de Base

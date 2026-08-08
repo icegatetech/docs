@@ -1,6 +1,6 @@
 ---
 title: Модель Данных
-description: Схемы таблиц Iceberg IceGate для данных наблюдаемости
+description: Схемы таблиц Iceberg {{product_name}} для данных наблюдаемости
 ---
 
 # Модель Данных
@@ -11,7 +11,7 @@ description: Схемы таблиц Iceberg IceGate для данных наб�
 
 {% endnote %}
 
-IceGate хранит данные наблюдаемости в четырёх таблицах Apache Iceberg.
+{{product_name}} хранит данные наблюдаемости в четырёх таблицах Apache Iceberg.
 
 ## Обзор Таблиц
 

@@ -1,6 +1,6 @@
 ---
 title: Traçage Distribué de Bout en Bout
-description: Instrumenter les services et interroger les traces via l'API Tempo d'IceGate
+description: Instrumenter les services et interroger les traces via l'API Tempo d'{{product_name}}
 ---
 
 # Traçage Distribué de Bout en Bout

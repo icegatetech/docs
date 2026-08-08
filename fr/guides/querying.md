@@ -5,9 +5,9 @@ description: Interroger les logs, traces et métriques avec LogQL, PromQL et Tra
 
 # Interrogation des Données
 
-IceGate fournit des APIs compatibles Loki et Tempo pour interroger les données d'observabilité,
-ainsi qu'Arrow Flight SQL pour du SQL généraliste. L'
-[API compatible Prometheus](../api-reference/prometheus.md) est prévue mais pas encore
+{{product_name}} fournit des APIs compatibles Loki et Tempo pour interroger les données d'observabilité,
+ainsi qu'Arrow Flight SQL pour du SQL généraliste.
+L'[API compatible Prometheus](../api-reference/prometheus.md) est prévue mais pas encore
 implémentée — interrogez les métriques via Flight SQL en attendant. Les pages de référence des API
 font foi sur les points de terminaison servis aujourd'hui.
 

@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configurer les composants IceGate
+description: Configurer les composants {{product_name}}
 ---
 
 # Configuration

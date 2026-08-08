@@ -5,7 +5,7 @@ description: Точки доступа OpenTelemetry Protocol для загру�
 
 # API Загрузки OTLP
 
-IceGate принимает данные наблюдаемости через протокол OpenTelemetry (OTLP). Поддерживаются транспорты HTTP и gRPC.
+{{product_name}} принимает данные наблюдаемости через протокол OpenTelemetry (OTLP). Поддерживаются транспорты HTTP и gRPC.
 
 ## Протоколы
 

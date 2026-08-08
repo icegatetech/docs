@@ -1,11 +1,11 @@
 ---
 title: Installation
-description: Install IceGate on Kubernetes with Helm
+description: Install {{product_name}} on Kubernetes with Helm
 ---
 
 # Installation
 
-IceGate is deployed on Kubernetes using Helm charts, with Kustomize overlays for environment-specific customizations.
+{{product_name}} is deployed on Kubernetes using Helm charts, with Kustomize overlays for environment-specific customizations.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ IceGate is deployed on Kubernetes using Helm charts, with Kustomize overlays for
 
 ## Helm Chart
 
-The Helm chart deploys all IceGate components: Ingest, Query, and a Migrate job (schema creation as a pre-install/pre-upgrade hook).
+The Helm chart deploys all {{product_name}} components: Ingest, Query, and a Migrate job (schema creation as a pre-install/pre-upgrade hook).
 
 ### Install from OCI Registry
 
@@ -41,7 +41,7 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
+Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that {{product_name}} binaries expect. See [Configuration](configuration.md) for the native config reference.
 
 {% endnote %}
 
@@ -130,7 +130,7 @@ aws:
 
 ## Kustomize Overlays
 
-For environment-specific customizations, IceGate provides Kustomize overlays that compose the Helm chart with infrastructure dependencies.
+For environment-specific customizations, {{product_name}} provides Kustomize overlays that compose the Helm chart with infrastructure dependencies.
 
 ### Available Overlays
 
@@ -142,7 +142,7 @@ For environment-specific customizations, IceGate provides Kustomize overlays tha
 | `aws-s3tables` | AWS S3 Tables catalog | Observability stack (no MinIO/Nessie) |
 | `external-s3` | External S3 + Nessie catalog | Nessie, observability stack (no MinIO) |
 
-All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built IceGate dashboards, and Jaeger for distributed tracing.
+All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built {{product_name}} dashboards, and Jaeger for distributed tracing.
 
 ### Usage
 
@@ -159,7 +159,7 @@ skaffold dev
 Each overlay contains:
 
 - `kustomization.yaml` — declares Helm charts and patches
-- `values-icegate.yaml` — IceGate Helm values for this environment
+- `values-icegate.yaml` — {{product_name}} Helm values for this environment
 - `secret-aws.yaml` — AWS credentials Secret (edit before applying)
 
 To create a custom overlay:

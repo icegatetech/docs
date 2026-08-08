@@ -1,11 +1,11 @@
 ---
 title: Marques
-description: Attribution des marques tierces citées dans la documentation IceGate
+description: Attribution des marques tierces citées dans la documentation {{product_name}}
 ---
 
 # Marques
 
-{{product_name}} est développé par TripleCloud et distribué sous licence Apache 2.0.
+{{product_name}} est développé par TripleCloud et distribué sous licence {{license}}.
 
 Cette documentation cite des projets tiers afin de décrire, de manière factuelle, les formats que
 {{product_name}} écrit et les protocoles que ses API implémentent. Cet usage nominatif n'implique
@@ -29,9 +29,10 @@ Lorsque cette documentation décrit une API comme compatible Loki ou Tempo, cela
 servir les points de terminaison documentés dans la [référence des API](api-reference/loki.md), et
 non une réimplémentation complète.
 
-L'API compatible Prometheus est **prévue, pas implémentée** : ses routes renvoient
-`501 Not Implemented`. Sa [page de référence](api-reference/prometheus.md) documente une surface
-envisagée, et non une surface fonctionnelle.
+L’API compatible Prometheus est **prévue, pas implémentée** : toutes ses routes renvoient
+`501 Not Implemented`, à l’exception de `/-/ready`, qui répond. Sa
+[page de référence](api-reference/prometheus.md) documente une surface envisagée, et non une
+surface fonctionnelle.
 
 Les pages de référence des API font foi sur ce qui fonctionne aujourd'hui : si un point de
 terminaison ou un paramètre n'y figure pas, considérez qu'il n'est pas encore implémenté.

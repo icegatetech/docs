@@ -1,6 +1,6 @@
 ---
 title: Data Retention
-description: Configure data lifecycle, retention policies, and storage management in IceGate
+description: Configure data lifecycle, retention policies, and storage management in {{product_name}}
 ---
 
 # Data Retention

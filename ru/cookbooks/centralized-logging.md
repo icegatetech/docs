@@ -1,6 +1,6 @@
 ---
 title: Централизованное Логирование для Микросервисов
-description: Настройка централизованного логирования с OpenTelemetry Collector и IceGate
+description: Настройка централизованного логирования с OpenTelemetry Collector и {{product_name}}
 ---
 
 # Централизованное Логирование для Микросервисов

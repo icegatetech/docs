@@ -1,6 +1,6 @@
 ---
 title: Intégration Grafana
-description: Configurer Grafana pour interroger les logs, traces et métriques depuis IceGate
+description: Configurer Grafana pour interroger les logs, traces et métriques depuis {{product_name}}
 ---
 
 # Intégration Grafana

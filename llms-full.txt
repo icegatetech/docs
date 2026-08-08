@@ -198,7 +198,7 @@ curl http://localhost:3100/ready
 
 # Configuration
 
-{{product_name}} uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
+IceGate uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
 
 ## CLI Usage
 
@@ -1356,11 +1356,11 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 # Grafana Integration
 
-This guide covers connecting Grafana to all three {{product_name}} query APIs: Loki (logs), Tempo (traces), and Prometheus (metrics).
+This guide covers connecting Grafana to the IceGate query APIs: Loki (logs) and Tempo (traces), both implemented, plus Prometheus (metrics), which is planned and not yet functional.
 
 ## Prerequisites
 
-- {{product_name}} Query service running (see [Installation](../getting-started/installation.md))
+- IceGate Query service running (see [Installation](../getting-started/installation.md))
 - Grafana 10+ ([grafana.com/oss](https://grafana.com/oss/grafana/))
 
 ## Verify Query Service Health
@@ -1384,7 +1384,7 @@ All endpoints should return HTTP 200.
 
 ### Loki Data Source (Logs)
 
-{{product_name}} implements the Grafana Loki API on port **3100**.
+IceGate implements the Grafana Loki API on port **3100**.
 
 1. Go to **Connections** > **Data sources** > **Add data source**
 2. Select **Loki**
@@ -1414,11 +1414,11 @@ datasources:
 
 ### Tempo Data Source (Traces)
 
-{{product_name}} implements the Grafana Tempo API on port **3200**.
+IceGate implements the Grafana Tempo API on port **3200**.
 
 {% note warning %}
 
-The Tempo API provides basic trace retrieval and search. TraceQL support is planned for future releases.
+The Tempo API provides trace retrieval and search, and TraceQL is supported for /api/search; TraceQL features that are not yet implemented return 501 Not Implemented.
 
 {% endnote %}
 
@@ -1457,11 +1457,11 @@ datasources:
 
 ### Prometheus Data Source (Metrics)
 
-{{product_name}} implements the Grafana Prometheus API on port **9090**.
+IceGate mounts the Grafana Prometheus API routes on port **9090**, but they are not implemented: every route returns 501 Not Implemented except /-/ready.
 
 {% note warning %}
 
-The Prometheus query API is currently under development. Metadata endpoints (labels, series) are available, but PromQL queries are not yet supported. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
+The Prometheus query API is NOT implemented. Every route returns 501 Not Implemented, including the metadata endpoints; only /-/ready responds. PromQL is not parsed at all yet. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 
@@ -1541,7 +1541,7 @@ datasources:
 
 ### Logs to Traces
 
-{{product_name}} stores `trace_id` and `span_id` fields in log records. Configure Grafana to link from log lines to traces:
+IceGate stores `trace_id` and `span_id` fields in log records. Configure Grafana to link from log lines to traces:
 
 1. In the Loki data source settings, go to **Derived fields**
 2. Add a derived field:
@@ -1611,7 +1611,7 @@ Create a dashboard with three panels:
 
 ## Using IceGate as a Drop-In for Existing Grafana
 
-If you have an existing Grafana setup with Loki, you can point it at {{product_name}} by changing only the data source URL:
+If you have an existing Grafana setup with Loki, you can point it at IceGate by changing only the data source URL:
 
 1. Go to **Connections** > **Data sources**
 2. Edit your existing Loki data source
@@ -1619,7 +1619,7 @@ If you have an existing Grafana setup with Loki, you can point it at {{product_n
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Your existing dashboards, alerting rules, and saved queries will continue to work because {{product_name}} implements the same Loki API.
+Your existing dashboards, alerting rules, and saved queries will continue to work because IceGate implements the same Loki API.
 
 {% note info %}
 
@@ -1632,8 +1632,8 @@ LogQL metric queries (`rate()`, `count_over_time()`, `sum by()`, etc.) are suppo
 | API | Port | Grafana Data Source Type | Status |
 |-----|------|--------------------------|--------|
 | Loki (logs) | 3100 | Loki | Fully implemented |
-| Tempo (traces) | 3200 | Tempo | Basic retrieval and search (TraceQL planned) |
-| Prometheus (metrics) | 9090 | Prometheus | Metadata only (PromQL planned) |
+| Tempo (traces) | 3200 | Tempo | Retrieval and search; TraceQL supported (unimplemented features return 501) |
+| Prometheus (metrics) | 9090 | Prometheus | Planned; every route returns 501 except /-/ready |
 
 ## Next Steps
 
@@ -1730,7 +1730,7 @@ datasources:
 
 ## Architecture: Multi-Tenant Deployment
 
-A multi-tenant {{product_name}} deployment uses a single cluster shared by all tenants. Data isolation is enforced at the storage layer:
+A multi-tenant IceGate deployment uses a single cluster shared by all tenants. Data isolation is enforced at the storage layer:
 
 ```
 Tenant A ──┐                          ┌── Iceberg partition: tenant_id="tenant-a"
@@ -1764,7 +1764,7 @@ Compare to dedicated-table approaches:
 | Separate tables per tenant | Medium | High (schema management per tenant) | Physical |
 | Separate clusters per tenant | High | Very high | Full |
 
-{{product_name}} uses the shared tables approach, which is optimal for SaaS and platform use cases where many tenants share similar data shapes.
+IceGate uses the shared tables approach, which is optimal for SaaS and platform use cases where many tenants share similar data shapes.
 
 ## Concrete Example: Three Tenants
 
@@ -1872,7 +1872,7 @@ Consider implementing per-tenant limits:
 
 # Performance Tuning
 
-This guide covers tuning {{product_name}} for high-volume workloads across ingestion, compaction, and query paths.
+This guide covers tuning IceGate for high-volume workloads across ingestion, compaction, and query paths.
 
 ## Architecture Overview
 
@@ -2145,11 +2145,11 @@ catalog:
 
 # Data Retention
 
-This guide covers managing the data lifecycle in {{product_name}}, from WAL segments through Iceberg table maintenance.
+This guide covers managing the data lifecycle in IceGate, from WAL segments through Iceberg table maintenance.
 
 ## Data Lifecycle
 
-Data in {{product_name}} moves through three stages:
+Data in IceGate moves through three stages:
 
 1. **WAL (Write-Ahead Log)** — temporary Parquet files in object storage, written by Ingest
 2. **Iceberg tables** — optimized, partitioned Parquet files managed by Apache Iceberg
@@ -2388,7 +2388,7 @@ docker start nessie
 
 # Centralized Logging for Microservices
 
-This cookbook walks through setting up centralized log collection from multiple microservices into {{product_name}} using the OpenTelemetry Collector.
+This cookbook walks through setting up centralized log collection from multiple microservices into IceGate using the OpenTelemetry Collector.
 
 ## Architecture
 
@@ -2422,7 +2422,7 @@ This cookbook walks through setting up centralized log collection from multiple 
 
 ## Step 1: Deploy the OpenTelemetry Collector
 
-The Collector acts as a central aggregation point, decoupling your services from {{product_name}}.
+The Collector acts as a central aggregation point, decoupling your services from IceGate.
 
 ```yaml
 # otel-collector-config.yaml
@@ -2544,7 +2544,7 @@ exporter, _ := otlploggrpc.New(ctx,
 
 ### Direct Ingestion (without Collector)
 
-For simple setups, send logs directly to {{product_name}}:
+For simple setups, send logs directly to IceGate:
 
 ```bash
 curl -X POST http://localhost:4318/v1/logs \
@@ -2627,7 +2627,7 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 ## Step 4: Set Up Grafana
 
-Add {{product_name}} as a Loki data source in Grafana:
+Add IceGate as a Loki data source in Grafana:
 
 ```yaml
 # grafana/provisioning/datasources/icegate.yaml
@@ -2681,7 +2681,7 @@ Each team queries only their own data. See [Multi-Tenancy](../guides/multi-tenan
 
 # End-to-End Distributed Tracing
 
-This cookbook walks through instrumenting services with OpenTelemetry, sending trace data to {{product_name}} via OTLP, and retrieving traces via the Tempo-compatible API.
+This cookbook walks through instrumenting services with OpenTelemetry, sending trace data to IceGate via OTLP, and retrieving traces via the Tempo-compatible API.
 
 {% note warning %}
 
@@ -2973,7 +2973,7 @@ See [Grafana Integration](../guides/grafana-integration.md) for cross-signal lin
 
 ## Span Data Model
 
-Spans stored in {{product_name}} include:
+Spans stored in IceGate include:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -2997,17 +2997,17 @@ Spans stored in {{product_name}} include:
 
 # Cross-Signal Correlation
 
-This cookbook shows how to correlate data across logs, traces, and metrics in {{product_name}} to quickly move from an alert to a root cause.
+This cookbook shows how to correlate data across logs, traces, and metrics in IceGate to quickly move from an alert to a root cause.
 
 {% note warning %}
 
-This guide uses the Loki API (fully implemented) and the Tempo API (basic trace retrieval and search available; TraceQL planned). The Prometheus API is under development — use LogQL metric queries as an alternative for log-based metrics.
+This guide uses the Loki API (fully implemented) and the Tempo API (retrieval and search available; TraceQL supported, unimplemented features return 501). The Prometheus API is NOT implemented — every route returns 501 except /-/ready; use LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 
 ## How Correlation Works
 
-{{product_name}} stores all observability signals in Apache Iceberg tables with shared fields that enable cross-signal linking:
+IceGate stores all observability signals in Apache Iceberg tables with shared fields that enable cross-signal linking:
 
 | Field | Present In | Purpose |
 |-------|-----------|---------|
@@ -4027,7 +4027,7 @@ X-Scope-OrgID: my-tenant
 
 {% note warning %}
 
-The Tempo API is currently under development. Basic trace retrieval is available but TraceQL support is planned for future releases.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval and /api/search are available, and TraceQL is supported for search — TraceQL features that are not yet implemented return 501 Not Implemented rather than silently returning wrong results.
 
 {% endnote %}
 
@@ -4810,7 +4810,7 @@ storage:
 
 ### Failure Modes
 
-{{product_name}} is designed for resilience through stateless compute and durable object storage:
+IceGate is designed for resilience through stateless compute and durable object storage:
 
 | Component | Failure Impact | Recovery |
 |-----------|---------------|----------|
@@ -6666,4 +6666,4 @@ GitHub Issues: [https://github.com/icegatetech/icegate/issues](https://github.co
 
 Apache®, Apache Iceberg, Apache Arrow, Apache Parquet, Apache DataFusion, Apache Arrow Flight SQL and associated project logos are either registered trademarks or trademarks of The Apache Software Foundation in the United States and/or other countries. OpenTelemetry® and Prometheus® are registered trademarks of The Linux Foundation. Grafana®, Loki® and Tempo® are registered trademarks of Raintank, Inc. dba Grafana Labs. IceGate is not affiliated with, endorsed by, or sponsored by any of these organizations. All other trademarks are the property of their respective owners.
 
-Where this documentation describes an API as Loki- or Tempo-compatible, IceGate implements a subset of that project's HTTP read API sufficient for the documented endpoints — not a complete reimplementation. The Prometheus-compatible API is planned but NOT implemented: its routes return 501 Not Implemented, and its reference page documents an intended surface rather than a working one. The API reference pages state what is supported today.
+Where this documentation describes an API as Loki- or Tempo-compatible, IceGate implements a subset of that project's HTTP read API sufficient for the documented endpoints — not a complete reimplementation. The Prometheus-compatible API is planned but NOT implemented: every route returns 501 Not Implemented except /-/ready, which responds, and its reference page documents an intended surface rather than a working one. The API reference pages state what is supported today.

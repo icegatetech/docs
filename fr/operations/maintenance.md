@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintenir IceGate pour des performances optimales
+description: Maintenir {{product_name}} pour des performances optimales
 ---
 
 # Maintenance
@@ -19,7 +19,7 @@ maintain migrate create -c maintain.yaml
 
 ### Mises à Niveau de Schéma
 
-Mettre à niveau les schémas de tables existants lors de la mise à jour d'IceGate :
+Mettre à niveau les schémas de tables existants lors de la mise à jour d'{{product_name}} :
 
 ```bash
 maintain migrate upgrade -c maintain.yaml

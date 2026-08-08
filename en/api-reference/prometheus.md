@@ -15,7 +15,7 @@ For metrics queries today, use [Arrow Flight SQL](../guides/querying.md) against
 
 {% endnote %}
 
-This is the planned shape of IceGate's Prometheus®-compatible HTTP API for querying metrics. See
+This is the planned shape of {{product_name}}'s Prometheus®-compatible HTTP API for querying metrics. See
 [Trademarks](../trademarks.md) for attribution.
 
 ## Base URL
@@ -118,7 +118,7 @@ curl -G http://localhost:9090/api/v1/series \
 
 ## Metric Types
 
-IceGate stores all OpenTelemetry metric types:
+{{product_name}} stores all OpenTelemetry metric types:
 
 | Metric Type | Description |
 |-------------|-------------|

@@ -1,6 +1,6 @@
 ---
 title: Modèle de Données
-description: Schémas des tables Iceberg IceGate pour les données d'observabilité
+description: Schémas des tables Iceberg {{product_name}} pour les données d'observabilité
 ---
 
 # Modèle de Données
@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-IceGate stocke les données d'observabilité dans quatre tables Apache Iceberg.
+{{product_name}} stocke les données d'observabilité dans quatre tables Apache Iceberg.
 
 ## Vue d'Ensemble des Tables
 

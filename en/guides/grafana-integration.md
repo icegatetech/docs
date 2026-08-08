@@ -1,6 +1,6 @@
 ---
 title: Grafana Integration
-description: Set up Grafana to query logs, traces, and metrics from IceGate
+description: Set up Grafana to query logs, traces, and metrics from {{product_name}}
 ---
 
 # Grafana Integration
@@ -67,7 +67,7 @@ datasources:
 
 {% note warning %}
 
-The Tempo API provides basic trace retrieval and search. TraceQL support is planned for future releases.
+The Tempo API provides trace retrieval and search, and TraceQL is supported for `/api/search`; TraceQL features that are not yet implemented return `501 Not Implemented`.
 
 {% endnote %}
 
@@ -253,12 +253,12 @@ Create a dashboard with three panels:
 
 ### Trace Explorer
 
-1. Navigate to **Explore** > select **IceGate Traces**
+1. Navigate to **Explore** > select **{{product_name}} Traces**
 2. Search by service name: enter `service.name=my-service` in the tags field
 3. Filter by minimum duration: set `minDuration` to `100ms`
 4. Click a trace to view its span waterfall
 
-## Using IceGate as a Drop-In for Existing Grafana
+## Using {{product_name}} as a Drop-In for Existing Grafana
 
 If you have an existing Grafana setup with Loki, you can point it at {{product_name}} by changing only the data source URL:
 
@@ -281,8 +281,8 @@ LogQL metric queries (`rate()`, `count_over_time()`, `sum by()`, etc.) are suppo
 | API | Port | Grafana Data Source Type | Status |
 |-----|------|--------------------------|--------|
 | Loki (logs) | 3100 | Loki | Fully implemented |
-| Tempo (traces) | 3200 | Tempo | Basic retrieval and search (TraceQL planned) |
-| Prometheus (metrics) | 9090 | Prometheus | Metadata only (PromQL planned) |
+| Tempo (traces) | 3200 | Tempo | Retrieval and search; TraceQL supported (unimplemented features return `501`) |
+| Prometheus (metrics) | 9090 | Prometheus | Planned; every route returns `501` except `/-/ready` |
 
 ## Next Steps
 

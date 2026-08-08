@@ -1,11 +1,11 @@
 ---
 title: Installation
-description: Installer IceGate sur Kubernetes avec Helm
+description: Installer {{product_name}} sur Kubernetes avec Helm
 ---
 
 # Installation
 
-IceGate est déployé sur Kubernetes en utilisant des charts Helm, avec des overlays Kustomize pour les personnalisations spécifiques à l'environnement.
+{{product_name}} est déployé sur Kubernetes en utilisant des charts Helm, avec des overlays Kustomize pour les personnalisations spécifiques à l'environnement.
 
 ## Prérequis
 
@@ -15,7 +15,7 @@ IceGate est déployé sur Kubernetes en utilisant des charts Helm, avec des over
 
 ## Helm Chart
 
-Le chart Helm déploie tous les composants IceGate : Ingest, Query et un job Migrate (création du schéma en tant que hook pre-install/pre-upgrade).
+Le chart Helm déploie tous les composants {{product_name}} : Ingest, Query et un job Migrate (création du schéma en tant que hook pre-install/pre-upgrade).
 
 ### Installation depuis le registre OCI
 
@@ -130,7 +130,7 @@ aws:
 
 ## Overlays Kustomize
 
-Pour les personnalisations spécifiques à l'environnement, IceGate fournit des overlays Kustomize qui composent le chart Helm avec les dépendances d'infrastructure.
+Pour les personnalisations spécifiques à l'environnement, {{product_name}} fournit des overlays Kustomize qui composent le chart Helm avec les dépendances d'infrastructure.
 
 ### Overlays disponibles
 
@@ -142,7 +142,7 @@ Pour les personnalisations spécifiques à l'environnement, IceGate fournit des 
 | `aws-s3tables` | Catalogue AWS S3 Tables | Stack d'observabilité (sans MinIO/Nessie) |
 | `external-s3` | S3 externe + catalogue Nessie | Nessie, stack d'observabilité (sans MinIO) |
 
-Tous les overlays partagent une base commune (`config/kustomize/base/`) qui déploie la stack d'observabilité : Prometheus (kube-prometheus-stack), Grafana avec des tableaux de bord IceGate pré-configurés et Jaeger pour le traçage distribué.
+Tous les overlays partagent une base commune (`config/kustomize/base/`) qui déploie la stack d'observabilité : Prometheus (kube-prometheus-stack), Grafana avec des tableaux de bord {{product_name}} pré-configurés et Jaeger pour le traçage distribué.
 
 ### Utilisation
 
@@ -159,7 +159,7 @@ skaffold dev
 Chaque overlay contient :
 
 - `kustomization.yaml` — déclare les charts Helm et les patches
-- `values-icegate.yaml` — valeurs Helm IceGate pour cet environnement
+- `values-icegate.yaml` — valeurs Helm {{product_name}} pour cet environnement
 - `secret-aws.yaml` — Secret des identifiants AWS (à modifier avant application)
 
 Pour créer un overlay personnalisé :

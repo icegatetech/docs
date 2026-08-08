@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "yfm -i . -o ./build --static-content && cp llms.txt llms-full.txt context7.json ./build/",
-    "build:en": "yfm -i ./en -o ./build/en --static-content",
-    "build:fr": "yfm -i ./fr -o ./build/fr --static-content",
-    "build:ru": "yfm -i ./ru -o ./build/ru --static-content",
+    "build:en": "yfm -i ./en -o ./build/en --static-content -c ./.yfm",
+    "build:fr": "yfm -i ./fr -o ./build/fr --static-content -c ./.yfm",
+    "build:ru": "yfm -i ./ru -o ./build/ru --static-content -c ./.yfm",
     "serve": "npm run build && npx serve ./build -p 8080",
     "lint": "yfm -i . -o ./.lint-build --strict && rm -rf ./.lint-build",
     "clean": "rm -rf ./build"

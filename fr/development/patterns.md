@@ -1,6 +1,6 @@
 ---
 title: Patterns de Développement
-description: Patterns standards utilisés dans le codebase IceGate
+description: Patterns standards utilisés dans le codebase {{product_name}}
 ---
 
 # Patterns de Développement
@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-Ce document définit les patterns standards utilisés dans le codebase IceGate pour la configuration, les erreurs, les routes HTTP, les handlers et les services.
+Ce document définit les patterns standards utilisés dans le codebase {{product_name}} pour la configuration, les erreurs, les routes HTTP, les handlers et les services.
 
 ## Étapes Suivantes
 

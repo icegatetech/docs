@@ -1,17 +1,17 @@
 ---
 title: Compilation
-description: Compiler IceGate à partir du code source
+description: Compiler {{product_name}} à partir du code source
 ---
 
 # Compilation à partir du Code Source
 
-Ce guide couvre la compilation d'IceGate à partir du code source pour le développement et la production.
+Ce guide couvre la compilation d'{{product_name}} à partir du code source pour le développement et la production.
 
 ## Prérequis
 
 ### Requis
 
-- **Rust** >= 1.92.0 (pour le support de l'édition Rust 2024)
+- **Rust** >= {{rust_version}} (pour le support de l'édition Rust 2024)
 - **Cargo** (inclus avec Rust)
 - **Git**
 
@@ -96,7 +96,7 @@ debug = true
 
 ## Structure du Workspace
 
-IceGate utilise un workspace Cargo :
+{{product_name}} utilise un workspace Cargo :
 
 ```text
 Cargo.toml (workspace)
@@ -194,7 +194,7 @@ make ci
 
 ### Erreurs de Compilation
 
-1. Vérifiez que la version de Rust est >= 1.92.0 :
+1. Vérifiez que la version de Rust est >= {{rust_version}} :
 
    ```bash
    rustup update

@@ -1,11 +1,11 @@
 ---
 title: Déploiement
-description: Déployer IceGate en environnements de production
+description: Déployer {{product_name}} en environnements de production
 ---
 
 # Déploiement
 
-Ce guide couvre le déploiement d'IceGate en environnements de production.
+Ce guide couvre le déploiement d'{{product_name}} en environnements de production.
 
 ## Prérequis
 
@@ -165,7 +165,7 @@ docker build -t icegate/maintain:latest \
 
 ### Helm Charts
 
-IceGate inclut des Helm charts pour le déploiement Kubernetes :
+{{product_name}} inclut des Helm charts pour le déploiement Kubernetes :
 
 ```bash
 # Installation depuis les charts locaux
@@ -242,7 +242,7 @@ Tous les services exposent des points de terminaison de santé :
 
 ### Métriques
 
-Les services IceGate exposent des métriques Prometheus sur un port dédié (par défaut : 9091) :
+Les services {{product_name}} exposent des métriques Prometheus sur un port dédié (par défaut : 9091) :
 
 - Métriques Ingest : `http://ingest:9091/metrics`
 - Métriques Query : `http://query:9091/metrics`
@@ -259,7 +259,7 @@ metrics:
 
 ### Auto-Observabilité avec le Traçage
 
-IceGate peut exporter ses propres traces via OTLP pour le débogage :
+{{product_name}} peut exporter ses propres traces via OTLP pour le débogage :
 
 ```yaml
 tracing:

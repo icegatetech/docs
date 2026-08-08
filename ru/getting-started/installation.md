@@ -1,11 +1,11 @@
 ---
 title: Установка
-description: Установка IceGate в Kubernetes с помощью Helm
+description: Установка {{product_name}} в Kubernetes с помощью Helm
 ---
 
 # Установка
 
-IceGate разворачивается в Kubernetes с помощью Helm charts и оверлеев Kustomize для настройки под конкретное окружение.
+{{product_name}} разворачивается в Kubernetes с помощью Helm charts и оверлеев Kustomize для настройки под конкретное окружение.
 
 ## Предварительные Требования
 
@@ -15,7 +15,7 @@ IceGate разворачивается в Kubernetes с помощью Helm char
 
 ## Helm Chart
 
-Helm chart разворачивает все компоненты IceGate: Ingest, Query и задачу Migrate (создание схемы в виде хука pre-install/pre-upgrade).
+Helm chart разворачивает все компоненты {{product_name}}: Ingest, Query и задачу Migrate (создание схемы в виде хука pre-install/pre-upgrade).
 
 ### Установка из реестра OCI
 
@@ -130,7 +130,7 @@ aws:
 
 ## Оверлеи Kustomize
 
-Для настройки под конкретное окружение IceGate предоставляет оверлеи Kustomize, которые компонуют Helm chart с зависимостями инфраструктуры.
+Для настройки под конкретное окружение {{product_name}} предоставляет оверлеи Kustomize, которые компонуют Helm chart с зависимостями инфраструктуры.
 
 ### Доступные оверлеи
 
@@ -142,7 +142,7 @@ aws:
 | `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (без MinIO/Nessie) |
 | `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости (без MinIO) |
 
-Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами IceGate и Jaeger для распределённой трассировки.
+Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами {{product_name}} и Jaeger для распределённой трассировки.
 
 ### Использование
 
@@ -159,7 +159,7 @@ skaffold dev
 Каждый оверлей содержит:
 
 - `kustomization.yaml` — объявляет Helm charts и патчи
-- `values-icegate.yaml` — значения Helm IceGate для данного окружения
+- `values-icegate.yaml` — значения Helm {{product_name}} для данного окружения
 - `secret-aws.yaml` — Secret с учётными данными AWS (отредактировать перед применением)
 
 Для создания пользовательского оверлея:

@@ -5,7 +5,7 @@ description: Points d'accès OpenTelemetry Protocol pour l'ingestion de données
 
 # API d'Ingestion OTLP
 
-IceGate accepte les données d'observabilité via le protocole OpenTelemetry (OTLP). Les transports HTTP et gRPC sont pris en charge.
+{{product_name}} accepte les données d'observabilité via le protocole OpenTelemetry (OTLP). Les transports HTTP et gRPC sont pris en charge.
 
 ## Protocoles
 

@@ -1,11 +1,11 @@
 ---
 title: Architecture Overview
-description: IceGate system architecture and components
+description: {{product_name}} system architecture and components
 ---
 
 # Architecture Overview
 
-IceGate is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables with DataFusion as the query engine.
+{{product_name}} is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables with DataFusion as the query engine.
 
 ## Design Principles
 
@@ -82,7 +82,7 @@ The query service reads from both:
 | Catalog | Nessie, AWS S3 Tables, AWS Glue | Iceberg REST catalog backends |
 | Job Manager | icegate-jobmanager | S3-based shift job state management |
 | Caching | foyer 0.22 | Hybrid memory + disk cache for S3 reads |
-| Language | Rust 1.92+ (2024 edition) | Memory-safe, high-performance runtime |
+| Language | Rust {{rust_version}}+ (2024 edition) | Memory-safe, high-performance runtime |
 
 ## Data Flow
 

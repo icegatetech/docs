@@ -1,6 +1,6 @@
 ---
 title: Performance Tuning
-description: Optimize IceGate ingestion throughput, query performance, and compaction
+description: Optimize {{product_name}} ingestion throughput, query performance, and compaction
 ---
 
 # Performance Tuning

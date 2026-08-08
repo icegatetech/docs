@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Questions fréquemment posées sur IceGate
+description: Questions fréquemment posées sur {{product_name}}
 ---
 
 # Questions Fréquemment Posées
@@ -13,11 +13,11 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 ## Général
 
-### Qu'est-ce qu'IceGate ?
+### Qu'est-ce qu'{{product_name}} ?
 
-IceGate est un moteur de lac de données d'observabilité qui stocke les logs, traces, métriques et événements dans des tables Apache Iceberg.
+{{product_name}} est un moteur de lac de données d'observabilité qui stocke les logs, traces, métriques et événements dans des tables Apache Iceberg.
 
-### Qu'est-ce qui rend IceGate différent ?
+### Qu'est-ce qui rend {{product_name}} différent ?
 
 - **Standards Ouverts** : Construit sur Apache Iceberg, Arrow, Parquet et OpenTelemetry
 - **Économique** : Utilise le stockage objet (S3/MinIO)
@@ -26,7 +26,7 @@ IceGate est un moteur de lac de données d'observabilité qui stocke les logs, t
 
 ### Quel est le statut actuel ?
 
-IceGate est en développement **alpha**.
+{{product_name}} est en développement **alpha**.
 
 ## Démarrage
 

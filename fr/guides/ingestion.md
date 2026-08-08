@@ -1,6 +1,6 @@
 ---
 title: Ingestion de Données
-description: Ingérer des logs, traces et métriques dans IceGate
+description: Ingérer des logs, traces et métriques dans {{product_name}}
 ---
 
 # Ingestion de Données
@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-IceGate accepte les données d'observabilité via le protocole OpenTelemetry (OTLP).
+{{product_name}} accepte les données d'observabilité via le protocole OpenTelemetry (OTLP).
 
 ## Protocoles Supportés
 
@@ -22,7 +22,7 @@ IceGate accepte les données d'observabilité via le protocole OpenTelemetry (OT
 
 ## Identification du Tenant
 
-IceGate est multi-tenant. Spécifiez le tenant avec l'en-tête `X-Scope-OrgID` :
+{{product_name}} est multi-tenant. Spécifiez le tenant avec l'en-tête `X-Scope-OrgID` :
 
 ```bash
 curl -X POST http://localhost:4318/v1/logs \

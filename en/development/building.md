@@ -1,17 +1,17 @@
 ---
 title: Building from Source
-description: Build IceGate from source code
+description: Build {{product_name}} from source code
 ---
 
 # Building from Source
 
-This guide covers building IceGate from source for development and production.
+This guide covers building {{product_name}} from source for development and production.
 
 ## Prerequisites
 
 ### Required
 
-- **Rust** >= 1.92.0 (for Rust 2024 edition support)
+- **Rust** >= {{rust_version}} (for Rust 2024 edition support)
 - **Cargo** (included with Rust)
 - **Git**
 
@@ -96,7 +96,7 @@ debug = true
 
 ## Workspace Structure
 
-IceGate uses a Cargo workspace:
+{{product_name}} uses a Cargo workspace:
 
 ```text
 Cargo.toml (workspace)
@@ -194,7 +194,7 @@ make ci
 
 ### Compilation Errors
 
-1. Ensure Rust version >= 1.92.0:
+1. Ensure Rust version >= {{rust_version}}:
 
    ```bash
    rustup update

@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintain IceGate for optimal performance
+description: Maintain {{product_name}} for optimal performance
 ---
 
 # Maintenance
@@ -19,7 +19,7 @@ maintain migrate create -c maintain.yaml
 
 ### Schema Upgrades
 
-Upgrade existing table schemas when updating IceGate:
+Upgrade existing table schemas when updating {{product_name}}:
 
 ```bash
 maintain migrate upgrade -c maintain.yaml

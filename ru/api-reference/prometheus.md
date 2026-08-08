@@ -22,7 +22,7 @@ description: Планируемый API, совместимый с Prometheus, �
 
 {% endnote %}
 
-Ниже — планируемая форма HTTP API IceGate, совместимого с Prometheus®, для запросов к метрикам.
+Ниже — планируемая форма HTTP API {{product_name}}, совместимого с Prometheus®, для запросов к метрикам.
 Атрибуцию см. в разделе [Товарные знаки](../trademarks.md).
 
 ## Базовый URL

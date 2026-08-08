@@ -1,11 +1,11 @@
 ---
 title: Loki API Reference
-description: Loki-compatible HTTP API endpoints served by IceGate
+description: Loki-compatible HTTP API endpoints served by {{product_name}}
 ---
 
 # Loki API Reference
 
-IceGate provides a Loki®-compatible HTTP API for querying logs, served on port 3100. The endpoints
+{{product_name}} provides a Loki®-compatible HTTP API for querying logs, served on port 3100. The endpoints
 documented below are the ones implemented — this is a subset of Loki's API, not a complete
 reimplementation, so anything not listed here should be assumed unimplemented. See
 [Trademarks](../trademarks.md) for attribution.
@@ -223,7 +223,7 @@ curl -G http://localhost:3100/loki/api/v1/series \
 
 ### Explain
 
-Get query execution plan (IceGate extension).
+Get query execution plan ({{product_name}} extension).
 
 **Endpoint:** `GET /loki/api/v1/explain`
 

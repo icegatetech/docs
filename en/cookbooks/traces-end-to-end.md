@@ -1,6 +1,6 @@
 ---
 title: End-to-End Distributed Tracing
-description: Instrument services, send traces to IceGate, and query them via the Tempo API
+description: Instrument services, send traces to {{product_name}}, and query them via the Tempo API
 ---
 
 # End-to-End Distributed Tracing
@@ -288,7 +288,7 @@ datasources:
 
 Then in Grafana:
 
-1. Go to **Explore** > select **IceGate Traces**
+1. Go to **Explore** > select **{{product_name}} Traces**
 2. Enter a service name in the search field
 3. Click a trace to view its span waterfall diagram
 4. Inspect individual spans for attributes and timing

@@ -1,6 +1,6 @@
 ---
 title: Cross-Signal Correlation
-description: Correlate logs, traces, and metrics across observability pillars in IceGate
+description: Correlate logs, traces, and metrics across observability pillars in {{product_name}}
 ---
 
 # Cross-Signal Correlation
@@ -9,7 +9,7 @@ This cookbook shows how to correlate data across logs, traces, and metrics in {{
 
 {% note warning %}
 
-This guide uses the Loki API (fully implemented) and the Tempo API (basic trace retrieval and search available; TraceQL planned). The Prometheus API is under development — use LogQL metric queries as an alternative for log-based metrics.
+This guide uses the Loki API (fully implemented) and the Tempo API (retrieval and search available; TraceQL supported, unimplemented features return `501`). The Prometheus API is NOT implemented — every route returns `501` except `/-/ready`; use LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 

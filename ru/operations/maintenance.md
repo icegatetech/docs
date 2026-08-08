@@ -1,6 +1,6 @@
 ---
 title: Обслуживание
-description: Обслуживание IceGate для оптимальной производительности
+description: Обслуживание {{product_name}} для оптимальной производительности
 ---
 
 # Обслуживание
@@ -19,7 +19,7 @@ maintain migrate create -c maintain.yaml
 
 ### Обновление Схемы
 
-Обновление схем существующих таблиц при обновлении IceGate:
+Обновление схем существующих таблиц при обновлении {{product_name}}:
 
 ```bash
 maintain migrate upgrade -c maintain.yaml

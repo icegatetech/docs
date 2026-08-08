@@ -1,11 +1,11 @@
 ---
 title: Vue d'Ensemble de l'Architecture
-description: Architecture système et composants IceGate
+description: Architecture système et composants {{product_name}}
 ---
 
 # Vue d'Ensemble de l'Architecture
 
-IceGate est un moteur de lac de données d'observabilité qui stocke les logs, traces, métriques et événements dans des tables Apache Iceberg avec DataFusion comme moteur de requêtes.
+{{product_name}} est un moteur de lac de données d'observabilité qui stocke les logs, traces, métriques et événements dans des tables Apache Iceberg avec DataFusion comme moteur de requêtes.
 
 ## Principes de Conception
 
@@ -82,7 +82,7 @@ Le service query lit depuis les deux sources :
 | Catalogue | Nessie, AWS S3 Tables, AWS Glue | Backends de catalogue REST Iceberg |
 | Job Manager | icegate-jobmanager | Gestion de l'état des jobs shift basée sur S3 |
 | Cache | foyer 0.22 | Cache hybride mémoire + disque pour les lectures S3 |
-| Langage | Rust 1.92+ (édition 2024) | Runtime haute performance et sûr en mémoire |
+| Langage | Rust {{rust_version}}+ (édition 2024) | Runtime haute performance et sûr en mémoire |
 
 ## Flux de Données
 

@@ -1,11 +1,11 @@
 ---
 title: Data Model
-description: IceGate Iceberg table schemas for observability data
+description: {{product_name}} Iceberg table schemas for observability data
 ---
 
 # Data Model
 
-IceGate stores observability data in four Apache Iceberg tables: logs, spans, events, and metrics.
+{{product_name}} stores observability data in four Apache Iceberg tables: logs, spans, events, and metrics.
 
 ## Table Overview
 

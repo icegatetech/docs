@@ -1,11 +1,11 @@
 ---
 title: Trademarks
-description: Third-party trademark attribution for the projects IceGate builds on and interoperates with
+description: Third-party trademark attribution for the projects {{product_name}} builds on and interoperates with
 ---
 
 # Trademarks
 
-{{product_name}} is developed by TripleCloud and released under the Apache 2.0 licence.
+{{product_name}} is developed by TripleCloud and released under the {{license}} licence.
 
 This documentation names third-party projects in order to describe, factually, which formats
 {{product_name}} writes and which wire protocols its APIs implement. Such nominative use does not
@@ -26,11 +26,12 @@ All other trademarks are the property of their respective owners.
 
 Where this documentation describes an API as Loki- or Tempo-compatible, it means {{product_name}}
 implements a subset of that project's HTTP read API — enough to serve the endpoints documented in
-the [API reference](api-reference/loki.md), not a complete reimplementation.
+the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) API references, not a
+complete reimplementation.
 
-The Prometheus-compatible API is **planned, not implemented**: its routes return
-`501 Not Implemented`. Its [reference page](api-reference/prometheus.md) documents an intended
-surface, not a working one.
+The Prometheus-compatible API is **planned, not implemented**: every route returns
+`501 Not Implemented` except `/-/ready`, which responds. Its
+[reference page](api-reference/prometheus.md) documents an intended surface, not a working one.
 
 The API reference pages are the authoritative statement of what works today: if an endpoint or
 parameter is not listed there, assume it is not implemented yet.

@@ -1,21 +1,21 @@
 ---
 title: Guide de Démarrage
-description: Ingérer et interroger vos premières données d'observabilité avec IceGate
+description: Ingérer et interroger vos premières données d'observabilité avec {{product_name}}
 ---
 
 # Guide de Démarrage
 
-Ce guide vous accompagne dans l'ingestion de logs, traces et métriques dans IceGate, ainsi que dans leur interrogation via l'API et Grafana.
+Ce guide vous accompagne dans l'ingestion de logs, traces et métriques dans {{product_name}}, ainsi que dans leur interrogation via l'API et Grafana.
 
 {% note info %}
 
-Ce guide suppose qu'IceGate est déjà en cours d'exécution. Consultez [Installation](installation.md) pour le déploiement Helm ou [Environnement de développement](../development/setup.md) pour un environnement local.
+Ce guide suppose qu'{{product_name}} est déjà en cours d'exécution. Consultez [Installation](installation.md) pour le déploiement Helm ou [Environnement de développement](../development/setup.md) pour un environnement local.
 
 {% endnote %}
 
 ## Ingérer des Logs
 
-IceGate accepte les données via le protocole OpenTelemetry (OTLP) sur le service d'ingestion.
+{{product_name}} accepte les données via le protocole OpenTelemetry (OTLP) sur le service d'ingestion.
 
 ### Envoyer des Logs via OTLP HTTP
 
@@ -140,7 +140,7 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Interroger les Logs avec LogQL
 
-IceGate fournit une API compatible Loki sur le service de requête (port 3100) — un sous-ensemble de
+{{product_name}} fournit une API compatible Loki sur le service de requête (port 3100) — un sous-ensemble de
 l'API de Loki, listé dans la [référence des API](../api-reference/loki.md).
 
 ### Requête de Logs Basique
@@ -220,9 +220,9 @@ curl -G http://localhost:3100/loki/api/v1/series \
 
 ## Utiliser Grafana
 
-IceGate est compatible avec la source de données Loki de Grafana pour la visualisation et la création de tableaux de bord.
+{{product_name}} est compatible avec la source de données Loki de Grafana pour la visualisation et la création de tableaux de bord.
 
-### Ajouter IceGate comme Source de Données
+### Ajouter {{product_name}} comme Source de Données
 
 1. Ouvrez Grafana (par défaut : [http://localhost:3000](http://localhost:3000))
 2. Allez dans **Connections** > **Data sources** > **Add data source**
@@ -256,11 +256,11 @@ IceGate est compatible avec la source de données Loki de Grafana pour la visual
 
 ### Tableaux de Bord Préconfigurés
 
-Si déployé avec les overlays Kustomize ou Docker Compose, Grafana est préconfiguré avec des tableaux de bord IceGate pour les métriques des services d'ingestion et de requête.
+Si déployé avec les overlays Kustomize ou Docker Compose, Grafana est préconfiguré avec des tableaux de bord {{product_name}} pour les métriques des services d'ingestion et de requête.
 
 ## Utiliser l'OpenTelemetry Collector
 
-Pour les charges de travail de production, utilisez l'[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) pour transférer les données de vos applications vers IceGate :
+Pour les charges de travail de production, utilisez l'[OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) pour transférer les données de vos applications vers {{product_name}} :
 
 ```yaml
 # otel-collector-config.yaml
@@ -287,7 +287,7 @@ service:
 
 ## Multi-Tenancy
 
-IceGate isole les données par tenant à l'aide de l'en-tête `X-Scope-OrgID`. Les données de chaque tenant sont physiquement partitionnées.
+{{product_name}} isole les données par tenant à l'aide de l'en-tête `X-Scope-OrgID`. Les données de chaque tenant sont physiquement partitionnées.
 
 ```bash
 # Ingestion pour le tenant "team-a"

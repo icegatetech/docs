@@ -1,6 +1,6 @@
 ---
 title: Multi-Tenancy
-description: Configurer et utiliser l'isolation multi-tenant dans IceGate
+description: Configurer et utiliser l'isolation multi-tenant dans {{product_name}}
 ---
 
 # Multi-Tenancy
@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-IceGate est conçu comme un système multi-tenant, fournissant une isolation des données entre différentes organisations ou équipes.
+{{product_name}} est conçu comme un système multi-tenant, fournissant une isolation des données entre différentes organisations ou équipes.
 
 ## Identification du Tenant
 

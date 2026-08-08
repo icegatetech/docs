@@ -1,6 +1,6 @@
 ---
 title: Конфигурация
-description: Настройка компонентов IceGate
+description: Настройка компонентов {{product_name}}
 ---
 
 # Конфигурация

@@ -1,6 +1,6 @@
 # IceGate Documentation
 
-> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki®- and Tempo®-compatible APIs plus Arrow Flight SQL. A Prometheus®-compatible API is planned but NOT implemented — its routes return 501 Not Implemented.
+> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki®- and Tempo®-compatible APIs plus Arrow Flight SQL. A Prometheus®-compatible API is planned but NOT implemented — every route returns 501 Not Implemented except /-/ready, which responds.
 
 ## Key Links
 
@@ -20,7 +20,7 @@
 | OTLP gRPC (Ingest) | 4317 | gRPC | OpenTelemetry Collector |
 | Loki (Query) | 3100 | HTTP | Grafana Loki |
 | Prometheus (Query) | 9090 | HTTP | Grafana Prometheus (under development) |
-| Tempo (Query) | 3200 | HTTP | Grafana Tempo (basic retrieval, TraceQL planned) |
+| Tempo (Query) | 3200 | HTTP | Grafana Tempo (retrieval and search; TraceQL supported, unimplemented features return 501) |
 | Metrics | 9091 | HTTP | Prometheus scrape target |
 
 ## Installation (Kubernetes with Helm)
@@ -287,7 +287,7 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 ## Query Traces (Tempo API — Port 3200)
 
-The Tempo API is under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language is planned for future releases.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval by ID, search by tags and /api/search are available, and TraceQL is supported for search; TraceQL features that are not yet implemented return 501 Not Implemented.
 
 ### Tempo API Endpoints
 
@@ -325,7 +325,7 @@ curl -G http://localhost:3200/api/search \
 
 ## Prometheus API (Port 9090) — Under Development
 
-The Prometheus query API is under development. Metadata endpoints (labels, series) are available. PromQL queries are not yet supported. Use LogQL metric queries (rate, count_over_time, sum by) as an alternative for log-based metrics.
+The Prometheus query API is NOT implemented. Every route returns 501 Not Implemented, including the metadata endpoints; only /-/ready responds. PromQL is not parsed at all yet. Use LogQL metric queries (rate, count_over_time, sum by) as an alternative for log-based metrics.
 
 ## Multi-Tenancy
 

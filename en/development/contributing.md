@@ -1,11 +1,11 @@
 ---
 title: Contributing
-description: How to contribute to IceGate development
+description: How to contribute to {{product_name}} development
 ---
 
 # Contributing
 
-We welcome contributions to IceGate! This guide explains how to get started.
+We welcome contributions to {{product_name}}! This guide explains how to get started.
 
 ## Ways to Contribute
 
@@ -19,7 +19,7 @@ We welcome contributions to IceGate! This guide explains how to get started.
 
 ### Prerequisites
 
-- Rust >= 1.92.0
+- Rust >= {{rust_version}}
 - Docker and Docker Compose
 - Git
 
