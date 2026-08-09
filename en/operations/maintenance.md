@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintain {{product_name}} for optimal performance
+description: Keep {{product_name}} healthy in production - schema migration, Shift compaction, table optimization, retention, monitoring, backup, and performance tuning.
 ---
 
 # Maintenance
@@ -145,7 +145,7 @@ curl http://localhost:4318/health
 
 ### Catalog Backup
 
-On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix — there is no service to stop:
+On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix - there is no service to stop:
 
 ```bash
 aws s3 sync s3://warehouse/catalog/ ./catalog-backup/

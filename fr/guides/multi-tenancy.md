@@ -1,6 +1,6 @@
 ---
 title: Multi-Tenancy
-description: Configurer et utiliser l'isolation multi-tenant dans {{product_name}}
+description: Isolez vos tenants dans {{product_name}} - identification, garanties d'isolation des données, configuration Grafana, exemple à trois tenants et bonnes pratiques.
 ---
 
 # Multi-Tenancy

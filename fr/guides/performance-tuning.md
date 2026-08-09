@@ -1,6 +1,6 @@
 ---
 title: Optimisation des Performances
-description: Optimiser le débit d'ingestion, les performances de requêtes et la compaction dans {{product_name}}
+description: Optimisez {{product_name}} en débit et en latence - réglages d'ingestion, compaction Shift, optimisation des requêtes et guide de dimensionnement des ressources.
 ---
 
 # Optimisation des Performances

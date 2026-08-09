@@ -1,6 +1,6 @@
 ---
 title: Building from Source
-description: Build {{product_name}} from source code
+description: Build {{product_name}} from source - install Rust, clone the repo, pick a build profile, navigate the six-crate workspace, run the services, and run the tests.
 ---
 
 # Building from Source

@@ -1,6 +1,6 @@
 ---
 title: Référence API Prometheus
-description: API compatible Prometheus prévue — pas encore implémentée
+description: L'API compatible Prometheus d'{{product_name}} est prévue mais pas encore implémentée. État actuel, endpoints envisagés et types de métriques couverts.
 ---
 
 # Référence API Prometheus
@@ -15,7 +15,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 **Pas encore implémentée.** Les routes ci-dessous sont montées sur le port 9090, mais chacune
 d'elles renvoie `501 Not Implemented` ; seul `/-/ready` répond. Cette page documente la surface
-*prévue* afin que les intégrateurs voient la direction prise — ne développez pas encore dessus.
+*prévue* afin que les intégrateurs voient la direction prise - ne développez pas encore dessus.
 
 Pour interroger les métriques aujourd'hui, utilisez
 [Arrow Flight SQL](../guides/querying.md) sur les mêmes données.

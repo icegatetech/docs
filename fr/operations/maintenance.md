@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintenir {{product_name}} pour des performances optimales
+description: Gardez {{product_name}} en bonne santé en production - migration de schéma, compaction Shift, optimisation des tables, rétention, supervision et sauvegarde.
 ---
 
 # Maintenance

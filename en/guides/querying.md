@@ -1,13 +1,13 @@
 ---
 title: Querying Data
-description: Query logs, traces, and metrics with LogQL, PromQL, and TraceQL
+description: Query {{product_name}} with LogQL - real-time queries against the WAL, implementation status, worked query examples, and how to call the HTTP API directly.
 ---
 
 # Querying Data
 
 {{product_name}} provides Loki- and Tempo-compatible APIs for querying observability data, plus Arrow Flight
 SQL for general-purpose SQL. The
-[Prometheus-compatible API](../api-reference/prometheus.md) is planned and not implemented yet —
+[Prometheus-compatible API](../api-reference/prometheus.md) is planned and not implemented yet -
 query metrics through Flight SQL in the meantime. The API reference pages are authoritative on
 which endpoints are served today.
 
@@ -111,8 +111,8 @@ engine:
 
 When enabled, queries read from both:
 
-- **Iceberg tables** — Historical, compacted data
-- **WAL segments** — Real-time data not yet shifted
+- **Iceberg tables** - Historical, compacted data
+- **WAL segments** - Real-time data not yet shifted
 
 **Note:** The `/labels`, `/label/{name}/values`, and `/series` metadata endpoints always read from Iceberg only, regardless of this setting.
 

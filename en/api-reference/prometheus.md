@@ -1,6 +1,6 @@
 ---
 title: Prometheus API Reference
-description: Planned Prometheus-compatible HTTP API — not yet implemented
+description: The Prometheus-compatible API for {{product_name}} is planned but not yet implemented. Current status, intended endpoints, and metric type coverage.
 ---
 
 # Prometheus API Reference
@@ -9,7 +9,7 @@ description: Planned Prometheus-compatible HTTP API — not yet implemented
 
 **Not implemented yet.** The routes below are mounted on port 9090, but every one of them returns
 `501 Not Implemented`; only `/-/ready` responds. This page documents the *planned* surface so that
-integrators can see where it is heading — do not build against it yet.
+integrators can see where it is heading - do not build against it yet.
 
 For metrics queries today, use [Arrow Flight SQL](../guides/querying.md) against the same data.
 

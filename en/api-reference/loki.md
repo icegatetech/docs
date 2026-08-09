@@ -1,12 +1,12 @@
 ---
 title: Loki API Reference
-description: Loki-compatible HTTP API endpoints served by {{product_name}}
+description: Loki-compatible HTTP API served by {{product_name}} - query_range, labels, and series endpoints, with tenant authentication and error response formats.
 ---
 
 # Loki API Reference
 
 {{product_name}} provides a Loki®-compatible HTTP API for querying logs, served on port 3100. The endpoints
-documented below are the ones implemented — this is a subset of Loki's API, not a complete
+documented below are the ones implemented - this is a subset of Loki's API, not a complete
 reimplementation, so anything not listed here should be assumed unimplemented. See
 [Trademarks](../trademarks.md) for attribution.
 
@@ -272,5 +272,5 @@ All errors return a JSON response:
 ## Next Steps
 
 - Learn [LogQL Querying](../guides/querying.md)
-- Explore the [Prometheus API](prometheus.md) — planned, not implemented yet
+- Explore the [Prometheus API](prometheus.md) - planned, not implemented yet
 - See [Tempo API](tempo.md) for traces

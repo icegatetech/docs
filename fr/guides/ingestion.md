@@ -1,6 +1,6 @@
 ---
 title: Ingestion de Données
-description: Ingérer des logs, traces et métriques dans {{product_name}}
+description: Envoyez logs, traces et métriques à {{product_name}} via OTLP - protocoles supportés, exemples par signal, identification du tenant et garanties de livraison.
 ---
 
 # Ingestion de Données

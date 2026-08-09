@@ -1,6 +1,6 @@
 ---
 title: Deployment
-description: Deploy {{product_name}} in production environments
+description: Deploy {{product_name}} to production on Kubernetes or Docker Compose - architecture trade-offs, S3 storage, fault tolerance, monitoring, and security hardening.
 ---
 
 # Deployment
@@ -228,10 +228,10 @@ storage:
 
 ### Stateless Query Service
 
-The Query service has no local state — it reads from object storage and the Iceberg catalog. Any number of replicas can be started and stopped without coordination:
+The Query service has no local state - it reads from object storage and the Iceberg catalog. Any number of replicas can be started and stopped without coordination:
 
 ```yaml
-# Helm values.yaml — scale query for HA
+# Helm values.yaml - scale query for HA
 query:
   replicaCount: 3
   resources:

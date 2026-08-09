@@ -1,6 +1,6 @@
 ---
 title: Rétention des Données
-description: Configurer le cycle de vie des données, les politiques de rétention et la gestion du stockage dans {{product_name}}
+description: Maîtrisez la durée de vie des données dans {{product_name}} - rétention WAL et Iceberg, snapshots, stratégies, sauvegarde et optimisation des coûts de stockage.
 ---
 
 # Rétention des Données

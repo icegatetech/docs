@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configure {{product_name}} components
+description: Full configuration reference for {{product_name}} - CLI usage, environment variables, catalog and storage backends, and per-service ingest and query options.
 ---
 
 # Configuration
@@ -31,9 +31,9 @@ query version
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `AWS_ACCESS_KEY_ID` | S3 access key (used by storage and job manager) | — |
-| `AWS_SECRET_ACCESS_KEY` | S3 secret key | — |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry tracing endpoint (fallback if `tracing.otlp_endpoint` not set) | — |
+| `AWS_ACCESS_KEY_ID` | S3 access key (used by storage and job manager) | |
+| `AWS_SECRET_ACCESS_KEY` | S3 secret key | |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry tracing endpoint (fallback if `tracing.otlp_endpoint` not set) | |
 | `RUST_LOG` | Log level filter (e.g., `info`, `debug`, `info,icegate_query=debug`) | `info` |
 
 ## Catalog Configuration
@@ -55,10 +55,10 @@ catalog:
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | Yes | — | Catalog backend type (see below). No default — the field is required |
-| `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
+| `backend` | enum | Yes | | Catalog backend type (see below). No default - the field is required |
+| `warehouse` | string | Yes | | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
-| `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
+| `cache` | object | No | | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
 
 ### Catalog Backends
 
@@ -158,12 +158,12 @@ catalog:
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `memory_size_mb` | integer | Yes | — | Memory cache capacity in MiB |
-| `disk_dir` | string | Yes | — | Directory for disk cache storage |
-| `disk_size_mb` | integer | Yes | — | Disk cache capacity in MiB |
-| `stat_ttl_secs` | integer | No | — | TTL in seconds for caching S3 HEAD responses |
-| `max_write_cache_size_mb` | integer | No | — | Max value size in MiB to cache on writes. Larger files bypass the cache |
-| `prefetch.max_prefetch_bytes` | integer | No | — | Max bytes to prefetch for Parquet column chunks |
+| `memory_size_mb` | integer | Yes | | Memory cache capacity in MiB |
+| `disk_dir` | string | Yes | | Directory for disk cache storage |
+| `disk_size_mb` | integer | Yes | | Disk cache capacity in MiB |
+| `stat_ttl_secs` | integer | No | | TTL in seconds for caching S3 HEAD responses |
+| `max_write_cache_size_mb` | integer | No | | Max value size in MiB to cache on writes. Larger files bypass the cache |
+| `prefetch.max_prefetch_bytes` | integer | No | | Max bytes to prefetch for Parquet column chunks |
 
 ## Storage Configuration
 
@@ -181,9 +181,9 @@ storage:
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `bucket` | string | Yes | — | S3 bucket name |
-| `region` | string | Yes | — | AWS region |
-| `endpoint` | string | No | — | Custom endpoint URL for S3-compatible storage (RustFS, etc.) |
+| `bucket` | string | Yes | | S3 bucket name |
+| `region` | string | Yes | | AWS region |
+| `endpoint` | string | No | | Custom endpoint URL for S3-compatible storage (RustFS, etc.) |
 
 ### Local Filesystem
 
@@ -301,7 +301,7 @@ Controls how incoming data is written to the Write-Ahead Log.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `queue.common.base_path` | string | — | Base path for WAL segments (e.g., `s3://queue/`) |
+| `queue.common.base_path` | string | | Base path for WAL segments (e.g., `s3://queue/`) |
 | `queue.common.channel_capacity` | integer | `1024` | Bounded channel capacity for backpressure |
 | `queue.common.max_row_group_size` | integer | `8192` | Max rows per Parquet row group |
 | `queue.write.write_retries` | integer | `5` | Number of retry attempts for write operations |
@@ -334,15 +334,15 @@ The job manager stores shift job state in a separate S3 bucket.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `shift.jobsmanager.storage.endpoint` | string | — | S3 endpoint URL |
-| `shift.jobsmanager.storage.bucket` | string | — | Bucket name for job state |
+| `shift.jobsmanager.storage.endpoint` | string | | S3 endpoint URL |
+| `shift.jobsmanager.storage.bucket` | string | | Bucket name for job state |
 | `shift.jobsmanager.storage.prefix` | string | `shifter` | Object key prefix |
 | `shift.jobsmanager.storage.region` | string | `us-east-1` | AWS region |
 | `shift.jobsmanager.storage.use_ssl` | bool | `false` | Use HTTPS for the endpoint |
 | `shift.jobsmanager.storage.job_state_codec` | enum | `json` | Serialization format: `json` or `cbor` |
 | `shift.jobsmanager.storage.request_timeout_secs` | integer | `5` | S3 request timeout in seconds |
-| `shift.jobsmanager.storage.access_key_id` | string | — | S3 access key (falls back to `AWS_ACCESS_KEY_ID` env) |
-| `shift.jobsmanager.storage.secret_access_key` | string | — | S3 secret key (falls back to `AWS_SECRET_ACCESS_KEY` env) |
+| `shift.jobsmanager.storage.access_key_id` | string | | S3 access key (falls back to `AWS_ACCESS_KEY_ID` env) |
+| `shift.jobsmanager.storage.secret_access_key` | string | | S3 secret key (falls back to `AWS_SECRET_ACCESS_KEY` env) |
 
 ## Query Service Configuration
 
@@ -438,7 +438,7 @@ When `engine.wal_query_enabled` is `true`, the query service reads both committe
 | `loki.enabled` | bool | `true` | Enable Loki-compatible log query API |
 | `loki.host` | string | `0.0.0.0` | Bind address |
 | `loki.port` | integer | `3100` | Loki API port |
-| `prometheus.enabled` | bool | `true` | Serve the Prometheus query API. Routes are registered, but every handler except `/-/ready` returns `501 Not Implemented` — PromQL is not implemented yet. This is not the metrics endpoint; that is the `metrics` block on port 9091 |
+| `prometheus.enabled` | bool | `true` | Serve the Prometheus query API. Routes are registered, but every handler except `/-/ready` returns `501 Not Implemented` - PromQL is not implemented yet. This is not the metrics endpoint; that is the `metrics` block on port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Bind address |
 | `prometheus.port` | integer | `9090` | Prometheus API port |
 | `tempo.enabled` | bool | `true` | Enable Tempo-compatible trace API |
@@ -498,8 +498,8 @@ All services can export OpenTelemetry traces for self-observability.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `tracing.enabled` | bool | `true` | Enable tracing |
-| `tracing.service_name` | string | — | Service name for traces |
-| `tracing.otlp_endpoint` | string | — | OTLP endpoint URL. Falls back to `OTEL_EXPORTER_OTLP_ENDPOINT` env |
+| `tracing.service_name` | string | | Service name for traces |
+| `tracing.otlp_endpoint` | string | | OTLP endpoint URL. Falls back to `OTEL_EXPORTER_OTLP_ENDPOINT` env |
 | `tracing.sample_ratio` | float | `1.0` | Sampling ratio (0.0 to 1.0). Set lower in production |
 
 Example with Jaeger:

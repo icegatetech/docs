@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Questions fréquemment posées sur {{product_name}}
+description: Questions fréquentes sur {{product_name}} - ce que c'est, stockage et requêtes, multi-tenancy, performances, exploitation, intégrations et dépannage.
 ---
 
 # Questions Fréquemment Posées

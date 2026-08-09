@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Diagnose and resolve common {{product_name}} issues
+description: Diagnose {{product_name}} in production - service health checks, connection failures, query and ingestion problems, performance issues, and where to get help.
 ---
 
 # Troubleshooting
@@ -66,7 +66,7 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. On a local RustFS deployment, verify the object store is running. The readiness path is RustFS's own — on AWS S3 or another provider, skip to step 3 instead:
+1. On a local RustFS deployment, verify the object store is running. The readiness path is RustFS's own - on AWS S3 or another provider, skip to step 3 instead:
 
    ```bash
    curl http://localhost:9000/health/ready
@@ -94,7 +94,7 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. On the default S3 catalog, confirm the catalog state object is readable — there is no catalog service to check:
+1. On the default S3 catalog, confirm the catalog state object is readable - there is no catalog service to check:
 
    ```bash
    aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json

@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Installer {{product_name}} sur Kubernetes avec Helm
+description: Installez {{product_name}} sur Kubernetes avec le chart Helm ou les overlays Kustomize - prérequis, options de catalogue et de stockage, et vérification.
 ---
 
 # Installation
@@ -45,7 +45,7 @@ Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: s3` +
 
 {% endnote %}
 
-Un fichier `values.yaml` minimal utilisant le catalogue S3 intégré par défaut avec un stockage compatible S3. Aucun service de catalogue externe n'intervient — l'état du catalogue est un objet `root.json` dans le bucket warehouse :
+Un fichier `values.yaml` minimal utilisant le catalogue S3 intégré par défaut avec un stockage compatible S3. Aucun service de catalogue externe n'intervient - l'état du catalogue est un objet `root.json` dans le bucket warehouse :
 
 ```yaml
 catalog:
@@ -71,7 +71,7 @@ aws:
 
 ### Catalogue REST (Nessie)
 
-À utiliser uniquement si vous exploitez déjà Nessie ou un autre catalogue REST Iceberg — cela ajoute un service externe dont le déploiement par défaut n'a pas besoin :
+À utiliser uniquement si vous exploitez déjà Nessie ou un autre catalogue REST Iceberg - cela ajoute un service externe dont le déploiement par défaut n'a pas besoin :
 
 ```yaml
 catalog:
@@ -180,9 +180,9 @@ skaffold dev
 
 Chaque overlay contient :
 
-- `kustomization.yaml` — déclare les charts Helm et les patches
-- `values-icegate.yaml` — valeurs Helm {{product_name}} pour cet environnement
-- `secret-aws.yaml` — Secret des identifiants AWS (à modifier avant application)
+- `kustomization.yaml` - déclare les charts Helm et les patches
+- `values-icegate.yaml` - valeurs Helm {{product_name}} pour cet environnement
+- `secret-aws.yaml` - Secret des identifiants AWS (à modifier avant application)
 
 Pour créer un overlay personnalisé :
 

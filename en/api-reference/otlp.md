@@ -1,6 +1,6 @@
 ---
 title: OTLP Ingestion API
-description: OpenTelemetry Protocol endpoints for data ingestion
+description: OpenTelemetry Protocol ingestion for {{product_name}} over HTTP and gRPC - endpoints, SDK setup, authentication, error responses, and load testing.
 ---
 
 # OTLP Ingestion API
@@ -342,7 +342,7 @@ otel-log-generator otel \
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `--endpoint` | — | OTLP endpoint URL |
+| `--endpoint` | | OTLP endpoint URL |
 | `--transport` | `http` | Transport: `http` or `grpc` |
 | `--use-protobuf` | `false` | Use protobuf encoding (HTTP only) |
 | `--count` | `1` | Number of messages to send |

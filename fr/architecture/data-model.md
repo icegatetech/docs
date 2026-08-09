@@ -1,6 +1,6 @@
 ---
 title: Modèle de Données
-description: Schémas des tables Iceberg {{product_name}} pour les données d'observabilité
+description: Schémas des tables Iceberg d'{{product_name}} - tables logs, spans, events, metrics, operations et prices, leurs patterns communs et des exemples de requêtes.
 ---
 
 # Modèle de Données
@@ -11,7 +11,7 @@ Cette page est en cours de traduction. Pour la documentation complète, veuillez
 
 {% endnote %}
 
-{{product_name}} stocke les données d'observabilité dans cinq tables Apache Iceberg par tenant — logs, spans, events, metrics et operations — plus une table de référence globale, prices.
+{{product_name}} stocke les données d'observabilité dans cinq tables Apache Iceberg par tenant - logs, spans, events, metrics et operations - plus une table de référence globale, prices.
 
 ## Vue d'Ensemble des Tables
 

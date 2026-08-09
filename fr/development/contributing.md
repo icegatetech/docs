@@ -1,6 +1,6 @@
 ---
 title: Contribuer
-description: Comment contribuer au développement d'{{product_name}}
+description: Contribuez à {{product_name}} - environnement de développement, style de code, structure du projet, règles de pull request, tests, documentation et releases.
 ---
 
 # Contribuer
@@ -212,7 +212,7 @@ Les releases sont créées par les mainteneurs :
 
 ## Code de Conduite
 
-Soyez respectueux et inclusif. Nous suivons le [Code de Conduite Rust](https://www.rust-lang.org/policies/code-of-conduct).
+Soyez respectueux et inclusif. Nous suivons le [Code de Conduite Rust](https://rust-lang.org/policies/code-of-conduct).
 
 ## Étapes Suivantes
 

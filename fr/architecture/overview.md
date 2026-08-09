@@ -1,6 +1,6 @@
 ---
 title: Vue d'Ensemble de l'Architecture
-description: Architecture système et composants {{product_name}}
+description: Comment {{product_name}} sépare le calcul du stockage - principes de conception, diagrammes système et conteneurs, composants, stack technique et scalabilité.
 ---
 
 # Vue d'Ensemble de l'Architecture
@@ -47,7 +47,7 @@ Le Write-Ahead Log (WAL) stocke les données sous forme de fichiers Parquet orga
 - **Langages de Requête :** LogQL, TraceQL, SQL ; PromQL planifié
 - **Multi-tenance :** Le tenant provient de l'en-tête `X-Scope-OrgID`, ou des métadonnées gRPC `x-scope-orgid` pour Flight SQL
 
-Arrow Flight SQL est strictement en lecture seule — DDL et DML sont rejetés — et applique `tenant_id` au niveau des lignes à chaque scan, de sorte que les clients JDBC, ODBC et ADBC interrogent `iceberg.icegate.<table>` sans code client spécifique à {{product_name}}.
+Arrow Flight SQL est strictement en lecture seule - DDL et DML sont rejetés - et applique `tenant_id` au niveau des lignes à chaque scan, de sorte que les clients JDBC, ODBC et ADBC interrogent `iceberg.icegate.<table>` sans code client spécifique à {{product_name}}.
 
 Le service query lit depuis les deux sources :
 
@@ -76,7 +76,7 @@ La compaction, le GC et le crawler de tarifs s'exécutent chacun comme des jobs 
 
 **Objectif :** Organiser le lac de données avec des transactions ACID, sans base de données OLTP dédiée
 
-- **Backend par défaut :** Le catalogue S3 propre à {{product_name}} — l'état du catalogue est un objet `root.json` mis à jour par compare-and-swap
+- **Backend par défaut :** Le catalogue S3 propre à {{product_name}} - l'état du catalogue est un objet `root.json` mis à jour par compare-and-swap
 - **Backends alternatifs :** REST (Nessie), AWS S3 Tables, AWS Glue
 - **Déploiement :** Lié à Ingest, Query et Maintain par défaut ; optionnellement déployé de manière autonome comme serveur REST Iceberg sur le port 8181
 
@@ -144,7 +144,7 @@ L'expiration du cycle de vie est donc un paramètre de durabilité, pas une simp
 
 ![Séquence de Maintenance](../../assets/c4/structurizr-MaintenanceFlow.png)
 
-La migration est un job unique. La compaction, le GC des orphelins et le crawler de tarifs sont des boucles indépendantes suivant leurs propres cadences — les numéros d'étape ordonnent chaque boucle, pas les boucles entre elles. Chacune réserve son travail sous son propre préfixe d'état de jobs : les boucles ne se disputent donc jamais la propriété des tâches. Elles partagent malgré tout les tables sous-jacentes — la compaction valide des snapshots de réécriture pendant que le GC supprime des objets non référencés — d'où le fait que le GC ne supprime que les fichiers plus anciens que son délai de grâce et que les commits utilisent la concurrence optimiste, avec réessai en cas de conflit.
+La migration est un job unique. La compaction, le GC des orphelins et le crawler de tarifs sont des boucles indépendantes suivant leurs propres cadences - les numéros d'étape ordonnent chaque boucle, pas les boucles entre elles. Chacune réserve son travail sous son propre préfixe d'état de jobs : les boucles ne se disputent donc jamais la propriété des tâches. Elles partagent malgré tout les tables sous-jacentes - la compaction valide des snapshots de réécriture pendant que le GC supprime des objets non référencés - d'où le fait que le GC ne supprime que les fichiers plus anciens que son délai de grâce et que les commits utilisent la concurrence optimiste, avec réessai en cas de conflit.
 
 ## Évolutivité
 
@@ -152,7 +152,7 @@ La migration est un job unique. La compaction, le GC des orphelins et le crawler
 
 - **Ingest :** Augmenter le nombre de réplicas pour un débit plus élevé
 - **Query :** Augmenter le nombre de réplicas pour les requêtes concurrentes
-- **Maintain :** Augmenter le nombre de réplicas pour plus de débit de réécriture — les workers partagent leur état de jobs dans le stockage objet via compare-and-swap et valident en concurrence optimiste, les instances parallèles sont donc sûres. Privilégier d'abord l'augmentation du nombre de workers en processus ; les gains s'amenuisent à mesure que les réplicas augmentent, tous les workers d'une table étant en contention sur un unique objet d'état de jobs.
+- **Maintain :** Augmenter le nombre de réplicas pour plus de débit de réécriture - les workers partagent leur état de jobs dans le stockage objet via compare-and-swap et valident en concurrence optimiste, les instances parallèles sont donc sûres. Privilégier d'abord l'augmentation du nombre de workers en processus ; les gains s'amenuisent à mesure que les réplicas augmentent, tous les workers d'une table étant en contention sur un unique objet d'état de jobs.
 
 ### Mise à l'Échelle du Stockage
 

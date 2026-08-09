@@ -1,6 +1,6 @@
 ---
 title: Dépannage
-description: Diagnostiquer et résoudre les problèmes courants {{product_name}}
+description: Diagnostiquez {{product_name}} en production - santé des services, problèmes de connexion, de requête et d'ingestion, lenteurs, et où trouver de l'aide.
 ---
 
 # Dépannage
@@ -66,7 +66,7 @@ docker compose logs -f maintain
 
 **Solutions :**
 
-1. Sur un déploiement RustFS local, vérifiez que le stockage objet fonctionne. Le chemin de disponibilité est propre à RustFS — sur AWS S3 ou un autre fournisseur, passez directement à l'étape 3 :
+1. Sur un déploiement RustFS local, vérifiez que le stockage objet fonctionne. Le chemin de disponibilité est propre à RustFS - sur AWS S3 ou un autre fournisseur, passez directement à l'étape 3 :
 
    ```bash
    curl http://localhost:9000/health/ready
@@ -94,7 +94,7 @@ docker compose logs -f maintain
 
 **Solutions :**
 
-1. Avec le catalogue S3 par défaut, vérifiez que l'objet d'état du catalogue est lisible — il n'y a aucun service de catalogue à contrôler :
+1. Avec le catalogue S3 par défaut, vérifiez que l'objet d'état du catalogue est lisible - il n'y a aucun service de catalogue à contrôler :
 
    ```bash
    aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json

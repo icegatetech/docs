@@ -1,6 +1,6 @@
 ---
 title: Architecture Overview
-description: {{product_name}} system architecture and components
+description: How {{product_name}} separates compute from storage - design principles, system and container diagrams, component details, technology stack, and scalability.
 ---
 
 # Architecture Overview
@@ -47,7 +47,7 @@ The Write-Ahead Log (WAL) stores data as Parquet files organized for compatibili
 - **Query Languages:** LogQL, TraceQL, SQL; PromQL planned
 - **Multi-tenancy:** Tenant taken from the `X-Scope-OrgID` header, or the `x-scope-orgid` gRPC metadata for Flight SQL
 
-Arrow Flight SQL is strictly read-only — DDL and DML are rejected — and enforces `tenant_id` at the row level on every scan, so JDBC, ODBC, and ADBC clients query `iceberg.icegate.<table>` with no {{product_name}}-specific client code.
+Arrow Flight SQL is strictly read-only - DDL and DML are rejected - and enforces `tenant_id` at the row level on every scan, so JDBC, ODBC, and ADBC clients query `iceberg.icegate.<table>` with no {{product_name}}-specific client code.
 
 The query service reads from both:
 
@@ -76,7 +76,7 @@ Compaction, GC, and the pricing crawler each run as jobs whose state lives in ob
 
 **Purpose:** Organize the data lake with ACID transactions, without a dedicated OLTP database
 
-- **Default backend:** {{product_name}}'s own S3 catalog — catalog state is a `root.json` object updated by compare-and-swap
+- **Default backend:** {{product_name}}'s own S3 catalog - catalog state is a `root.json` object updated by compare-and-swap
 - **Alternative backends:** REST (Nessie), AWS S3 Tables, AWS Glue
 - **Deployment:** Linked into Ingest, Query, and Maintain by default; optionally deployed standalone as an Iceberg REST server on port 8181
 
@@ -144,7 +144,7 @@ That makes the lifecycle expiration a durability parameter, not housekeeping: a 
 
 ![Maintenance Sequence](../../assets/c4/structurizr-MaintenanceFlow.png)
 
-Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work under its own job-state prefix, so the loops never fight over task ownership. They still share the tables underneath — compaction commits rewrite snapshots while GC deletes unreferenced objects — which is why GC only removes files older than its grace period and commits use optimistic concurrency, retrying on conflict.
+Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules - the step numbers order each loop, not the loops against each other. Each claims work under its own job-state prefix, so the loops never fight over task ownership. They still share the tables underneath - compaction commits rewrite snapshots while GC deletes unreferenced objects - which is why GC only removes files older than its grace period and commits use optimistic concurrency, retrying on conflict.
 
 ## Scalability
 
@@ -152,7 +152,7 @@ Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are 
 
 - **Ingest:** Scale replicas for higher throughput
 - **Query:** Scale replicas for concurrent queries
-- **Maintain:** Scale replicas for more rewrite throughput — workers share job state in object storage with compare-and-swap and commit with optimistic concurrency, so parallel instances are safe. Prefer raising in-process worker count first; returns taper as replicas grow, since all workers on a table contend on one job-state object.
+- **Maintain:** Scale replicas for more rewrite throughput - workers share job state in object storage with compare-and-swap and commit with optimistic concurrency, so parallel instances are safe. Prefer raising in-process worker count first; returns taper as replicas grow, since all workers on a table contend on one job-state object.
 
 ### Storage Scaling
 

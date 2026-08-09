@@ -1,12 +1,12 @@
 ---
 title: Tempo API Reference
-description: Tempo-compatible HTTP API endpoints served by {{product_name}}
+description: Tempo-compatible HTTP API served by {{product_name}} - trace lookup and search endpoints, authentication, implementation status, and the span data model.
 ---
 
 # Tempo API Reference
 
 {{product_name}} provides a Tempo®-compatible HTTP API for querying distributed traces, served on port 3200.
-The endpoints documented below are the ones implemented — this is a subset of Tempo's API, not a
+The endpoints documented below are the ones implemented - this is a subset of Tempo's API, not a
 complete reimplementation, so anything not listed here should be assumed unimplemented. TraceQL is
 supported for `/api/search`; TraceQL features that are not yet implemented return
 `501 Not Implemented` rather than silently returning wrong results. See
@@ -30,7 +30,7 @@ X-Scope-OrgID: my-tenant
 
 {% note warning %}
 
-The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval and `/api/search` are available, and TraceQL is supported for search — TraceQL features that are not yet implemented return `501 Not Implemented` rather than silently returning wrong results.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval and `/api/search` are available, and TraceQL is supported for search - TraceQL features that are not yet implemented return `501 Not Implemented` rather than silently returning wrong results.
 
 {% endnote %}
 

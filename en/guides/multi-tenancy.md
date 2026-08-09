@@ -1,6 +1,6 @@
 ---
 title: Multi-Tenancy
-description: Configure and use multi-tenant isolation in {{product_name}}
+description: Isolate tenants in {{product_name}} - tenant identification, data isolation guarantees, Grafana configuration, a worked three-tenant example, and best practices.
 ---
 
 # Multi-Tenancy
@@ -171,14 +171,14 @@ curl -X POST http://localhost:4318/v1/logs \
 Each team only sees their own data:
 
 ```bash
-# Platform team queries — sees only gateway logs
+# Platform team queries - sees only gateway logs
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query={service_name=~".+"}' \
   --data-urlencode 'start=1704067200' \
   --data-urlencode 'end=1704153600' \
   -H "X-Scope-OrgID: team-platform"
 
-# Backend team queries — sees only order-service logs
+# Backend team queries - sees only order-service logs
 curl -G http://localhost:3100/loki/api/v1/query_range \
   --data-urlencode 'query={service_name=~".+"}' \
   --data-urlencode 'start=1704067200' \

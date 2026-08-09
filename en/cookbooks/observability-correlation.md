@@ -1,6 +1,6 @@
 ---
 title: Cross-Signal Correlation
-description: Correlate logs, traces, and metrics across observability pillars in {{product_name}}
+description: Move from alert to root cause in {{product_name}} by correlating logs, traces, and metrics - Grafana navigation, API patterns, and correlation best practices.
 ---
 
 # Cross-Signal Correlation
@@ -9,7 +9,7 @@ This cookbook shows how to correlate data across logs, traces, and metrics in {{
 
 {% note warning %}
 
-This guide uses the Loki API (fully implemented) and the Tempo API (retrieval and search available; TraceQL supported, unimplemented features return `501`). The Prometheus API is NOT implemented — every route returns `501` except `/-/ready`; use LogQL metric queries as an alternative for log-based metrics.
+This guide uses the Loki API (fully implemented) and the Tempo API (retrieval and search available; TraceQL supported, unimplemented features return `501`). The Prometheus API is NOT implemented - every route returns `501` except `/-/ready`; use LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 
@@ -85,7 +85,7 @@ curl -G http://localhost:3100/loki/api/v1/query_range \
   -H "X-Scope-OrgID: my-tenant"
 ```
 
-This returns logs from **all services** that participated in the same trace — showing the complete request path.
+This returns logs from **all services** that participated in the same trace - showing the complete request path.
 
 ### 4. Retrieve the Full Trace
 

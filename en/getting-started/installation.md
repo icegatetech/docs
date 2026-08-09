@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install {{product_name}} on Kubernetes with Helm
+description: Install {{product_name}} on Kubernetes with the Helm chart or Kustomize overlays - prerequisites, catalog and storage options, and how to verify the deployment.
 ---
 
 # Installation
@@ -45,7 +45,7 @@ Helm values use camelCase and flat keys (e.g., `backend: s3` + `s3.warehouse`). 
 
 {% endnote %}
 
-A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved — the catalog state is a `root.json` object in the warehouse bucket:
+A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved - the catalog state is a `root.json` object in the warehouse bucket:
 
 ```yaml
 catalog:
@@ -71,7 +71,7 @@ aws:
 
 ### REST Catalog (Nessie)
 
-Use this only if you already run a Nessie or other Iceberg REST catalog — it adds an external service the default deployment does not need:
+Use this only if you already run a Nessie or other Iceberg REST catalog - it adds an external service the default deployment does not need:
 
 ```yaml
 catalog:
@@ -180,9 +180,9 @@ skaffold dev
 
 Each overlay contains:
 
-- `kustomization.yaml` — declares Helm charts and patches
-- `values-icegate.yaml` — {{product_name}} Helm values for this environment
-- `secret-aws.yaml` — AWS credentials Secret (edit before applying)
+- `kustomization.yaml` - declares Helm charts and patches
+- `values-icegate.yaml` - {{product_name}} Helm values for this environment
+- `secret-aws.yaml` - AWS credentials Secret (edit before applying)
 
 To create a custom overlay:
 

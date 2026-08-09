@@ -1,6 +1,6 @@
 ---
 title: Trademarks
-description: Third-party trademark attribution for the projects {{product_name}} builds on and interoperates with
+description: Third-party trademark attribution for the projects {{product_name}} builds on and interoperates with, and what “compatible” means throughout this documentation.
 ---
 
 # Trademarks
@@ -25,7 +25,7 @@ All other trademarks are the property of their respective owners.
 ## What "compatible" means here
 
 Where this documentation describes an API as Loki- or Tempo-compatible, it means {{product_name}}
-implements a subset of that project's HTTP read API — enough to serve the endpoints documented in
+implements a subset of that project's HTTP read API - enough to serve the endpoints documented in
 the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) API references, not a
 complete reimplementation.
 

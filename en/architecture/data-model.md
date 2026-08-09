@@ -1,11 +1,11 @@
 ---
 title: Data Model
-description: {{product_name}} Iceberg table schemas for observability data
+description: Iceberg table schemas behind {{product_name}} - the logs, spans, events, metrics, operations, and prices tables, shared design patterns, and query examples.
 ---
 
 # Data Model
 
-{{product_name}} stores observability data in five tenant-scoped Apache Iceberg tables — logs, spans, events, metrics, and operations — plus one global reference table, prices.
+{{product_name}} stores observability data in five tenant-scoped Apache Iceberg tables - logs, spans, events, metrics, and operations - plus one global reference table, prices.
 
 ## Table Overview
 
@@ -361,7 +361,7 @@ CREATE TABLE operations (
 
 **Partitioning:** `tenant_id` (identity), `day(timestamp)`
 
-**Sorting:** `trace_id`, `timestamp DESC` — clusters a trace's operations together, recent first
+**Sorting:** `trace_id`, `timestamp DESC` - clusters a trace's operations together, recent first
 
 The six `VARCHAR` content columns (`input_messages`, `output_messages`, `system_instructions`, `tool_definitions`, `tool_call_arguments`, `tool_call_result`) hold JSON-encoded payloads rather than parsed structures, so prompt and completion shapes can vary per provider without a schema change.
 
@@ -369,19 +369,19 @@ The six `VARCHAR` content columns (`input_messages`, `output_messages`, `system_
 
 A global LLM rate card, populated by the Maintain service's pricing crawler from the OpenRouter and LiteLLM feeds.
 
-Unlike the five telemetry tables it carries **no `tenant_id`** — rates are reference data, identical for every tenant. It is an append-only observation log: a row is written only when a rate first differs from the previous one for its key, and `valid_to` is derived at query time.
+Unlike the five telemetry tables it carries **no `tenant_id`** - rates are reference data, identical for every tenant. It is an append-only observation log: a row is written only when a rate first differs from the previous one for its key, and `valid_to` is derived at query time.
 
 **Key:** `(provider, model, service_tier, region, min_input_tokens, valid_from)`
 
-Context tiers and service tiers live in the key rather than in extra columns, so the rate columns stay flat as the card grows. Rate columns are `DECIMAL(38, 10)` rather than floating point — money has to be exact, and binary `f64` cannot represent a value like `0.075` or sum it without drift.
+Context tiers and service tiers live in the key rather than in extra columns, so the rate columns stay flat as the card grows. Rate columns are `DECIMAL(38, 10)` rather than floating point - money has to be exact, and binary `f64` cannot represent a value like `0.075` or sum it without drift.
 
 ### Joining Prices to Operations
 
-The query engine exposes a derived view, `prices_effective`, which adds `valid_to` — the next revision's `valid_from` for the same key, `NULL` for the row currently in effect. It is a DataFusion object, so the Loki, Tempo, and Flight SQL paths see it; Trino reads the Iceberg catalog directly and does not, which is why the raw table stays self-sufficient.
+The query engine exposes a derived view, `prices_effective`, which adds `valid_to` - the next revision's `valid_from` for the same key, `NULL` for the row currently in effect. It is a DataFusion object, so the Loki, Tempo, and Flight SQL paths see it; Trino reads the Iceberg catalog directly and does not, which is why the raw table stays self-sufficient.
 
 {% note warning %}
 
-{{product_name}} does not compute cost, and `operations` does not carry the full pricing key. It records `provider_name` and `request_model`, which line up with `prices.provider` and `prices.model`, but nothing for `service_tier`, `region`, or `min_input_tokens`. A cost query has to supply those three from deployment knowledge — a fixed tier and region per account, say. Treat such a join as an estimate parameterised by your own assumptions, not a derivation the schema guarantees.
+{{product_name}} does not compute cost, and `operations` does not carry the full pricing key. It records `provider_name` and `request_model`, which line up with `prices.provider` and `prices.model`, but nothing for `service_tier`, `region`, or `min_input_tokens`. A cost query has to supply those three from deployment knowledge - a fixed tier and region per account, say. Treat such a join as an estimate parameterised by your own assumptions, not a derivation the schema guarantees.
 
 {% endnote %}
 

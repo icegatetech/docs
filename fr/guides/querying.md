@@ -1,6 +1,6 @@
 ---
 title: Interrogation des Données
-description: Interroger les logs, traces et métriques avec LogQL, PromQL et TraceQL
+description: Interrogez {{product_name}} en LogQL - requêtes temps réel sur le WAL, état d'avancement, exemples de requêtes commentés et appels directs à l'API HTTP.
 ---
 
 # Interrogation des Données
@@ -8,7 +8,7 @@ description: Interroger les logs, traces et métriques avec LogQL, PromQL et Tra
 {{product_name}} fournit des APIs compatibles Loki et Tempo pour interroger les données d'observabilité,
 ainsi qu'Arrow Flight SQL pour du SQL généraliste.
 L'[API compatible Prometheus](../api-reference/prometheus.md) est prévue mais pas encore
-implémentée — interrogez les métriques via Flight SQL en attendant. Les pages de référence des API
+implémentée - interrogez les métriques via Flight SQL en attendant. Les pages de référence des API
 font foi sur les points de terminaison servis aujourd'hui.
 
 ## LogQL pour les Logs
@@ -111,8 +111,8 @@ engine:
 
 Lorsque activé, les requêtes lisent depuis les deux sources :
 
-- **Tables Iceberg** — Données historiques, compactées
-- **Segments WAL** — Données en temps réel pas encore transférées
+- **Tables Iceberg** - Données historiques, compactées
+- **Segments WAL** - Données en temps réel pas encore transférées
 
 **Note :** Les points de terminaison de métadonnées `/labels`, `/label/{name}/values` et `/series` lisent toujours uniquement depuis Iceberg, quel que soit ce paramètre.
 

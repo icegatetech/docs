@@ -1,6 +1,6 @@
 ---
 title: Модель Данных
-description: Схемы таблиц Iceberg {{product_name}} для данных наблюдаемости
+description: Схемы таблиц Iceberg в {{product_name}} - таблицы logs, spans, events, metrics, operations и prices, их общие паттерны проектирования и примеры запросов.
 ---
 
 # Модель Данных
@@ -11,7 +11,7 @@ description: Схемы таблиц Iceberg {{product_name}} для данны�
 
 {% endnote %}
 
-{{product_name}} хранит данные наблюдаемости в пяти таблицах Apache Iceberg с разделением по тенантам — logs, spans, events, metrics и operations — плюс одна глобальная справочная таблица prices.
+{{product_name}} хранит данные наблюдаемости в пяти таблицах Apache Iceberg с разделением по тенантам - logs, spans, events, metrics и operations - плюс одна глобальная справочная таблица prices.
 
 ## Обзор Таблиц
 
@@ -28,7 +28,7 @@ description: Схемы таблиц Iceberg {{product_name}} для данны�
 
 ### Мультитенантность
 
-Пять таблиц с разделением по тенантам используют identity-партиционирование по `tenant_id`. `prices` — справочные данные, общие для всех тенантов: в ней нет `tenant_id`, и партиционируется она иначе.
+Пять таблиц с разделением по тенантам используют identity-партиционирование по `tenant_id`. `prices` - справочные данные, общие для всех тенантов: в ней нет `tenant_id`, и партиционируется она иначе.
 
 ### Хранение Атрибутов
 

@@ -1,6 +1,6 @@
 ---
 title: Data Retention
-description: Configure data lifecycle, retention policies, and storage management in {{product_name}}
+description: Control how long data lives in {{product_name}} - WAL and Iceberg retention, snapshot management, retention strategies, backup, and storage cost optimization.
 ---
 
 # Data Retention
@@ -11,23 +11,23 @@ This guide covers managing the data lifecycle in {{product_name}}, from WAL segm
 
 Data in {{product_name}} moves through three stages:
 
-1. **WAL (Write-Ahead Log)** — temporary Parquet files in object storage, written by Ingest
-2. **Iceberg tables** — optimized, partitioned Parquet files managed by Apache Iceberg
-3. **Snapshots** — Iceberg metadata tracking table versions over time
+1. **WAL (Write-Ahead Log)** - temporary Parquet files in object storage, written by Ingest
+2. **Iceberg tables** - optimized, partitioned Parquet files managed by Apache Iceberg
+3. **Snapshots** - Iceberg metadata tracking table versions over time
 
 Each stage has independent retention controls.
 
 ## WAL Retention
 
-Shift does not delete WAL segments after committing them to Iceberg — a lifecycle rule on the queue bucket is what reclaims them, so configure one:
+Shift does not delete WAL segments after committing them to Iceberg - a lifecycle rule on the queue bucket is what reclaims them, so configure one:
 
 {% note warning %}
 
-Size the expiration from your worst-case unshifted-WAL window, not for convenience. A segment is only safe to expire once shift has committed it and recorded its offset in an Iceberg snapshot. If shift is stopped, backlogged, or recovering for longer than the expiration, the rule deletes segments whose offsets were never committed. The snapshot offset only tells shift where to resume — it cannot rebuild a deleted segment, so that is acknowledged data lost. One day suits the demo stack; choose yours from how long ingest can plausibly run without a successful shift commit, and alert on shift lag rather than relying on the rule to stay ahead of it.
+Size the expiration from your worst-case unshifted-WAL window, not for convenience. A segment is only safe to expire once shift has committed it and recorded its offset in an Iceberg snapshot. If shift is stopped, backlogged, or recovering for longer than the expiration, the rule deletes segments whose offsets were never committed. The snapshot offset only tells shift where to resume - it cannot rebuild a deleted segment, so that is acknowledged data lost. One day suits the demo stack; choose yours from how long ingest can plausibly run without a successful shift commit, and alert on shift lag rather than relying on the rule to stay ahead of it.
 
 {% endnote %}
 
-The bucket in both commands below is the one from `queue.common.base_path` (`s3://queue/` by default). Substitute your own if you changed it — a rule applied to the wrong bucket leaves the real WAL bucket unmanaged.
+The bucket in both commands below is the one from `queue.common.base_path` (`s3://queue/` by default). Substitute your own if you changed it - a rule applied to the wrong bucket leaves the real WAL bucket unmanaged.
 
 ### RustFS (and other S3-compatible stores)
 
@@ -230,13 +230,13 @@ aws s3api put-bucket-versioning \
 
 ### Catalog Backup
 
-On the default S3 catalog there is no service to stop and no database to dump — the catalog is `root.json` plus the table metadata files, in the warehouse bucket. Enabling versioning on that bucket (above) already gives point-in-time recovery. For an off-site copy, sync the catalog prefix:
+On the default S3 catalog there is no service to stop and no database to dump - the catalog is `root.json` plus the table metadata files, in the warehouse bucket. Enabling versioning on that bucket (above) already gives point-in-time recovery. For an off-site copy, sync the catalog prefix:
 
 ```bash
 aws s3 sync s3://warehouse/catalog/ ./catalog-backup-$(date +%Y%m%d)/
 ```
 
-Each object is replaced atomically — `root.json` by compare-and-swap, metadata files never in place — so no single object is ever copied half-written. The *set* is a different matter: `sync` lists and then copies, so commits landing during the run can leave the copy mixing catalog generations. For a point-in-time copy, read a single version from the versioned bucket, or take the copy while writes are quiesced, and verify it by restoring to a scratch prefix before relying on it.
+Each object is replaced atomically - `root.json` by compare-and-swap, metadata files never in place - so no single object is ever copied half-written. The *set* is a different matter: `sync` lists and then copies, so commits landing during the run can leave the copy mixing catalog generations. For a point-in-time copy, read a single version from the versioned bucket, or take the copy while writes are quiesced, and verify it by restoring to a scratch prefix before relying on it.
 
 If you run the REST catalog backend instead, back up Nessie's RocksDB storage:
 
@@ -253,11 +253,11 @@ docker start nessie
 
 ## Storage Cost Optimization
 
-1. **Use ZSTD compression** (default) — best compression ratio for observability data
-2. **Partition pruning** — queries skip irrelevant partitions when filtering by `tenant_id` and `timestamp`
-3. **Regular compaction** — run `optimize` to merge small files and improve read performance
-4. **Aggressive snapshot expiry** — old snapshots reference data files that cannot be cleaned up
-5. **Object storage lifecycle rules** — set expiration policies on the queue bucket
+1. **Use ZSTD compression** (default) - best compression ratio for observability data
+2. **Partition pruning** - queries skip irrelevant partitions when filtering by `tenant_id` and `timestamp`
+3. **Regular compaction** - run `optimize` to merge small files and improve read performance
+4. **Aggressive snapshot expiry** - old snapshots reference data files that cannot be cleaned up
+5. **Object storage lifecycle rules** - set expiration policies on the queue bucket
 
 ## Next Steps
 

@@ -1,6 +1,6 @@
 ---
 title: Déploiement
-description: Déployer {{product_name}} en environnements de production
+description: Déployez {{product_name}} en production sur Kubernetes ou Docker Compose - arbitrages d'architecture, stockage S3, tolérance aux pannes, supervision et sécurité.
 ---
 
 # Déploiement

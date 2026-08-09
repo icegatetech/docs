@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configurer les composants {{product_name}}
+description: Référence complète de configuration d'{{product_name}} - options CLI, variables d'environnement, backends de catalogue et de stockage, et réglages par service.
 ---
 
 # Configuration
@@ -31,9 +31,9 @@ query version
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
-| `AWS_ACCESS_KEY_ID` | Clé d'accès S3 (utilisée par le stockage et le job manager) | — |
-| `AWS_SECRET_ACCESS_KEY` | Clé secrète S3 | — |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Point de terminaison de traçage OpenTelemetry (fallback si `tracing.otlp_endpoint` non défini) | — |
+| `AWS_ACCESS_KEY_ID` | Clé d'accès S3 (utilisée par le stockage et le job manager) | |
+| `AWS_SECRET_ACCESS_KEY` | Clé secrète S3 | |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Point de terminaison de traçage OpenTelemetry (fallback si `tracing.otlp_endpoint` non défini) | |
 | `RUST_LOG` | Filtre de niveau de log (ex. `info`, `debug`, `info,icegate_query=debug`) | `info` |
 
 ## Configuration du Catalogue
@@ -55,10 +55,10 @@ catalog:
 
 | Paramètre | Type | Requis | Défaut | Description |
 |-----------|------|--------|--------|-------------|
-| `backend` | enum | Oui | — | Type de backend du catalogue (voir ci-dessous). Pas de valeur par défaut : le champ est requis |
-| `warehouse` | string | Oui | — | Emplacement de l'entrepôt (ex. `s3://warehouse/`) |
+| `backend` | enum | Oui | | Type de backend du catalogue (voir ci-dessous). Pas de valeur par défaut : le champ est requis |
+| `warehouse` | string | Oui | | Emplacement de l'entrepôt (ex. `s3://warehouse/`) |
 | `properties` | map | Non | `{}` | Propriétés supplémentaires spécifiques au catalogue |
-| `cache` | object | Non | — | Configuration du cache IO (voir [Configuration du Cache](#configuration-du-cache)) |
+| `cache` | object | Non | | Configuration du cache IO (voir [Configuration du Cache](#configuration-du-cache)) |
 
 ### Backends du Catalogue
 
@@ -158,12 +158,12 @@ catalog:
 
 | Paramètre | Type | Requis | Défaut | Description |
 |-----------|------|--------|--------|-------------|
-| `memory_size_mb` | integer | Oui | — | Capacité du cache mémoire en MiB |
-| `disk_dir` | string | Oui | — | Répertoire pour le stockage du cache disque |
-| `disk_size_mb` | integer | Oui | — | Capacité du cache disque en MiB |
-| `stat_ttl_secs` | integer | Non | — | TTL en secondes pour le cache des réponses S3 HEAD |
-| `max_write_cache_size_mb` | integer | Non | — | Taille maximale en MiB des valeurs mises en cache à l'écriture. Les fichiers plus volumineux contournent le cache |
-| `prefetch.max_prefetch_bytes` | integer | Non | — | Nombre maximum d'octets à pré-charger pour les blocs de colonnes Parquet |
+| `memory_size_mb` | integer | Oui | | Capacité du cache mémoire en MiB |
+| `disk_dir` | string | Oui | | Répertoire pour le stockage du cache disque |
+| `disk_size_mb` | integer | Oui | | Capacité du cache disque en MiB |
+| `stat_ttl_secs` | integer | Non | | TTL en secondes pour le cache des réponses S3 HEAD |
+| `max_write_cache_size_mb` | integer | Non | | Taille maximale en MiB des valeurs mises en cache à l'écriture. Les fichiers plus volumineux contournent le cache |
+| `prefetch.max_prefetch_bytes` | integer | Non | | Nombre maximum d'octets à pré-charger pour les blocs de colonnes Parquet |
 
 ## Configuration du Stockage
 
@@ -181,9 +181,9 @@ storage:
 
 | Paramètre | Type | Requis | Défaut | Description |
 |-----------|------|--------|--------|-------------|
-| `bucket` | string | Oui | — | Nom du bucket S3 |
-| `region` | string | Oui | — | Région AWS |
-| `endpoint` | string | Non | — | URL de point de terminaison personnalisée pour le stockage compatible S3 (RustFS, etc.) |
+| `bucket` | string | Oui | | Nom du bucket S3 |
+| `region` | string | Oui | | Région AWS |
+| `endpoint` | string | Non | | URL de point de terminaison personnalisée pour le stockage compatible S3 (RustFS, etc.) |
 
 ### Système de Fichiers Local
 
@@ -301,7 +301,7 @@ Contrôle la manière dont les données entrantes sont écrites dans le Write-Ah
 
 | Paramètre | Type | Défaut | Description |
 |-----------|------|--------|-------------|
-| `queue.common.base_path` | string | — | Chemin de base pour les segments WAL (ex. `s3://queue/`) |
+| `queue.common.base_path` | string | | Chemin de base pour les segments WAL (ex. `s3://queue/`) |
 | `queue.common.channel_capacity` | integer | `1024` | Capacité du canal borné pour la contre-pression |
 | `queue.common.max_row_group_size` | integer | `8192` | Nombre maximum de lignes par groupe de lignes Parquet |
 | `queue.write.write_retries` | integer | `5` | Nombre de tentatives de réessai pour les opérations d'écriture |
@@ -334,15 +334,15 @@ Le job manager stocke l'état des jobs shift dans un bucket S3 séparé.
 
 | Paramètre | Type | Défaut | Description |
 |-----------|------|--------|-------------|
-| `shift.jobsmanager.storage.endpoint` | string | — | URL du point de terminaison S3 |
-| `shift.jobsmanager.storage.bucket` | string | — | Nom du bucket pour l'état des jobs |
+| `shift.jobsmanager.storage.endpoint` | string | | URL du point de terminaison S3 |
+| `shift.jobsmanager.storage.bucket` | string | | Nom du bucket pour l'état des jobs |
 | `shift.jobsmanager.storage.prefix` | string | `shifter` | Préfixe de clé d'objet |
 | `shift.jobsmanager.storage.region` | string | `us-east-1` | Région AWS |
 | `shift.jobsmanager.storage.use_ssl` | bool | `false` | Utiliser HTTPS pour le point de terminaison |
 | `shift.jobsmanager.storage.job_state_codec` | enum | `json` | Format de sérialisation : `json` ou `cbor` |
 | `shift.jobsmanager.storage.request_timeout_secs` | integer | `5` | Timeout des requêtes S3 en secondes |
-| `shift.jobsmanager.storage.access_key_id` | string | — | Clé d'accès S3 (fallback vers la variable d'environnement `AWS_ACCESS_KEY_ID`) |
-| `shift.jobsmanager.storage.secret_access_key` | string | — | Clé secrète S3 (fallback vers la variable d'environnement `AWS_SECRET_ACCESS_KEY`) |
+| `shift.jobsmanager.storage.access_key_id` | string | | Clé d'accès S3 (fallback vers la variable d'environnement `AWS_ACCESS_KEY_ID`) |
+| `shift.jobsmanager.storage.secret_access_key` | string | | Clé secrète S3 (fallback vers la variable d'environnement `AWS_SECRET_ACCESS_KEY`) |
 
 ## Configuration du Service Query
 
@@ -438,7 +438,7 @@ Lorsque `engine.wal_query_enabled` est `true`, le service query lit à la fois l
 | `loki.enabled` | bool | `true` | Activer l'API de requête de logs compatible Loki |
 | `loki.host` | string | `0.0.0.0` | Adresse d'écoute |
 | `loki.port` | integer | `3100` | Port de l'API Loki |
-| `prometheus.enabled` | bool | `true` | Servir l'API de requêtes Prometheus. Les routes sont enregistrées, mais tout handler sauf `/-/ready` retourne `501 Not Implemented` — PromQL n'est pas encore implémenté. Ce n'est pas l'endpoint de métriques : celui-ci est le bloc `metrics` sur le port 9091 |
+| `prometheus.enabled` | bool | `true` | Servir l'API de requêtes Prometheus. Les routes sont enregistrées, mais tout handler sauf `/-/ready` retourne `501 Not Implemented` - PromQL n'est pas encore implémenté. Ce n'est pas l'endpoint de métriques : celui-ci est le bloc `metrics` sur le port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Adresse d'écoute |
 | `prometheus.port` | integer | `9090` | Port de l'API Prometheus |
 | `tempo.enabled` | bool | `true` | Activer l'API de traces compatible Tempo |
@@ -498,8 +498,8 @@ Tous les services peuvent exporter des traces OpenTelemetry pour l'auto-observab
 | Paramètre | Type | Défaut | Description |
 |-----------|------|--------|-------------|
 | `tracing.enabled` | bool | `true` | Activer le traçage |
-| `tracing.service_name` | string | — | Nom du service pour les traces |
-| `tracing.otlp_endpoint` | string | — | URL du point de terminaison OTLP. Fallback vers la variable d'environnement `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| `tracing.service_name` | string | | Nom du service pour les traces |
+| `tracing.otlp_endpoint` | string | | URL du point de terminaison OTLP. Fallback vers la variable d'environnement `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | `tracing.sample_ratio` | float | `1.0` | Ratio d'échantillonnage (0.0 à 1.0). Réduire en production |
 
 Exemple avec Jaeger :

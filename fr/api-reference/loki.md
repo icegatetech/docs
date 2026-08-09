@@ -1,12 +1,12 @@
 ---
 title: Référence API Loki
-description: Points de terminaison HTTP de l'API compatible Loki servis par {{product_name}}
+description: API HTTP compatible Loki servie par {{product_name}} - endpoints query_range, labels et series, authentification par tenant et formats de réponse d'erreur.
 ---
 
 # Référence API Loki
 
 {{product_name}} fournit une API HTTP compatible Loki® pour interroger les logs, servie sur le port 3100.
-Les points de terminaison documentés ci-dessous sont ceux implémentés — il s'agit d'un
+Les points de terminaison documentés ci-dessous sont ceux implémentés - il s'agit d'un
 sous-ensemble de l'API de Loki, et non d'une réimplémentation complète : tout ce qui n'y figure pas
 doit être considéré comme non implémenté. Voir [Marques](../trademarks.md) pour l'attribution.
 
@@ -268,5 +268,5 @@ Toutes les erreurs retournent une réponse JSON :
 ## Étapes Suivantes
 
 - Apprenez le [Requêtage LogQL](../guides/querying.md)
-- Explorez l'[API Prometheus](prometheus.md) — prévue, pas encore implémentée
+- Explorez l'[API Prometheus](prometheus.md) - prévue, pas encore implémentée
 - Voir l'[API Tempo](tempo.md) pour les traces

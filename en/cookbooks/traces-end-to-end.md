@@ -1,6 +1,6 @@
 ---
 title: End-to-End Distributed Tracing
-description: Instrument services, send traces to {{product_name}}, and query them via the Tempo API
+description: Instrument your services, send traces to {{product_name}}, and retrieve them through the Tempo API or Grafana - plus the span data model behind every trace.
 ---
 
 # End-to-End Distributed Tracing

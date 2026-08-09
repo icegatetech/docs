@@ -1,6 +1,6 @@
 ---
 title: Grafana Integration
-description: Set up Grafana to query logs, traces, and metrics from {{product_name}}
+description: Point Grafana at {{product_name}} - add Loki and Tempo data sources, provision them as code, navigate across signals, and configure multi-tenant dashboards.
 ---
 
 # Grafana Integration
@@ -108,7 +108,7 @@ datasources:
 
 {% note warning %}
 
-**The Prometheus data source will not work yet.** {{product_name}} mounts the Prometheus API routes on port **9090**, but every one of them — including the metadata endpoints (`labels`, `series`, `label/{name}/values`) — returns `501 Not Implemented`. Only `/-/ready` responds.
+**The Prometheus data source will not work yet.** {{product_name}} mounts the Prometheus API routes on port **9090**, but every one of them - including the metadata endpoints (`labels`, `series`, `label/{name}/values`) - returns `501 Not Implemented`. Only `/-/ready` responds.
 
 Use the Loki data source with LogQL metric queries for log-based metrics, or Arrow Flight SQL for general-purpose SQL over the same data. The steps below are recorded for when the API lands.
 
@@ -239,15 +239,15 @@ For dynamic per-user tenancy, see [Multi-Tenancy](multi-tenancy.md#per-user-tena
 
 Create a dashboard with three panels:
 
-1. **Logs panel** — shows raw log entries:
+1. **Logs panel** - shows raw log entries:
    - Query: `{service_name="my-service"}`
    - Visualization: Logs
 
-2. **Error rate time series** — tracks error frequency:
+2. **Error rate time series** - tracks error frequency:
    - Query: `sum by (service_name) (rate({severity_text="ERROR"}[5m]))`
    - Visualization: Time series
 
-3. **Log volume stat** — shows total log count:
+3. **Log volume stat** - shows total log count:
    - Query: `sum(count_over_time({service_name="my-service"}[1h]))`
    - Visualization: Stat
 
@@ -268,7 +268,7 @@ If you have an existing Grafana setup with Loki, you can point it at {{product_n
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features {{product_name}} implements — it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
+Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features {{product_name}} implements - it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
 
 {% note info %}
 

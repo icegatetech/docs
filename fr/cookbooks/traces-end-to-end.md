@@ -1,6 +1,6 @@
 ---
 title: Traçage Distribué de Bout en Bout
-description: Instrumenter les services et interroger les traces via l'API Tempo d'{{product_name}}
+description: Instrumentez vos services, envoyez les traces à {{product_name}} et récupérez-les via l'API Tempo ou Grafana - avec le modèle de données des spans.
 ---
 
 # Traçage Distribué de Bout en Bout

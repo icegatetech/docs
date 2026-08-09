@@ -1,6 +1,6 @@
 ---
 title: Development Setup
-description: Set up a local {{product_name}} development environment
+description: Run {{product_name}} locally for development with Skaffold or Docker Compose - prerequisites, cluster setup, and the environment variables each service reads.
 ---
 
 # Development Setup
@@ -51,7 +51,7 @@ You need a local Kubernetes cluster. Options:
 | Runtime | Install | Notes |
 |---------|---------|-------|
 | [OrbStack](https://orbstack.dev/) | macOS only | Lightweight, fast startup. Use `-p orbstack` profile |
-| [Docker Desktop](https://docs.docker.com/desktop/kubernetes/) | macOS, Windows, Linux | Enable Kubernetes in settings |
+| [Docker Desktop](https://docs.docker.com/desktop/use-desktop/kubernetes/) | macOS, Windows, Linux | Enable Kubernetes in settings |
 | [minikube](https://minikube.sigs.k8s.io/) | All platforms | `minikube start` |
 | [kind](https://kind.sigs.k8s.io/) | All platforms | `kind create cluster` |
 

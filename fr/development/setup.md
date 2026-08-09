@@ -1,6 +1,6 @@
 ---
 title: Environnement de Développement
-description: Configurer un environnement de développement local pour {{product_name}}
+description: Lancez {{product_name}} en local avec Skaffold ou Docker Compose - prérequis, mise en place du cluster et variables d'environnement lues par chaque service.
 ---
 
 # Environnement de Développement
@@ -51,7 +51,7 @@ Vous avez besoin d'un cluster Kubernetes local. Options :
 | Runtime | Installation | Notes |
 |---------|-------------|-------|
 | [OrbStack](https://orbstack.dev/) | macOS uniquement | Léger, démarrage rapide. Utiliser le profil `-p orbstack` |
-| [Docker Desktop](https://docs.docker.com/desktop/kubernetes/) | macOS, Windows, Linux | Activer Kubernetes dans les paramètres |
+| [Docker Desktop](https://docs.docker.com/desktop/use-desktop/kubernetes/) | macOS, Windows, Linux | Activer Kubernetes dans les paramètres |
 | [minikube](https://minikube.sigs.k8s.io/) | Toutes les plateformes | `minikube start` |
 | [kind](https://kind.sigs.k8s.io/) | Toutes les plateformes | `kind create cluster` |
 

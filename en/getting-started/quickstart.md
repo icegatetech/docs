@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Ingest and query your first observability data with {{product_name}}
+description: Ingest your first logs, traces, and metrics into {{product_name}}, query them with LogQL, and wire up Grafana and the OpenTelemetry Collector in minutes.
 ---
 
 # Quick Start
@@ -140,7 +140,7 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Query Logs with LogQL
 
-{{product_name}} provides a Loki-compatible API on the Query service (port 3100) — a subset of Loki's API,
+{{product_name}} provides a Loki-compatible API on the Query service (port 3100) - a subset of Loki's API,
 listed in the [API reference](../api-reference/loki.md).
 
 ### Basic Log Query

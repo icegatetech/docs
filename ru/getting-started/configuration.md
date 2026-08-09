@@ -1,6 +1,6 @@
 ---
 title: Конфигурация
-description: Настройка компонентов {{product_name}}
+description: Полный справочник конфигурации {{product_name}} - параметры CLI, переменные окружения, бэкенды каталога и хранилища, настройки загрузки и запросов.
 ---
 
 # Конфигурация
@@ -31,9 +31,9 @@ query version
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `AWS_ACCESS_KEY_ID` | Ключ доступа S3 (используется хранилищем и job manager) | — |
-| `AWS_SECRET_ACCESS_KEY` | Секретный ключ S3 | — |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Эндпоинт трейсинга OpenTelemetry (запасной, если `tracing.otlp_endpoint` не задан) | — |
+| `AWS_ACCESS_KEY_ID` | Ключ доступа S3 (используется хранилищем и job manager) | |
+| `AWS_SECRET_ACCESS_KEY` | Секретный ключ S3 | |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Эндпоинт трейсинга OpenTelemetry (запасной, если `tracing.otlp_endpoint` не задан) | |
 | `RUST_LOG` | Фильтр уровня логирования (например, `info`, `debug`, `info,icegate_query=debug`) | `info` |
 
 ## Конфигурация Каталога
@@ -55,16 +55,16 @@ catalog:
 
 | Параметр | Тип | Обязательный | По умолчанию | Описание |
 |----------|-----|--------------|--------------|----------|
-| `backend` | enum | Да | — | Тип бэкенда каталога (см. ниже). Значения по умолчанию нет — поле обязательное |
-| `warehouse` | string | Да | — | Расположение хранилища (например, `s3://warehouse/`) |
+| `backend` | enum | Да | | Тип бэкенда каталога (см. ниже). Значения по умолчанию нет - поле обязательное |
+| `warehouse` | string | Да | | Расположение хранилища (например, `s3://warehouse/`) |
 | `properties` | map | Нет | `{}` | Дополнительные свойства каталога |
-| `cache` | object | Нет | — | Конфигурация IO-кэша (см. [Конфигурация Кэша](#конфигурация-кэша)) |
+| `cache` | object | Нет | | Конфигурация IO-кэша (см. [Конфигурация Кэша](#конфигурация-кэша)) |
 
 ### Бэкенды Каталога
 
 #### S3-каталог (по умолчанию)
 
-Собственный каталог {{product_name}}. Состояние каталога — объект `root.json` в объектном хранилище, обновляемый через compare-and-swap, поэтому внешний сервис каталога не требуется.
+Собственный каталог {{product_name}}. Состояние каталога - объект `root.json` в объектном хранилище, обновляемый через compare-and-swap, поэтому внешний сервис каталога не требуется.
 
 ```yaml
 catalog:
@@ -158,12 +158,12 @@ catalog:
 
 | Параметр | Тип | Обязательный | По умолчанию | Описание |
 |----------|-----|--------------|--------------|----------|
-| `memory_size_mb` | integer | Да | — | Ёмкость кэша в памяти в MiB |
-| `disk_dir` | string | Да | — | Директория для дискового кэша |
-| `disk_size_mb` | integer | Да | — | Ёмкость дискового кэша в MiB |
-| `stat_ttl_secs` | integer | Нет | — | TTL в секундах для кэширования ответов S3 HEAD |
-| `max_write_cache_size_mb` | integer | Нет | — | Макс. размер значения в MiB для кэширования при записи. Файлы большего размера обходят кэш |
-| `prefetch.max_prefetch_bytes` | integer | Нет | — | Макс. байт для предзагрузки блоков столбцов Parquet |
+| `memory_size_mb` | integer | Да | | Ёмкость кэша в памяти в MiB |
+| `disk_dir` | string | Да | | Директория для дискового кэша |
+| `disk_size_mb` | integer | Да | | Ёмкость дискового кэша в MiB |
+| `stat_ttl_secs` | integer | Нет | | TTL в секундах для кэширования ответов S3 HEAD |
+| `max_write_cache_size_mb` | integer | Нет | | Макс. размер значения в MiB для кэширования при записи. Файлы большего размера обходят кэш |
+| `prefetch.max_prefetch_bytes` | integer | Нет | | Макс. байт для предзагрузки блоков столбцов Parquet |
 
 ## Конфигурация Хранилища
 
@@ -181,9 +181,9 @@ storage:
 
 | Параметр | Тип | Обязательный | По умолчанию | Описание |
 |----------|-----|--------------|--------------|----------|
-| `bucket` | string | Да | — | Имя бакета S3 |
-| `region` | string | Да | — | Регион AWS |
-| `endpoint` | string | Нет | — | URL кастомного эндпоинта для S3-совместимого хранилища (RustFS и др.) |
+| `bucket` | string | Да | | Имя бакета S3 |
+| `region` | string | Да | | Регион AWS |
+| `endpoint` | string | Нет | | URL кастомного эндпоинта для S3-совместимого хранилища (RustFS и др.) |
 
 ### Локальная Файловая Система
 
@@ -301,7 +301,7 @@ tracing:
 
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
-| `queue.common.base_path` | string | — | Базовый путь для сегментов WAL (например, `s3://queue/`) |
+| `queue.common.base_path` | string | | Базовый путь для сегментов WAL (например, `s3://queue/`) |
 | `queue.common.channel_capacity` | integer | `1024` | Ёмкость ограниченного канала для обратного давления |
 | `queue.common.max_row_group_size` | integer | `8192` | Макс. строк в группе строк Parquet |
 | `queue.write.write_retries` | integer | `5` | Количество повторных попыток записи |
@@ -334,15 +334,15 @@ Job manager хранит состояние задач shift в отдельно
 
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
-| `shift.jobsmanager.storage.endpoint` | string | — | URL эндпоинта S3 |
-| `shift.jobsmanager.storage.bucket` | string | — | Имя бакета для состояния задач |
+| `shift.jobsmanager.storage.endpoint` | string | | URL эндпоинта S3 |
+| `shift.jobsmanager.storage.bucket` | string | | Имя бакета для состояния задач |
 | `shift.jobsmanager.storage.prefix` | string | `shifter` | Префикс ключа объекта |
 | `shift.jobsmanager.storage.region` | string | `us-east-1` | Регион AWS |
 | `shift.jobsmanager.storage.use_ssl` | bool | `false` | Использовать HTTPS для эндпоинта |
 | `shift.jobsmanager.storage.job_state_codec` | enum | `json` | Формат сериализации: `json` или `cbor` |
 | `shift.jobsmanager.storage.request_timeout_secs` | integer | `5` | Тайм-аут запроса S3 в секундах |
-| `shift.jobsmanager.storage.access_key_id` | string | — | Ключ доступа S3 (запасной — переменная `AWS_ACCESS_KEY_ID`) |
-| `shift.jobsmanager.storage.secret_access_key` | string | — | Секретный ключ S3 (запасной — переменная `AWS_SECRET_ACCESS_KEY`) |
+| `shift.jobsmanager.storage.access_key_id` | string | | Ключ доступа S3 (запасной - переменная `AWS_ACCESS_KEY_ID`) |
+| `shift.jobsmanager.storage.secret_access_key` | string | | Секретный ключ S3 (запасной - переменная `AWS_SECRET_ACCESS_KEY`) |
 
 ## Конфигурация Сервиса Query
 
@@ -438,7 +438,7 @@ tracing:
 | `loki.enabled` | bool | `true` | Включить Loki-совместимый API запросов логов |
 | `loki.host` | string | `0.0.0.0` | Адрес привязки |
 | `loki.port` | integer | `3100` | Порт Loki API |
-| `prometheus.enabled` | bool | `true` | Отдавать API запросов Prometheus. Маршруты зарегистрированы, но все обработчики, кроме `/-/ready`, возвращают `501 Not Implemented` — PromQL пока не реализован. Это не эндпоинт метрик: им является блок `metrics` на порту 9091 |
+| `prometheus.enabled` | bool | `true` | Отдавать API запросов Prometheus. Маршруты зарегистрированы, но все обработчики, кроме `/-/ready`, возвращают `501 Not Implemented` - PromQL пока не реализован. Это не эндпоинт метрик: им является блок `metrics` на порту 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Адрес привязки |
 | `prometheus.port` | integer | `9090` | Порт Prometheus API |
 | `tempo.enabled` | bool | `true` | Включить Tempo-совместимый API трейсов |
@@ -498,8 +498,8 @@ maintain migrate upgrade -c maintain.yaml --dry-run
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
 | `tracing.enabled` | bool | `true` | Включить трейсинг |
-| `tracing.service_name` | string | — | Имя сервиса для трейсов |
-| `tracing.otlp_endpoint` | string | — | URL эндпоинта OTLP. Запасной — переменная `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| `tracing.service_name` | string | | Имя сервиса для трейсов |
+| `tracing.otlp_endpoint` | string | | URL эндпоинта OTLP. Запасной - переменная `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | `tracing.sample_ratio` | float | `1.0` | Коэффициент сэмплирования (0.0 до 1.0). Уменьшите в продакшене |
 
 Пример с Jaeger:

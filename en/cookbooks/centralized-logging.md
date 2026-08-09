@@ -1,6 +1,6 @@
 ---
 title: Centralized Logging for Microservices
-description: Set up centralized log collection from microservices into {{product_name}}
+description: Collect logs from every microservice into {{product_name}} - deploy the OpenTelemetry Collector, instrument services, query across them, and isolate per team.
 ---
 
 # Centralized Logging for Microservices
@@ -133,7 +133,7 @@ provider.add_log_record_processor(
     )
 )
 
-# Use standard Python logging — bridged to OTLP
+# Use standard Python logging - bridged to OTLP
 logger = logging.getLogger("order-service")
 logger.info("Order created", extra={"order.id": "ORD-12345", "user.id": "usr-42"})
 ```

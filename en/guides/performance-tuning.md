@@ -1,6 +1,6 @@
 ---
 title: Performance Tuning
-description: Optimize {{product_name}} ingestion throughput, query performance, and compaction
+description: Tune {{product_name}} for throughput and latency - ingestion settings, Shift compaction, query optimization, and a resource sizing guide for each service.
 ---
 
 # Performance Tuning
@@ -11,9 +11,9 @@ This guide covers tuning {{product_name}} for high-volume workloads across inges
 
 Data flows through three stages, each with independent tuning parameters:
 
-1. **Ingest** — receives OTLP data, writes to WAL (Write-Ahead Log)
-2. **Shift** — compacts WAL segments into optimized Iceberg Parquet files
-3. **Query** — reads from Iceberg tables (and optionally WAL) via DataFusion
+1. **Ingest** - receives OTLP data, writes to WAL (Write-Ahead Log)
+2. **Shift** - compacts WAL segments into optimized Iceberg Parquet files
+3. **Query** - reads from Iceberg tables (and optionally WAL) via DataFusion
 
 ## Ingestion Tuning
 
@@ -67,7 +67,7 @@ queue:
 
 ### Horizontal Scaling
 
-The Ingest service is stateless — scale replicas to increase throughput:
+The Ingest service is stateless - scale replicas to increase throughput:
 
 ```yaml
 # Helm values.yaml

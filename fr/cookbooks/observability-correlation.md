@@ -1,6 +1,6 @@
 ---
 title: Corrélation des Signaux d'Observabilité
-description: Corréler les logs et les traces dans {{product_name}} pour un diagnostic efficace
+description: De l'alerte à la cause racine dans {{product_name}} en corrélant logs, traces et métriques - navigation Grafana, patterns d'API et bonnes pratiques.
 ---
 
 # Corrélation des Signaux d'Observabilité

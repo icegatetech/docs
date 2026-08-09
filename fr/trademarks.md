@@ -1,6 +1,6 @@
 ---
 title: Marques
-description: Attribution des marques tierces citées dans la documentation {{product_name}}
+description: Attribution des marques tierces sur lesquelles {{product_name}} s'appuie ou avec lesquelles il interopère, et ce que « compatible » signifie dans cette documentation.
 ---
 
 # Marques
@@ -25,7 +25,7 @@ les autres marques appartiennent à leurs titulaires respectifs.
 ## Ce que « compatible » signifie ici
 
 Lorsque cette documentation décrit une API comme compatible Loki ou Tempo, cela signifie que
-{{product_name}} implémente un sous-ensemble de l'API HTTP de lecture du projet concerné — de quoi
+{{product_name}} implémente un sous-ensemble de l'API HTTP de lecture du projet concerné - de quoi
 servir les points de terminaison documentés dans les références [Loki](api-reference/loki.md) et [Tempo](api-reference/tempo.md), et
 non une réimplémentation complète.
 

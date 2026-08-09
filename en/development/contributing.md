@@ -1,6 +1,6 @@
 ---
 title: Contributing
-description: How to contribute to {{product_name}} development
+description: Contribute to {{product_name}} - development setup, code style, project structure, pull request guidelines, testing, documentation, and the release process.
 ---
 
 # Contributing
@@ -212,7 +212,7 @@ Releases are created by maintainers:
 
 ## Code of Conduct
 
-Be respectful and inclusive. We follow the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
+Be respectful and inclusive. We follow the [Rust Code of Conduct](https://rust-lang.org/policies/code-of-conduct).
 
 ## Next Steps
 

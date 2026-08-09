@@ -5761,7 +5761,7 @@ You need a local Kubernetes cluster. Options:
 | Runtime | Install | Notes |
 |---------|---------|-------|
 | [OrbStack](https://orbstack.dev/) | macOS only | Lightweight, fast startup. Use `-p orbstack` profile |
-| [Docker Desktop](https://docs.docker.com/desktop/kubernetes/) | macOS, Windows, Linux | Enable Kubernetes in settings |
+| [Docker Desktop](https://docs.docker.com/desktop/use-desktop/kubernetes/) | macOS, Windows, Linux | Enable Kubernetes in settings |
 | [minikube](https://minikube.sigs.k8s.io/) | All platforms | `minikube start` |
 | [kind](https://kind.sigs.k8s.io/) | All platforms | `kind create cluster` |
 
@@ -6690,7 +6690,7 @@ Releases are created by maintainers:
 
 ## Code of Conduct
 
-Be respectful and inclusive. We follow the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
+Be respectful and inclusive. We follow the [Rust Code of Conduct](https://rust-lang.org/policies/code-of-conduct).
 
 ## Next Steps
 

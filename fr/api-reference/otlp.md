@@ -1,6 +1,6 @@
 ---
 title: API d'Ingestion OTLP
-description: Points d'accès OpenTelemetry Protocol pour l'ingestion de données
+description: Ingestion OpenTelemetry Protocol dans {{product_name}} via HTTP et gRPC - endpoints, configuration des SDK, authentification, erreurs et tests de charge.
 ---
 
 # API d'Ingestion OTLP
@@ -342,7 +342,7 @@ otel-log-generator otel \
 
 | Paramètre | Par défaut | Description |
 |-----------|-----------|-------------|
-| `--endpoint` | — | URL du point d'accès OTLP |
+| `--endpoint` | | URL du point d'accès OTLP |
 | `--transport` | `http` | Transport : `http` ou `grpc` |
 | `--use-protobuf` | `false` | Utiliser l'encodage protobuf (HTTP uniquement) |
 | `--count` | `1` | Nombre de messages à envoyer |

@@ -1,11 +1,11 @@
 ---
 title: Справочник Loki API
-description: HTTP API эндпоинты, совместимые с Loki, которые обслуживает {{product_name}}
+description: HTTP API, совместимый с Loki, в {{product_name}} - эндпоинты query_range, labels и series, аутентификация по тенанту и форматы ответов об ошибках.
 ---
 
 # Справочник Loki API
 
-{{product_name}} предоставляет HTTP API, совместимый с Loki®, для запросов к логам — на порту 3100. Ниже
+{{product_name}} предоставляет HTTP API, совместимый с Loki®, для запросов к логам - на порту 3100. Ниже
 описаны реализованные эндпоинты: это подмножество API Loki, а не полная реализация, поэтому всё,
 что здесь не перечислено, следует считать нереализованным. Атрибуцию см. в разделе
 [Товарные знаки](../trademarks.md).
@@ -272,5 +272,5 @@ curl -G http://localhost:3100/loki/api/v1/explain \
 ## Следующие Шаги
 
 - Изучите [Запросы LogQL](../guides/querying.md)
-- Изучите [Prometheus API](prometheus.md) — запланирован, пока не реализован
+- Изучите [Prometheus API](prometheus.md) - запланирован, пока не реализован
 - Смотрите [Tempo API](tempo.md) для трейсов

@@ -1,6 +1,6 @@
 ---
 title: Окружение для Разработки
-description: Настройка локального окружения для разработки {{product_name}}
+description: Запустите {{product_name}} локально через Skaffold или Docker Compose - требования, подготовка кластера и переменные окружения для каждого сервиса.
 ---
 
 # Окружение для Разработки
@@ -31,7 +31,7 @@ cd icegate
 
 ## Skaffold (Рекомендуется)
 
-[Skaffold](https://skaffold.dev/) — рекомендуемый способ разработки IceGate. Он собирает образы из исходного кода, разворачивает их в локальном кластере Kubernetes и отслеживает изменения файлов для автоматической пересборки.
+[Skaffold](https://skaffold.dev/) - рекомендуемый способ разработки IceGate. Он собирает образы из исходного кода, разворачивает их в локальном кластере Kubernetes и отслеживает изменения файлов для автоматической пересборки.
 
 ### Установка Skaffold
 
@@ -51,7 +51,7 @@ chmod +x skaffold && sudo mv skaffold /usr/local/bin/
 | Среда выполнения | Установка | Примечания |
 |------------------|-----------|------------|
 | [OrbStack](https://orbstack.dev/) | только macOS | Легковесный, быстрый запуск. Используйте профиль `-p orbstack` |
-| [Docker Desktop](https://docs.docker.com/desktop/kubernetes/) | macOS, Windows, Linux | Включите Kubernetes в настройках |
+| [Docker Desktop](https://docs.docker.com/desktop/use-desktop/kubernetes/) | macOS, Windows, Linux | Включите Kubernetes в настройках |
 | [minikube](https://minikube.sigs.k8s.io/) | Все платформы | `minikube start` |
 | [kind](https://kind.sigs.k8s.io/) | Все платформы | `kind create cluster` |
 

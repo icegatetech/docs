@@ -1,6 +1,6 @@
 ---
 title: Compilation
-description: Compiler {{product_name}} à partir du code source
+description: Compilez {{product_name}} depuis les sources - installer Rust, cloner le dépôt, choisir un profil, parcourir les six crates, lancer les services et les tests.
 ---
 
 # Compilation à partir du Code Source

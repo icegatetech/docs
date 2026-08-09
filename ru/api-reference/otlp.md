@@ -1,6 +1,6 @@
 ---
 title: API Загрузки OTLP
-description: Точки доступа OpenTelemetry Protocol для загрузки данных
+description: Загрузка данных по OpenTelemetry Protocol в {{product_name}} через HTTP и gRPC - эндпоинты, настройка SDK, аутентификация, ошибки и нагрузочное тестирование.
 ---
 
 # API Загрузки OTLP
@@ -291,7 +291,7 @@ service:
 
 ## Нагрузочное тестирование с IceGen
 
-[IceGen](https://github.com/icegatetech/icegen) — это высокопроизводительный генератор логов OpenTelemetry для тестирования загрузки данных в IceGate.
+[IceGen](https://github.com/icegatetech/icegen) - это высокопроизводительный генератор логов OpenTelemetry для тестирования загрузки данных в IceGate.
 
 ### Установка
 
@@ -342,7 +342,7 @@ otel-log-generator otel \
 
 | Параметр | По умолчанию | Описание |
 |----------|-------------|----------|
-| `--endpoint` | — | URL точки доступа OTLP |
+| `--endpoint` | | URL точки доступа OTLP |
 | `--transport` | `http` | Транспорт: `http` или `grpc` |
 | `--use-protobuf` | `false` | Использовать кодирование protobuf (только HTTP) |
 | `--count` | `1` | Количество сообщений для отправки |

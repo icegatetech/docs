@@ -1,6 +1,6 @@
 ---
 title: Guide de Démarrage
-description: Ingérer et interroger vos premières données d'observabilité avec {{product_name}}
+description: Ingérez vos premiers logs, traces et métriques dans {{product_name}}, interrogez-les en LogQL et branchez Grafana et l'OpenTelemetry Collector en quelques minutes.
 ---
 
 # Guide de Démarrage
@@ -140,7 +140,7 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Interroger les Logs avec LogQL
 
-{{product_name}} fournit une API compatible Loki sur le service de requête (port 3100) — un sous-ensemble de
+{{product_name}} fournit une API compatible Loki sur le service de requête (port 3100) - un sous-ensemble de
 l'API de Loki, listé dans la [référence des API](../api-reference/loki.md).
 
 ### Requête de Logs Basique

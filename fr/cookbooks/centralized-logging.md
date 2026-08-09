@@ -1,6 +1,6 @@
 ---
 title: Journalisation Centralisée pour Microservices
-description: Mettre en place une journalisation centralisée avec OpenTelemetry Collector et {{product_name}}
+description: Centralisez les logs de vos microservices dans {{product_name}} - déployer l'OpenTelemetry Collector, instrumenter, interroger et isoler chaque équipe.
 ---
 
 # Journalisation Centralisée pour Microservices

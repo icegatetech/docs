@@ -1,6 +1,6 @@
 ---
 title: Patterns de Développement
-description: Patterns standards utilisés dans le codebase {{product_name}}
+description: Les sept patterns standards du codebase {{product_name}} - config, erreurs de crate et de transport, modèles de réponse, handlers et routage serveur.
 ---
 
 # Patterns de Développement

@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Frequently asked questions about {{product_name}}
+description: Common questions about {{product_name}} - what it is, storage and querying, multi-tenancy, performance, operations, integrations, and troubleshooting basics.
 ---
 
 # Frequently Asked Questions
@@ -9,7 +9,7 @@ description: Frequently asked questions about {{product_name}}
 
 ### What is {{product_name}}?
 
-{{product_name}} is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki- and Tempo-compatible APIs for querying, plus Arrow Flight SQL. A Prometheus-compatible API is [planned but not implemented yet](api-reference/prometheus.md) — see the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references for what is served today.
+{{product_name}} is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki- and Tempo-compatible APIs for querying, plus Arrow Flight SQL. A Prometheus-compatible API is [planned but not implemented yet](api-reference/prometheus.md) - see the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references for what is served today.
 
 ### What makes {{product_name}} different?
 
@@ -97,7 +97,7 @@ Not yet implemented:
 
 ### Can I use Grafana?
 
-Yes. {{product_name}} provides Loki-compatible APIs that work with Grafana's Loki data source, and Tempo-compatible APIs for the Tempo data source. Both implement a subset of the upstream API, so check the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references if a panel depends on a specific endpoint. The Prometheus data source will not work yet — that API is planned.
+Yes. {{product_name}} provides Loki-compatible APIs that work with Grafana's Loki data source, and Tempo-compatible APIs for the Tempo data source. Both implement a subset of the upstream API, so check the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references if a panel depends on a specific endpoint. The Prometheus data source will not work yet - that API is planned.
 
 ## Multi-Tenancy
 

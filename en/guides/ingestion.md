@@ -1,6 +1,6 @@
 ---
 title: Data Ingestion
-description: Ingest logs, traces, and metrics into {{product_name}}
+description: Send logs, traces, and metrics to {{product_name}} over OTLP - supported protocols, per-signal examples, tenant identification, data flow, and delivery guarantees.
 ---
 
 # Data Ingestion
