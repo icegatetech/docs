@@ -1,21 +1,21 @@
 ---
 title: Установка
-description: Установка IceGate в Kubernetes с помощью Helm
+description: Установка {{product_name}} в Kubernetes с помощью Helm
 ---
 
 # Установка
 
-IceGate разворачивается в Kubernetes с помощью Helm charts и оверлеев Kustomize для настройки под конкретное окружение.
+{{product_name}} разворачивается в Kubernetes с помощью Helm charts и оверлеев Kustomize для настройки под конкретное окружение.
 
 ## Предварительные Требования
 
 - **Kubernetes** >= 1.28 с **Helm 3**
-- **Объектное хранилище:** AWS S3 или S3-совместимое (MinIO)
-- **Каталог Iceberg:** Nessie (REST), AWS S3 Tables или AWS Glue
+- **Объектное хранилище:** AWS S3 или S3-совместимое (RustFS)
+- **Каталог Iceberg:** встроенный S3-каталог (по умолчанию, без внешнего сервиса), либо Nessie (REST), AWS S3 Tables или AWS Glue
 
 ## Helm Chart
 
-Helm chart разворачивает все компоненты IceGate: Ingest, Query и задачу Migrate (создание схемы в виде хука pre-install/pre-upgrade).
+Helm chart разворачивает все компоненты {{product_name}}: Ingest, Query и задачу Migrate (создание схемы в виде хука pre-install/pre-upgrade).
 
 ### Установка из реестра OCI
 
@@ -41,11 +41,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Значения Helm используют camelCase и плоские ключи (например, `backend: rest` + `rest.uri`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !rest`), который ожидают бинарные файлы IceGate. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
+Значения Helm используют camelCase и плоские ключи (например, `backend: s3` + `s3.warehouse`). Chart транслирует их в нативный формат конфигурации serde tagged enum (`backend: !s3`), который ожидают бинарные файлы {{product_name}}. См. [Конфигурацию](configuration.md) для справочника по нативному формату конфигурации.
 
 {% endnote %}
 
-Минимальный файл `values.yaml` для REST-каталога (Nessie) с S3-совместимым хранилищем:
+Минимальный файл `values.yaml` со встроенным S3-каталогом по умолчанию и S3-совместимым хранилищем. Внешний сервис каталога не задействован — состояние каталога это объект `root.json` в бакете warehouse:
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### REST-каталог (Nessie)
+
+Используйте только если у вас уже развёрнут Nessie или другой REST-каталог Iceberg — это добавляет внешний сервис, который не нужен развёртыванию по умолчанию:
 
 ```yaml
 catalog:
@@ -58,11 +84,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
+    endpoint: "http://rustfs:9000"
 
 aws:
   existingSecret: icegate-aws-credentials
@@ -109,9 +131,9 @@ aws:
 
 | Значение | По умолчанию | Описание |
 |----------|--------------|----------|
-| `catalog.backend` | `rest` | Тип каталога: `rest`, `s3tables` или `glue` |
+| `catalog.backend` | `s3` | Тип каталога: `s3`, `rest`, `s3tables` или `glue` |
 | `storage.s3.bucket` | `warehouse` | Имя S3-бакета |
-| `storage.s3.endpoint` | `""` | Пользовательский S3-эндпоинт (MinIO). Опустить для реального AWS S3 |
+| `storage.s3.endpoint` | `""` | Пользовательский S3-эндпоинт (RustFS). Опустить для реального AWS S3 |
 | `aws.existingSecret` | `""` | Secret с ключами `aws-access-key-id` и `aws-secret-access-key` |
 | `query.replicaCount` | `1` | Количество реплик сервиса Query |
 | `ingest.replicaCount` | `1` | Количество реплик сервиса Ingest |
@@ -130,19 +152,19 @@ aws:
 
 ## Оверлеи Kustomize
 
-Для настройки под конкретное окружение IceGate предоставляет оверлеи Kustomize, которые компонуют Helm chart с зависимостями инфраструктуры.
+Для настройки под конкретное окружение {{product_name}} предоставляет оверлеи Kustomize, которые компонуют Helm chart с зависимостями инфраструктуры.
 
 ### Доступные оверлеи
 
 | Оверлей | Описание | Инфраструктура |
 |---------|----------|----------------|
-| `skaffold` | Локальная разработка со Skaffold | MinIO, Nessie, стек наблюдаемости |
-| `orbstack` | Среда выполнения контейнеров OrbStack | MinIO, Nessie, стек наблюдаемости |
-| `aws-glue` | Каталог AWS Glue | Стек наблюдаемости (без MinIO/Nessie) |
-| `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (без MinIO/Nessie) |
-| `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости (без MinIO) |
+| `skaffold` | Локальная разработка со Skaffold | RustFS, стек наблюдаемости |
+| `orbstack` | Среда выполнения контейнеров OrbStack | RustFS, стек наблюдаемости |
+| `aws-glue` | Каталог AWS Glue | Стек наблюдаемости (внешний S3) |
+| `aws-s3tables` | Каталог AWS S3 Tables | Стек наблюдаемости (внешний S3) |
+| `external-s3` | Внешний S3 + каталог Nessie | Nessie, стек наблюдаемости |
 
-Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами IceGate и Jaeger для распределённой трассировки.
+Все оверлеи используют общую базу (`config/kustomize/base/`), которая разворачивает стек наблюдаемости: Prometheus (kube-prometheus-stack), Grafana с готовыми дашбордами {{product_name}} и Jaeger для распределённой трассировки.
 
 ### Использование
 
@@ -159,7 +181,7 @@ skaffold dev
 Каждый оверлей содержит:
 
 - `kustomization.yaml` — объявляет Helm charts и патчи
-- `values-icegate.yaml` — значения Helm IceGate для данного окружения
+- `values-icegate.yaml` — значения Helm {{product_name}} для данного окружения
 - `secret-aws.yaml` — Secret с учётными данными AWS (отредактировать перед применением)
 
 Для создания пользовательского оверлея:

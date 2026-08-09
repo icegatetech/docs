@@ -1,11 +1,11 @@
 ---
 title: Grafana Integration
-description: Set up Grafana to query logs, traces, and metrics from IceGate
+description: Set up Grafana to query logs, traces, and metrics from {{product_name}}
 ---
 
 # Grafana Integration
 
-This guide covers connecting Grafana to all three {{product_name}} query APIs: Loki (logs), Tempo (traces), and Prometheus (metrics).
+This guide covers connecting Grafana to the {{product_name}} query APIs: Loki (logs) and Tempo (traces), both implemented, plus Prometheus (metrics), which is planned and not yet functional.
 
 ## Prerequisites
 
@@ -67,7 +67,7 @@ datasources:
 
 {% note warning %}
 
-The Tempo API provides basic trace retrieval and search. TraceQL support is planned for future releases.
+The Tempo API provides trace retrieval and search, and TraceQL is supported for `/api/search`; TraceQL features that are not yet implemented return `501 Not Implemented`.
 
 {% endnote %}
 
@@ -106,11 +106,11 @@ datasources:
 
 ### Prometheus Data Source (Metrics)
 
-{{product_name}} implements the Grafana Prometheus API on port **9090**.
-
 {% note warning %}
 
-The Prometheus query API is currently under development. Metadata endpoints (labels, series) are available, but PromQL queries are not yet supported. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
+**The Prometheus data source will not work yet.** {{product_name}} mounts the Prometheus API routes on port **9090**, but every one of them — including the metadata endpoints (`labels`, `series`, `label/{name}/values`) — returns `501 Not Implemented`. Only `/-/ready` responds.
+
+Use the Loki data source with LogQL metric queries for log-based metrics, or Arrow Flight SQL for general-purpose SQL over the same data. The steps below are recorded for when the API lands.
 
 {% endnote %}
 
@@ -253,12 +253,12 @@ Create a dashboard with three panels:
 
 ### Trace Explorer
 
-1. Navigate to **Explore** > select **IceGate Traces**
+1. Navigate to **Explore** > select **{{product_name}} Traces**
 2. Search by service name: enter `service.name=my-service` in the tags field
 3. Filter by minimum duration: set `minDuration` to `100ms`
 4. Click a trace to view its span waterfall
 
-## Using IceGate as a Drop-In for Existing Grafana
+## Using {{product_name}} as a Drop-In for Existing Grafana
 
 If you have an existing Grafana setup with Loki, you can point it at {{product_name}} by changing only the data source URL:
 
@@ -268,7 +268,7 @@ If you have an existing Grafana setup with Loki, you can point it at {{product_n
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Your existing dashboards, alerting rules, and saved queries will continue to work because {{product_name}} implements the same Loki API.
+Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features {{product_name}} implements — it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
 
 {% note info %}
 
@@ -281,8 +281,8 @@ LogQL metric queries (`rate()`, `count_over_time()`, `sum by()`, etc.) are suppo
 | API | Port | Grafana Data Source Type | Status |
 |-----|------|--------------------------|--------|
 | Loki (logs) | 3100 | Loki | Fully implemented |
-| Tempo (traces) | 3200 | Tempo | Basic retrieval and search (TraceQL planned) |
-| Prometheus (metrics) | 9090 | Prometheus | Metadata only (PromQL planned) |
+| Tempo (traces) | 3200 | Tempo | Retrieval and search; TraceQL supported (unimplemented features return `501`) |
+| Prometheus (metrics) | 9090 | Prometheus | Planned; every route returns `501` except `/-/ready` |
 
 ## Next Steps
 

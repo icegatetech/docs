@@ -1,11 +1,11 @@
 ---
 title: Multi-Tenancy
-description: Configure and use multi-tenant isolation in IceGate
+description: Configure and use multi-tenant isolation in {{product_name}}
 ---
 
 # Multi-Tenancy
 
-IceGate is designed as a multi-tenant system, providing data isolation between different organizations or teams.
+{{product_name}} is designed as a multi-tenant system, providing data isolation between different organizations or teams.
 
 ## Tenant Identification
 

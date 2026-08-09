@@ -24,6 +24,16 @@ npm run build:fr   # Build French only
 npm run build:ru   # Build Russian only
 ```
 
+**Do not drop `--static-content` from the build scripts.** Its help text ("allow loading custom
+resources into statically generated pages") undersells it: without the flag Diplodoc ships every
+page as an empty `<div id="root">` with the real content parked in a `diplodoc-state` JSON blob,
+so a crawler that does not run JavaScript sees ~4 words, no `<h1>`, and — because the TOC is
+rendered client-side too — no links to follow. Ahrefs found 4 of this site's pages for exactly
+that reason. With the flag, pages ship prerendered (~670 words and a real `<h1>` on a typical
+page) and the client bundle still hydrates on top, so nothing about the reading experience
+changes. Removing it breaks search and AI-crawler visibility site-wide, silently and with a
+green build.
+
 ## Project Structure
 
 ```
@@ -32,6 +42,7 @@ npm run build:ru   # Build Russian only
 ├── ru/                    # Russian documentation
 ├── llms.txt               # LLM context file — overview with key examples
 ├── llms-full.txt          # LLM context file — complete documentation content
+├── robots.txt             # Crawler policy; copied to the build root by `npm run build`
 ├── presets.yaml           # Build presets (default, development, production)
 ├── .yfm                   # Diplodoc configuration (vars, langs, settings)
 └── .yfmlint               # Linter rules configuration
@@ -72,7 +83,31 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 
 ## Writing Documentation
 
-- Use variables from `.yfm` vars section: `{{product_name}}`, `{{version}}`, `{{repo_url}}`
+- **Use the `.yfm` vars in prose** — every mention outside code. The corpus is converted, so a
+  rename or version bump is a one-line edit in `.yfm` rather than a find-and-replace across
+  three languages. In use today: `{{product_name}}` (266 sites), `{{rust_version}}` (15),
+  `{{repo_url}}` (5), `{{license}}` (4).
+- **Adding a var is only worth it when the value appears in prose.** Measure before you add:
+  ports are the cautionary case — `3100` appears 37 times in prose but 131 times inside code
+  blocks, and since code must stay literal, a `{{loki_port}}` var would let prose and the
+  adjacent `curl` command disagree after a change. That is strictly worse than a literal,
+  because it *looks* single-sourced. Same verdict for `{{version}}` and the Helm OCI ref: code
+  only, so they stay defined but unused. `{{product_description}}` is title-case and every
+  prose site is mid-sentence lowercase, so it does not fit either.
+- **Never substitute inside code.** Fenced blocks, inline code, link targets and HTML
+  attributes keep the literal name — commands, image tags, hostnames (`icegate-query`),
+  datasource UIDs and `github.com/icegatetech/icegate` are identifiers, not prose, and a reader
+  copy-pasting `{{product_name}}` into a shell gets nothing useful.
+- **`llms.txt` and `llms-full.txt` must contain the literal name, never a variable.** The build
+  `cp`s them into `./build` verbatim, so yfm never renders them — a `{{product_name}}` there
+  ships raw to the LLM consumers the files exist for. 23 of them were doing exactly that.
+- The per-language scripts pass `-c ./.yfm`, and **the `./` is load-bearing**. `--help` says
+  relative config paths resolve from the execution directory and "other" paths from `--input`;
+  a bare `.yfm` counts as "other", so it resolves to `en/.yfm`, silently finds nothing, and the
+  build emits 121 "Variable not found" warnings while shipping raw `{{product_name}}` to disk.
+  `./.yfm` resolves from the repo root and works. `../.yfm` fails outright (ENOENT one
+  directory above the repo). Verify a change here by grepping the output for `{{`, not by
+  trusting the exit code — a config that fails to load is a warning, not an error.
 - HTML is allowed (`allowHTML: true`)
 - Files must end with newline (MD047 enforced)
 - Line length not enforced (MD013 disabled)
@@ -86,7 +121,10 @@ When updating documentation, regenerate `llms-full.txt` after changes. `llms.txt
 - Primary installation method: **Helm chart** (`oci://ghcr.io/icegatetech/charts/icegate`)
 - Development environment: **Skaffold** (`skaffold dev`) with Kustomize overlays
 - Docker Compose available as alternative for local development
-- Rust 1.92.0+ (2024 edition), 6 workspace crates: common, queue, query, ingest, maintain, jobmanager
+- Rust 1.92.0+ (2024 edition), 6 workspace crates: common, catalog-s3, queue, query, ingest, maintain. `jobmanager` is **not** a workspace crate — it lives in `icegatetech/jobmanager` and is consumed as a git-pinned dependency
+- Default catalog backend is IceGate's own S3 catalog (`backend: !s3`, state in `root.json`), not Nessie. Nessie/Glue/S3 Tables are alternatives
+- Default object store is **RustFS** (S3-compatible), not MinIO
+- Shift (WAL → Iceberg) lives in the **ingest** crate; compaction, orphan GC, and the LLM pricing crawler live in **maintain**
 - Metrics port: **9091** (not 9090). Prometheus API port is 9090.
 - Real environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `RUST_LOG`
 

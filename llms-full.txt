@@ -15,8 +15,8 @@ IceGate is deployed on Kubernetes using Helm charts, with Kustomize overlays for
 ## Prerequisites
 
 - **Kubernetes** >= 1.28 with **Helm 3**
-- **Object Storage:** AWS S3 or S3-compatible (MinIO)
-- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
+- **Object Storage:** AWS S3 or S3-compatible (RustFS)
+- **Iceberg Catalog:** the built-in S3 catalog (default, no external service), or Nessie (REST), AWS S3 Tables, or AWS Glue
 
 ## Helm Chart
 
@@ -46,11 +46,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
+Helm values use camelCase and flat keys (e.g., `backend: s3` + `s3.warehouse`). The chart translates these into the native serde tagged enum config format (`backend: !s3`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
 
 {% endnote %}
 
-A minimal `values.yaml` for a REST catalog (Nessie) with S3-compatible storage:
+A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved — the catalog state is a `root.json` object in the warehouse bucket:
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### REST Catalog (Nessie)
+
+Use this only if you already run a Nessie or other Iceberg REST catalog — it adds an external service the default deployment does not need:
 
 ```yaml
 catalog:
@@ -63,11 +89,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
+    endpoint: "http://rustfs:9000"
 
 aws:
   existingSecret: icegate-aws-credentials
@@ -114,9 +136,9 @@ aws:
 
 | Value | Default | Description |
 |-------|---------|-------------|
-| `catalog.backend` | `rest` | Catalog type: `rest`, `s3tables`, or `glue` |
+| `catalog.backend` | `s3` | Catalog type: `s3`, `rest`, `s3tables`, or `glue` |
 | `storage.s3.bucket` | `warehouse` | S3 bucket name |
-| `storage.s3.endpoint` | `""` | Custom S3 endpoint (MinIO). Omit for real AWS S3 |
+| `storage.s3.endpoint` | `""` | Custom S3 endpoint (RustFS). Omit for real AWS S3 |
 | `aws.existingSecret` | `""` | Secret with `aws-access-key-id` and `aws-secret-access-key` keys |
 | `query.replicaCount` | `1` | Query service replicas |
 | `ingest.replicaCount` | `1` | Ingest service replicas |
@@ -141,11 +163,11 @@ For environment-specific customizations, IceGate provides Kustomize overlays tha
 
 | Overlay | Description | Infrastructure |
 |---------|-------------|----------------|
-| `skaffold` | Local development with Skaffold | MinIO, Nessie, observability stack |
-| `orbstack` | OrbStack container runtime | MinIO, Nessie, observability stack |
-| `aws-glue` | AWS Glue catalog | Observability stack (no MinIO/Nessie) |
-| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (no MinIO/Nessie) |
-| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack (no MinIO) |
+| `skaffold` | Local development with Skaffold | RustFS, observability stack |
+| `orbstack` | OrbStack container runtime | RustFS, observability stack |
+| `aws-glue` | AWS Glue catalog | Observability stack (external S3) |
+| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (external S3) |
+| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack |
 
 All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built IceGate dashboards, and Jaeger for distributed tracing.
 
@@ -198,7 +220,7 @@ curl http://localhost:3100/ready
 
 # Configuration
 
-{{product_name}} uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
+IceGate uses YAML or TOML configuration files. The format is auto-detected by file extension (`.yaml`/`.yml` for YAML, `.toml` for TOML).
 
 ## CLI Usage
 
@@ -235,23 +257,47 @@ The `catalog` section configures the Apache Iceberg catalog. It is shared by all
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 ```
 
 ### Catalog Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `backend` | enum | No | `memory` | Catalog backend type (see below) |
+| `backend` | enum | Yes | — | Catalog backend type (see below). No default — the field is required |
 | `warehouse` | string | Yes | — | Warehouse location (e.g., `s3://warehouse/`) |
 | `properties` | map | No | `{}` | Additional catalog-specific properties |
 | `cache` | object | No | — | IO cache configuration (see [Cache Configuration](#cache-configuration)) |
 
 ### Catalog Backends
+
+#### S3 Catalog (Default)
+
+IceGate's own catalog. Catalog state is a `root.json` object in object storage, updated by compare-and-swap, so no external catalog service is required:
+
+```yaml
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `warehouse` (inside `!s3`) | string | Yes | Object-storage key prefix holding the catalog state |
+| `properties.bucket` | string | Yes | Bucket holding the catalog state |
+| `properties.region` | string | Yes | Region for the catalog's S3 client |
+| `properties.endpoint` | string | No | Custom endpoint for S3-compatible storage. Omit for real AWS S3 |
 
 #### REST Catalog (Nessie)
 
@@ -308,9 +354,13 @@ The optional `cache` section enables a foyer hybrid cache (memory + disk) to red
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -334,21 +384,21 @@ catalog:
 
 The `storage` section configures the object storage backend. Shared by all services.
 
-### S3 / S3-Compatible (MinIO)
+### S3 / S3-Compatible (RustFS)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `bucket` | string | Yes | — | S3 bucket name |
 | `region` | string | Yes | — | AWS region |
-| `endpoint` | string | No | — | Custom endpoint URL for S3-compatible storage (MinIO, etc.) |
+| `endpoint` | string | No | — | Custom endpoint URL for S3-compatible storage (RustFS, etc.) |
 
 ### Local Filesystem
 
@@ -377,17 +427,19 @@ Full reference for the Ingest service (`ingest run -c ingest.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 queue:
   common:
@@ -416,7 +468,7 @@ shift:
     poll_interval_ms: 1000
     iteration_interval_millisecs: 30000
     storage:
-      endpoint: http://minio:9000
+      endpoint: http://rustfs:9000
       bucket: jobs
       prefix: shifter
       region: us-east-1
@@ -515,11 +567,13 @@ Full reference for the Query service (`query run -c query.yaml`).
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
   cache:
     memory_size_mb: 1024
     disk_dir: /tmp/icegate/cache
@@ -529,7 +583,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 
 engine:
   batch_size: 8192
@@ -599,7 +653,7 @@ When `engine.wal_query_enabled` is `true`, the query service reads both committe
 | `loki.enabled` | bool | `true` | Enable Loki-compatible log query API |
 | `loki.host` | string | `0.0.0.0` | Bind address |
 | `loki.port` | integer | `3100` | Loki API port |
-| `prometheus.enabled` | bool | `true` | Enable Prometheus-compatible metrics API |
+| `prometheus.enabled` | bool | `true` | Serve the Prometheus query API. Routes are registered, but every handler except `/-/ready` returns `501 Not Implemented` — PromQL is not implemented yet. This is not the metrics endpoint; that is the `metrics` block on port 9091 |
 | `prometheus.host` | string | `0.0.0.0` | Bind address |
 | `prometheus.port` | integer | `9090` | Prometheus API port |
 | `tempo.enabled` | bool | `true` | Enable Tempo-compatible trace API |
@@ -612,17 +666,19 @@ The Maintain service only requires catalog and storage configuration:
 
 ```yaml
 catalog:
-  backend: !rest
-    uri: http://nessie:19120/iceberg
+  backend: !s3
+    warehouse: catalog
   warehouse: s3://warehouse/
   properties:
-    prefix: main
+    bucket: warehouse
+    region: us-east-1
+    endpoint: http://rustfs:9000
 
 storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
 ```
 
 ### Maintain CLI
@@ -692,8 +748,8 @@ make run-analytics-release
 Environment variables for local development:
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 
@@ -1356,11 +1412,11 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 # Grafana Integration
 
-This guide covers connecting Grafana to all three {{product_name}} query APIs: Loki (logs), Tempo (traces), and Prometheus (metrics).
+This guide covers connecting Grafana to the IceGate query APIs: Loki (logs) and Tempo (traces), both implemented, plus Prometheus (metrics), which is planned and not yet functional.
 
 ## Prerequisites
 
-- {{product_name}} Query service running (see [Installation](../getting-started/installation.md))
+- IceGate Query service running (see [Installation](../getting-started/installation.md))
 - Grafana 10+ ([grafana.com/oss](https://grafana.com/oss/grafana/))
 
 ## Verify Query Service Health
@@ -1384,7 +1440,7 @@ All endpoints should return HTTP 200.
 
 ### Loki Data Source (Logs)
 
-{{product_name}} implements the Grafana Loki API on port **3100**.
+IceGate implements the Grafana Loki API on port **3100**.
 
 1. Go to **Connections** > **Data sources** > **Add data source**
 2. Select **Loki**
@@ -1414,11 +1470,11 @@ datasources:
 
 ### Tempo Data Source (Traces)
 
-{{product_name}} implements the Grafana Tempo API on port **3200**.
+IceGate implements the Grafana Tempo API on port **3200**.
 
 {% note warning %}
 
-The Tempo API provides basic trace retrieval and search. TraceQL support is planned for future releases.
+The Tempo API provides trace retrieval and search, and TraceQL is supported for /api/search; TraceQL features that are not yet implemented return 501 Not Implemented.
 
 {% endnote %}
 
@@ -1457,11 +1513,11 @@ datasources:
 
 ### Prometheus Data Source (Metrics)
 
-{{product_name}} implements the Grafana Prometheus API on port **9090**.
+IceGate mounts the Grafana Prometheus API routes on port **9090**, but they are not implemented: every route returns 501 Not Implemented except /-/ready.
 
 {% note warning %}
 
-The Prometheus query API is currently under development. Metadata endpoints (labels, series) are available, but PromQL queries are not yet supported. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
+The Prometheus query API is NOT implemented. Every route returns 501 Not Implemented, including the metadata endpoints; only /-/ready responds. PromQL is not parsed at all yet. Use the Loki API with LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 
@@ -1541,7 +1597,7 @@ datasources:
 
 ### Logs to Traces
 
-{{product_name}} stores `trace_id` and `span_id` fields in log records. Configure Grafana to link from log lines to traces:
+IceGate stores `trace_id` and `span_id` fields in log records. Configure Grafana to link from log lines to traces:
 
 1. In the Loki data source settings, go to **Derived fields**
 2. Add a derived field:
@@ -1611,7 +1667,7 @@ Create a dashboard with three panels:
 
 ## Using IceGate as a Drop-In for Existing Grafana
 
-If you have an existing Grafana setup with Loki, you can point it at {{product_name}} by changing only the data source URL:
+If you have an existing Grafana setup with Loki, you can point it at IceGate by changing only the data source URL:
 
 1. Go to **Connections** > **Data sources**
 2. Edit your existing Loki data source
@@ -1619,7 +1675,7 @@ If you have an existing Grafana setup with Loki, you can point it at {{product_n
 4. Add the `X-Scope-OrgID` header if not already present
 5. Click **Save & Test**
 
-Your existing dashboards, alerting rules, and saved queries will continue to work because {{product_name}} implements the same Loki API.
+Dashboards, alerting rules, and saved queries keep working as long as they stay within the endpoints and LogQL features IceGate implements — it serves a subset of the Loki read API, not all of it. Check the [Loki API reference](../api-reference/loki.md) and the [LogQL implementation status](querying.md) for anything a panel depends on, and re-test alert rules after switching.
 
 {% note info %}
 
@@ -1632,8 +1688,8 @@ LogQL metric queries (`rate()`, `count_over_time()`, `sum by()`, etc.) are suppo
 | API | Port | Grafana Data Source Type | Status |
 |-----|------|--------------------------|--------|
 | Loki (logs) | 3100 | Loki | Fully implemented |
-| Tempo (traces) | 3200 | Tempo | Basic retrieval and search (TraceQL planned) |
-| Prometheus (metrics) | 9090 | Prometheus | Metadata only (PromQL planned) |
+| Tempo (traces) | 3200 | Tempo | Retrieval and search; TraceQL supported (unimplemented features return 501) |
+| Prometheus (metrics) | 9090 | Prometheus | Planned; every route returns 501 except /-/ready |
 
 ## Next Steps
 
@@ -1730,7 +1786,7 @@ datasources:
 
 ## Architecture: Multi-Tenant Deployment
 
-A multi-tenant {{product_name}} deployment uses a single cluster shared by all tenants. Data isolation is enforced at the storage layer:
+A multi-tenant IceGate deployment uses a single cluster shared by all tenants. Data isolation is enforced at the storage layer:
 
 ```
 Tenant A ──┐                          ┌── Iceberg partition: tenant_id="tenant-a"
@@ -1764,7 +1820,7 @@ Compare to dedicated-table approaches:
 | Separate tables per tenant | Medium | High (schema management per tenant) | Physical |
 | Separate clusters per tenant | High | Very high | Full |
 
-{{product_name}} uses the shared tables approach, which is optimal for SaaS and platform use cases where many tenants share similar data shapes.
+IceGate uses the shared tables approach, which is optimal for SaaS and platform use cases where many tenants share similar data shapes.
 
 ## Concrete Example: Three Tenants
 
@@ -1872,7 +1928,7 @@ Consider implementing per-tenant limits:
 
 # Performance Tuning
 
-This guide covers tuning {{product_name}} for high-volume workloads across ingestion, compaction, and query paths.
+This guide covers tuning IceGate for high-volume workloads across ingestion, compaction, and query paths.
 
 ## Architecture Overview
 
@@ -2145,11 +2201,11 @@ catalog:
 
 # Data Retention
 
-This guide covers managing the data lifecycle in {{product_name}}, from WAL segments through Iceberg table maintenance.
+This guide covers managing the data lifecycle in IceGate, from WAL segments through Iceberg table maintenance.
 
 ## Data Lifecycle
 
-Data in {{product_name}} moves through three stages:
+Data in IceGate moves through three stages:
 
 1. **WAL (Write-Ahead Log)** — temporary Parquet files in object storage, written by Ingest
 2. **Iceberg tables** — optimized, partitioned Parquet files managed by Apache Iceberg
@@ -2159,20 +2215,32 @@ Each stage has independent retention controls.
 
 ## WAL Retention
 
-WAL segments are automatically deleted after the shift process compacts them into Iceberg tables. For the queue bucket, configure an object storage lifecycle rule as a safety net:
+Shift does not delete WAL segments after committing them to Iceberg — a lifecycle rule on the queue bucket is what reclaims them, so configure one:
 
-### MinIO Lifecycle Rule
+{% note warning %}
+
+Size the expiration from your worst-case unshifted-WAL window, not for convenience. A segment is only safe to expire once shift has committed it and recorded its offset in an Iceberg snapshot. If shift is stopped, backlogged, or recovering for longer than the expiration, the rule deletes segments whose offsets were never committed. The snapshot offset only tells shift where to resume — it cannot rebuild a deleted segment, so that is acknowledged data lost. One day suits the demo stack; choose yours from how long ingest can plausibly run without a successful shift commit, and alert on shift lag rather than relying on the rule to stay ahead of it.
+
+{% endnote %}
+
+The bucket in both commands below is the one from `queue.common.base_path` (`s3://queue/` by default). Substitute your own if you changed it — a rule applied to the wrong bucket leaves the real WAL bucket unmanaged.
+
+### RustFS (and other S3-compatible stores)
+
+RustFS speaks the S3 API, so the same `aws s3api` call the project's own bootstrap uses works against it:
 
 ```bash
 # Set 1-day TTL on queue bucket
-mc ilm rule add --expire-days 1 myminio/queue
+aws --endpoint-url http://localhost:9000 s3api put-bucket-lifecycle-configuration \
+  --bucket queue \
+  --lifecycle-configuration '{"Rules":[{"ID":"expire-1d","Status":"Enabled","Filter":{"Prefix":""},"Expiration":{"Days":1}}]}'
 ```
 
 ### AWS S3 Lifecycle Rule
 
 ```bash
 aws s3api put-bucket-lifecycle-configuration \
-  --bucket icegate-queue \
+  --bucket queue \
   --lifecycle-configuration '{
     "Rules": [{
       "ID": "expire-wal-segments",
@@ -2352,13 +2420,21 @@ Enable S3 versioning for point-in-time recovery of the warehouse bucket:
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 
 ### Catalog Backup
 
-Back up the Nessie catalog (RocksDB storage):
+On the default S3 catalog there is no service to stop and no database to dump — the catalog is `root.json` plus the table metadata files, in the warehouse bucket. Enabling versioning on that bucket (above) already gives point-in-time recovery. For an off-site copy, sync the catalog prefix:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup-$(date +%Y%m%d)/
+```
+
+Because `root.json` is replaced by compare-and-swap, a copy taken mid-commit is still a consistent earlier version rather than a torn write.
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB storage:
 
 ```bash
 # Stop Nessie
@@ -2388,7 +2464,7 @@ docker start nessie
 
 # Centralized Logging for Microservices
 
-This cookbook walks through setting up centralized log collection from multiple microservices into {{product_name}} using the OpenTelemetry Collector.
+This cookbook walks through setting up centralized log collection from multiple microservices into IceGate using the OpenTelemetry Collector.
 
 ## Architecture
 
@@ -2422,7 +2498,7 @@ This cookbook walks through setting up centralized log collection from multiple 
 
 ## Step 1: Deploy the OpenTelemetry Collector
 
-The Collector acts as a central aggregation point, decoupling your services from {{product_name}}.
+The Collector acts as a central aggregation point, decoupling your services from IceGate.
 
 ```yaml
 # otel-collector-config.yaml
@@ -2544,7 +2620,7 @@ exporter, _ := otlploggrpc.New(ctx,
 
 ### Direct Ingestion (without Collector)
 
-For simple setups, send logs directly to {{product_name}}:
+For simple setups, send logs directly to IceGate:
 
 ```bash
 curl -X POST http://localhost:4318/v1/logs \
@@ -2627,7 +2703,7 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 ## Step 4: Set Up Grafana
 
-Add {{product_name}} as a Loki data source in Grafana:
+Add IceGate as a Loki data source in Grafana:
 
 ```yaml
 # grafana/provisioning/datasources/icegate.yaml
@@ -2681,7 +2757,7 @@ Each team queries only their own data. See [Multi-Tenancy](../guides/multi-tenan
 
 # End-to-End Distributed Tracing
 
-This cookbook walks through instrumenting services with OpenTelemetry, sending trace data to {{product_name}} via OTLP, and retrieving traces via the Tempo-compatible API.
+This cookbook walks through instrumenting services with OpenTelemetry, sending trace data to IceGate via OTLP, and retrieving traces via the Tempo-compatible API.
 
 {% note warning %}
 
@@ -2973,7 +3049,7 @@ See [Grafana Integration](../guides/grafana-integration.md) for cross-signal lin
 
 ## Span Data Model
 
-Spans stored in {{product_name}} include:
+Spans stored in IceGate include:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -2997,17 +3073,17 @@ Spans stored in {{product_name}} include:
 
 # Cross-Signal Correlation
 
-This cookbook shows how to correlate data across logs, traces, and metrics in {{product_name}} to quickly move from an alert to a root cause.
+This cookbook shows how to correlate data across logs, traces, and metrics in IceGate to quickly move from an alert to a root cause.
 
 {% note warning %}
 
-This guide uses the Loki API (fully implemented) and the Tempo API (basic trace retrieval and search available; TraceQL planned). The Prometheus API is under development — use LogQL metric queries as an alternative for log-based metrics.
+This guide uses the Loki API (fully implemented) and the Tempo API (retrieval and search available; TraceQL supported, unimplemented features return 501). The Prometheus API is NOT implemented — every route returns 501 except /-/ready; use LogQL metric queries as an alternative for log-based metrics.
 
 {% endnote %}
 
 ## How Correlation Works
 
-{{product_name}} stores all observability signals in Apache Iceberg tables with shared fields that enable cross-signal linking:
+IceGate stores all observability signals in Apache Iceberg tables with shared fields that enable cross-signal linking:
 
 | Field | Present In | Purpose |
 |-------|-----------|---------|
@@ -4027,7 +4103,7 @@ X-Scope-OrgID: my-tenant
 
 {% note warning %}
 
-The Tempo API is currently under development. Basic trace retrieval is available but TraceQL support is planned for future releases.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval and /api/search are available, and TraceQL is supported for search — TraceQL features that are not yet implemented return 501 Not Implemented rather than silently returning wrong results.
 
 {% endnote %}
 
@@ -4164,7 +4240,7 @@ Spans stored in IceGate include:
 
 # Architecture Overview
 
-IceGate is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables with DataFusion as the query engine.
+IceGate is an observability data lake engine that stores logs, traces, metrics, events, and LLM operations in Apache Iceberg tables with DataFusion as the query engine.
 
 ## Design Principles
 
@@ -4202,13 +4278,18 @@ The Write-Ahead Log (WAL) stores data as Parquet files organized for compatibili
 **Purpose:** Execute queries against logs, traces, metrics, and events
 
 - **Engine:** Apache DataFusion + Apache Arrow
-- **APIs:** Loki (3100), Prometheus (9090), Tempo (3200)
-- **Query Languages:** LogQL, PromQL (planned), TraceQL (planned)
+- **APIs:** Loki (3100), Tempo (3200), Arrow Flight SQL (8815); Prometheus (9090) serves routes but its handlers still return `501 Not Implemented`
+- **Query Languages:** LogQL, TraceQL, SQL; PromQL planned
+- **Multi-tenancy:** Tenant taken from the `X-Scope-OrgID` header, or the `x-scope-orgid` gRPC metadata for Flight SQL
+
+Arrow Flight SQL is strictly read-only — DDL and DML are rejected — and enforces `tenant_id` at the row level on every scan, so JDBC, ODBC, and ADBC clients query `iceberg.icegate.<table>` with no IceGate-specific client code.
 
 The query service reads from both:
 
 - **WAL**: For real-time data (seconds-old)
-- **Iceberg Tables**: For historical data (compacted)
+- **Iceberg Tables**: For historical data (shifted and compacted)
+
+The boundary between the two is the WAL offset recorded in the Iceberg snapshot summary, so a row is read from exactly one side and never counted twice.
 
 ### Maintain Service
 
@@ -4216,10 +4297,25 @@ The query service reads from both:
 
 **Purpose:** Data lifecycle and optimization operations
 
-- **Compaction:** Merge small WAL files into optimized Iceberg tables
-- **TTL:** Expire and delete old data based on retention policies
-- **Optimization:** Rewrite data files for better query performance
-- **Cleanup:** Remove orphaned files and expired snapshots
+- **Schema migration:** Create the Iceberg tables (`maintain migrate create`)
+- **Data compaction:** Rewrite small Parquet data files into fewer, larger sorted ones
+- **Manifest compaction:** Repack fragmented Iceberg manifests
+- **Orphan GC:** Delete objects the current table metadata no longer references, once past a grace period
+- **Pricing crawler:** Crawl LLM rate cards from external feeds into the global `icegate.prices` table
+
+Compaction, GC, and the pricing crawler each run as jobs whose state lives in object storage, under their own job-state prefix.
+
+### Catalog
+
+![Catalog Components](../../assets/c4/structurizr-CatalogComponents.png)
+
+**Purpose:** Organize the data lake with ACID transactions, without a dedicated OLTP database
+
+- **Default backend:** IceGate's own S3 catalog — catalog state is a `root.json` object updated by compare-and-swap
+- **Alternative backends:** REST (Nessie), AWS S3 Tables, AWS Glue
+- **Deployment:** Linked into Ingest, Query, and Maintain by default; optionally deployed standalone as an Iceberg REST server on port 8181
+
+A conditional read keeps the cached catalog root fresh; table metadata is immutable per location, so it is cached unconditionally in an LRU.
 
 ### Alert Service (Planned)
 
@@ -4238,8 +4334,10 @@ The query service reads from both:
 | Memory Format | Apache Arrow 57.0 | Zero-copy data processing |
 | Storage Format | Apache Parquet 57.0 | Columnar storage with ZSTD compression |
 | Ingestion | OpenTelemetry 0.31 | Standard observability protocol (gRPC + HTTP) |
-| Catalog | Nessie, AWS S3 Tables, AWS Glue | Iceberg REST catalog backends |
-| Job Manager | icegate-jobmanager | S3-based shift job state management |
+| SQL Interface | Arrow Flight SQL 57.0 | Read-only SQL for JDBC, ODBC, and ADBC clients |
+| Catalog | S3 catalog (default), Nessie, AWS S3 Tables, AWS Glue | Iceberg catalog backends; the default keeps state in object storage |
+| Object Storage | RustFS, or any S3-compatible store | WAL segments, Iceberg data, catalog state, job state |
+| Job Manager | jobmanager (separate repository) | S3-based job state for shift, compaction, GC, and pricing |
 | Caching | foyer 0.22 | Hybrid memory + disk cache for S3 reads |
 | Language | Rust 1.92+ (2024 edition) | Memory-safe, high-performance runtime |
 
@@ -4247,12 +4345,18 @@ The query service reads from both:
 
 ### Ingestion Flow
 
+![Ingestion Sequence](../../assets/c4/structurizr-IngestionFlow.png)
+
+Steps 1-7 are the write path, acknowledged once the WAL segment lands. Steps 8-14 are shift, which runs independently of the request.
+
 1. Client sends OTLP data to Ingest service
 2. Ingest validates and transforms data
 3. Data written to WAL as Parquet files
 4. Acknowledgment sent to client (exactly-once)
 
 ### Query Flow
+
+![Query Sequence](../../assets/c4/structurizr-QueryFlow.png)
 
 1. Client sends query to Query service
 2. Query parsed and planned by DataFusion
@@ -4265,8 +4369,17 @@ The query service reads from both:
 2. Groups segments into shift tasks
 3. Reads WAL files in parallel, merges and re-partitions data
 4. Writes optimized Iceberg data files
-5. Commits new snapshot to catalog
-6. Deletes processed WAL segments
+5. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
+
+Shift never deletes WAL segments. They are reclaimed by an object lifecycle rule on the queue bucket, and the offset in the snapshot summary is what lets shift resume where it left off.
+
+That makes the lifecycle expiration a durability parameter, not housekeeping: a segment has to outlive the commit that covers it. If shift is delayed or failing when the rule fires, segments whose offsets were never committed are deleted and the data is gone. See [Data Retention](../guides/data-retention.md) for sizing.
+
+### Maintenance Flow
+
+![Maintenance Sequence](../../assets/c4/structurizr-MaintenanceFlow.png)
+
+Migration is a one-shot job. Compaction, orphan GC, and the pricing crawler are independent loops on their own schedules — the step numbers order each loop, not the loops against each other. Each claims work under its own job-state prefix, so the loops never fight over task ownership. They still share the tables underneath — compaction commits rewrite snapshots while GC deletes unreferenced objects — which is why GC only removes files older than its grace period and commits use optimistic concurrency, retrying on conflict.
 
 ## Scalability
 
@@ -4274,7 +4387,7 @@ The query service reads from both:
 
 - **Ingest:** Scale replicas for higher throughput
 - **Query:** Scale replicas for concurrent queries
-- **Maintain:** Single instance (leader election)
+- **Maintain:** Scale replicas for more rewrite throughput — workers share job state in object storage with compare-and-swap and commit with optimistic concurrency, so parallel instances are safe. Prefer raising in-process worker count first; returns taper as replicas grow, since all workers on a table contend on one job-state object.
 
 ### Storage Scaling
 
@@ -4291,7 +4404,7 @@ The query service reads from both:
 
 # Data Model
 
-IceGate stores observability data in four Apache Iceberg tables: logs, spans, events, and metrics.
+IceGate stores observability data in five tenant-scoped Apache Iceberg tables — logs, spans, events, metrics, and operations — plus one global reference table, prices.
 
 ## Table Overview
 
@@ -4301,12 +4414,14 @@ IceGate stores observability data in four Apache Iceberg tables: logs, spans, ev
 | `spans` | Distributed trace spans | Request tracing |
 | `events` | Semantic events | Business events, alerts |
 | `metrics` | All metric types | Performance monitoring |
+| `operations` | LLM and agent operations | Token usage, cost, prompt and completion capture |
+| `prices` | Global LLM rate card (no `tenant_id`) | Reference rates for costing `operations` |
 
 ## Common Design Patterns
 
 ### Multi-Tenancy
 
-All tables use identity partitioning on `tenant_id`:
+The five tenant-scoped tables use identity partitioning on `tenant_id`. `prices` is reference data shared by every tenant, so it carries no `tenant_id` and is partitioned differently:
 
 ```sql
 partitioning = ARRAY['tenant_id', 'account_id', 'day(timestamp)']
@@ -4550,6 +4665,125 @@ CREATE TABLE metrics (
 | `exponential_histogram` | `count`, `sum`, `scale`, `zero_count`, `positive_*`, `negative_*` |
 | `summary` | `count`, `sum`, `quantile_values` |
 
+## Operations Table
+
+LLM and agent operations, following the OpenTelemetry generative-AI semantic conventions.
+
+```sql
+CREATE TABLE operations (
+    tenant_id VARCHAR NOT NULL,
+    conversation_id VARCHAR,
+
+    -- identity
+    trace_id VARBINARY NOT NULL,
+    span_id VARBINARY NOT NULL,
+    parent_span_id VARBINARY,
+    service_name VARCHAR,
+    scope_name VARCHAR,
+    scope_version VARCHAR,
+
+    -- timing
+    timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    end_timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    duration_micros BIGINT NOT NULL,
+    ingested_timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+
+    operation_name VARCHAR NOT NULL,
+
+    -- provider and model
+    provider_name VARCHAR,
+    request_model VARCHAR,
+    response_model VARCHAR,
+    response_id VARCHAR,
+
+    -- sampling parameters
+    temperature DOUBLE,
+    top_p DOUBLE,
+    top_k BIGINT,
+    max_tokens BIGINT,
+    frequency_penalty DOUBLE,
+    presence_penalty DOUBLE,
+    seed BIGINT,
+    stream BOOLEAN,
+    choice_count BIGINT,
+    output_type VARCHAR,
+    reasoning_effort VARCHAR,
+
+    time_to_first_chunk_ms BIGINT,
+
+    -- token usage
+    input_tokens BIGINT,
+    output_tokens BIGINT,
+    total_tokens BIGINT,
+    reasoning_tokens BIGINT,
+    cache_creation_input_tokens BIGINT,
+    cache_read_input_tokens BIGINT,
+
+    user_id VARCHAR,
+
+    -- tool calls
+    tool_name VARCHAR,
+    tool_call_id VARCHAR,
+    tool_type VARCHAR,
+    tool_description VARCHAR,
+
+    data_source_id VARCHAR,
+    embedding_dimensions INTEGER,
+
+    -- server and status
+    server_address VARCHAR,
+    server_port INTEGER,
+    status_code INTEGER,
+    status_message VARCHAR,
+    error_type VARCHAR,
+
+    -- agent and workflow
+    agent_id VARCHAR,
+    agent_name VARCHAR,
+    agent_version VARCHAR,
+    agent_description VARCHAR,
+    workflow_name VARCHAR,
+
+    -- content, JSON-encoded
+    input_messages VARCHAR,
+    output_messages VARCHAR,
+    system_instructions VARCHAR,
+    tool_definitions VARCHAR,
+    tool_call_arguments VARCHAR,
+    tool_call_result VARCHAR,
+
+    stop_sequences ARRAY(VARCHAR),
+    finish_reasons ARRAY(VARCHAR),
+    encoding_formats ARRAY(VARCHAR)
+)
+```
+
+**Partitioning:** `tenant_id` (identity), `day(timestamp)`
+
+**Sorting:** `trace_id`, `timestamp DESC` — clusters a trace's operations together, recent first
+
+The six `VARCHAR` content columns (`input_messages`, `output_messages`, `system_instructions`, `tool_definitions`, `tool_call_arguments`, `tool_call_result`) hold JSON-encoded payloads rather than parsed structures, so prompt and completion shapes can vary per provider without a schema change.
+
+## Prices Table
+
+A global LLM rate card, populated by the Maintain service's pricing crawler from the OpenRouter and LiteLLM feeds.
+
+Unlike the five telemetry tables it carries **no `tenant_id`** — rates are reference data, identical for every tenant. It is an append-only observation log: a row is written only when a rate first differs from the previous one for its key, and `valid_to` is derived at query time.
+
+**Key:** `(provider, model, service_tier, region, min_input_tokens, valid_from)`
+
+Context tiers and service tiers live in the key rather than in extra columns, so the rate columns stay flat as the card grows. Rate columns are `DECIMAL(38, 10)` rather than floating point — money has to be exact, and binary `f64` cannot represent a value like `0.075` or sum it without drift.
+
+### Joining Prices to Operations
+
+The query engine exposes a derived view, `prices_effective`, which adds `valid_to` — the next revision's `valid_from` for the same key, `NULL` for the row currently in effect. It is a DataFusion object, so the Loki, Tempo, and Flight SQL paths see it; Trino reads the Iceberg catalog directly and does not, which is why the raw table stays self-sufficient.
+
+{% note warning %}
+
+IceGate does not compute cost, and `operations` does not carry the full pricing key. It records `provider_name` and `request_model`, which line up with `prices.provider` and `prices.model`, but nothing for `service_tier`, `region`, or `min_input_tokens`. A cost query has to supply those three from deployment knowledge — a fixed tier and region per account, say. Treat such a join as an estimate parameterised by your own assumptions, not a derivation the schema guarantees.
+
+{% endnote %}
+
 ## Query Examples
 
 ### Logs Query
@@ -4600,8 +4834,8 @@ This guide covers deploying IceGate in production environments.
 
 ## Prerequisites
 
-- **Object Storage:** S3, MinIO, or S3-compatible storage
-- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
+- **Object Storage:** S3, RustFS, or S3-compatible storage
+- **Iceberg Catalog:** the built-in S3 catalog (default), or Nessie (REST), AWS S3 Tables, or AWS Glue
 - **Docker/Kubernetes:** For container orchestration
 
 ## Architecture Considerations
@@ -4612,7 +4846,7 @@ This guide covers deploying IceGate in production environments.
 |-----------|---------|-------|
 | Ingest | Horizontal | Scale for write throughput |
 | Query | Horizontal | Scale for query concurrency |
-| Maintain | Single leader | Coordinates compaction |
+| Maintain | Horizontal | Workers coordinate through job state in object storage (compare-and-swap) |
 
 ### Resource Requirements
 
@@ -4641,7 +4875,7 @@ This guide covers deploying IceGate in production environments.
 The project includes Docker Compose profiles for different deployment scenarios:
 
 ```bash
-# Core services: MinIO, Nessie, Ingest, Query, Maintain
+# Core services: RustFS, Ingest, Query, Maintain
 make run-core-release
 
 # Core + load generator for testing
@@ -4657,26 +4891,19 @@ make run-analytics-release
 ```yaml
 # docker-compose.yml
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
-
-  nessie:
-    image: projectnessie/nessie:latest
-    environment:
-      NESSIE_VERSION_STORE_TYPE: ROCKSDB
-    volumes:
-      - nessie-data:/data
-    ports:
-      - "19120:19120"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
 
   ingest:
     image: icegate/ingest:latest
@@ -4691,8 +4918,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "9091:9091"   # Prometheus metrics
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   query:
     image: icegate/query:latest
@@ -4707,9 +4933,9 @@ services:
       - "3100:3100"   # Loki API
       - "9090:9090"   # Prometheus API
       - "3200:3200"   # Tempo API
+      - "8815:8815"   # Arrow Flight SQL
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   maintain:
     image: icegate/maintain:latest
@@ -4719,12 +4945,10 @@ services:
     volumes:
       - ./config/maintain.yaml:/etc/icegate/maintain.yaml:ro
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
 volumes:
-  minio-data:
-  nessie-data:
+  rustfs-data:
   query-cache:
 ```
 
@@ -4778,7 +5002,7 @@ Pre-built Kustomize overlays are available for common scenarios:
 | `orbstack` | OrbStack container runtime |
 | `aws-glue` | AWS Glue catalog integration |
 | `aws-s3tables` | AWS S3 Tables catalog integration |
-| `external-s3` | External S3 storage (not MinIO) |
+| `external-s3` | External S3 storage with a Nessie catalog |
 
 ```bash
 # Apply with kustomize
@@ -4796,13 +5020,13 @@ storage:
     region: us-east-1
 ```
 
-### MinIO
+### RustFS (S3-compatible)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
     region: us-east-1
 ```
 
@@ -4810,7 +5034,7 @@ storage:
 
 ### Failure Modes
 
-{{product_name}} is designed for resilience through stateless compute and durable object storage:
+IceGate is designed for resilience through stateless compute and durable object storage:
 
 | Component | Failure Impact | Recovery |
 |-----------|---------------|----------|
@@ -4818,11 +5042,11 @@ storage:
 | Query replica fails | Reduced query capacity | Load balancer routes to healthy replicas |
 | Maintain/Shift | WAL segments accumulate | Restarts and resumes from last committed snapshot |
 | Object storage (S3) | Service outage | WAL writes fail with 503; clients should retry |
-| Catalog (Nessie) | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
+| Catalog | Cannot commit new data or read metadata | Queries fail; data in WAL is preserved |
 
 ### Durability Guarantees
 
-- **WAL persistence**: All ingested data is written to object storage (S3/MinIO) before acknowledgment. Data survives node failures.
+- **WAL persistence**: All ingested data is written to object storage (S3 or RustFS) before acknowledgment. Data survives node failures.
 - **Exactly-once delivery**: The ingest service acknowledges only after WAL write completes.
 - **Immutable segments**: WAL segments are append-only Parquet files. Once written, they cannot be corrupted by subsequent operations.
 - **Iceberg snapshots**: Each shift operation creates an atomic Iceberg snapshot. Failed shifts do not corrupt existing data.
@@ -4953,7 +5177,7 @@ environment:
 ### Network Security
 
 - Use TLS for all external connections
-- Restrict access to MinIO/Nessie from internal network only
+- Restrict access to object storage and any external catalog from internal network only
 - Use network policies in Kubernetes
 
 ### Authentication
@@ -5024,8 +5248,9 @@ The Ingest service automatically shifts WAL data into optimized Iceberg tables v
 3. Reads WAL Parquet files in parallel
 4. Merges and re-partitions data
 5. Writes optimized Iceberg data files
-6. Commits new snapshot to catalog
-7. Deletes processed WAL segments
+6. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
+
+Shift does not delete WAL segments. An object lifecycle rule on the queue bucket reclaims them, and the offset in the snapshot summary is what lets shift resume where it left off.
 
 ### Tuning Shift Performance
 
@@ -5116,7 +5341,15 @@ curl http://localhost:4318/health
 
 ### Catalog Backup
 
-Nessie stores catalog metadata. Back up the RocksDB data:
+On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix — there is no service to stop:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+`sync` is not an atomic snapshot: it lists, then copies, and commits landing in between can leave the copy mixing catalog generations. For a point-in-time copy, use bucket versioning (below) and read a single version, or take the copy while writes are quiesced. Verify any backup by restoring it to a scratch prefix and listing the tables before relying on it.
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB data:
 
 ```bash
 # Stop Nessie
@@ -5150,7 +5383,7 @@ Enable versioning on your S3 bucket for point-in-time recovery:
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 
@@ -5241,15 +5474,15 @@ docker compose logs -f maintain
 
 **Symptoms:**
 
-- "Connection refused" to MinIO
+- "Connection refused" to the object store
 - S3 authentication errors
 
 **Solutions:**
 
-1. Verify MinIO is running:
+1. On a local RustFS deployment, verify the object store is running. The readiness path is RustFS's own — on AWS S3 or another provider, skip to step 3 instead:
 
    ```bash
-   curl http://localhost:9000/minio/health/ready
+   curl http://localhost:9000/health/ready
    ```
 
 2. Check credentials:
@@ -5259,7 +5492,7 @@ docker compose logs -f maintain
    echo $AWS_SECRET_ACCESS_KEY
    ```
 
-3. Test S3 connection:
+3. Test the S3 connection. Drop `--endpoint-url` when the backend is real AWS S3:
 
    ```bash
    aws s3 ls --endpoint-url http://localhost:9000
@@ -5274,19 +5507,31 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. Verify Nessie is running:
+1. On the default S3 catalog, confirm the catalog state object is readable — there is no catalog service to check:
 
    ```bash
-   curl http://localhost:19120/api/v1/trees
+   aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json
    ```
+
+   A missing `root.json` means migration never ran. Run `maintain migrate create` before anything else.
 
 2. Check catalog configuration:
 
    ```yaml
    catalog:
-     backend: !rest
-       uri: http://nessie:19120/iceberg
+     backend: !s3
+       warehouse: catalog
      warehouse: s3://warehouse/
+     properties:
+       bucket: warehouse
+       region: us-east-1
+       endpoint: http://rustfs:9000
+   ```
+
+3. On the REST backend only, verify Nessie is running:
+
+   ```bash
+   curl http://localhost:19120/api/v1/trees
    ```
 
 ## Query Issues
@@ -5523,7 +5768,7 @@ You need a local Kubernetes cluster. Options:
 ### Run with Skaffold
 
 ```bash
-# Default profile (local k8s with MinIO + Nessie)
+# Default profile (local k8s with RustFS + the built-in S3 catalog)
 skaffold dev
 
 # OrbStack profile
@@ -5552,8 +5797,7 @@ Skaffold uses Kustomize overlays that compose multiple Helm charts:
 
 | Component | Description |
 |-----------|-------------|
-| MinIO | S3-compatible storage with buckets: `warehouse`, `queue`, `jobs` |
-| Nessie | Iceberg REST catalog with RocksDB persistence |
+| RustFS | S3-compatible storage with buckets: `warehouse`, `queue`, `jobs` |
 
 **Observability namespace (`observability`):**
 
@@ -5567,7 +5811,7 @@ Skaffold uses Kustomize overlays that compose multiple Helm charts:
 
 | Profile | Overlay | Use Case |
 |---------|---------|----------|
-| (default) | `skaffold` | Local development with MinIO + Nessie |
+| (default) | `skaffold` | Local development with RustFS + the built-in S3 catalog |
 | `orbstack` | `orbstack` | OrbStack Kubernetes (macOS) |
 | `aws-glue` | `aws-glue` | AWS Glue catalog (pushes images) |
 | `k3s-external-s3` | `external-s3` | External S3 + Nessie (pushes images) |
@@ -5620,10 +5864,9 @@ make down
 
 | Service | Port | Description |
 |---------|------|-------------|
-| MinIO | 9000, 9001 | S3-compatible storage + console |
-| Nessie | 19120 | Iceberg REST catalog |
+| RustFS | 9000, 9001 | S3-compatible storage + console |
 | Ingest | 4317, 4318 | OTLP gRPC and HTTP receivers |
-| Query | 3100, 9090, 3200 | Loki, Prometheus, Tempo APIs |
+| Query | 3100, 9090, 3200, 8815 | Loki, Tempo, Arrow Flight SQL APIs; Prometheus routes return 501 except `/-/ready` |
 | Grafana | 3000 | Dashboards |
 
 Docker Compose profiles add optional services:
@@ -5632,7 +5875,7 @@ Docker Compose profiles add optional services:
 |---------|----------|
 | `load` | otelgen (log load generator) |
 | `monitoring` | Jaeger (16686), Prometheus (9092), node-exporter, cAdvisor |
-| `analytics` | Trino SQL engine (8082) |
+| `analytics` | Nessie (19120) and Trino SQL engine (8082) |
 
 ### Docker Build
 
@@ -5653,11 +5896,11 @@ docker build -t icegate/query:dev \
 
 ## Environment Variables
 
-For local development with MinIO:
+For local development with RustFS:
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 
@@ -5767,11 +6010,11 @@ IceGate uses a Cargo workspace:
 Cargo.toml (workspace)
 ├── crates/
 │   ├── icegate-common/Cargo.toml
+│   ├── icegate-catalog-s3/Cargo.toml
 │   ├── icegate-queue/Cargo.toml
 │   ├── icegate-query/Cargo.toml
 │   ├── icegate-ingest/Cargo.toml
-│   ├── icegate-maintain/Cargo.toml
-│   └── icegate-jobmanager/Cargo.toml
+│   └── icegate-maintain/Cargo.toml
 ```
 
 Build individual crates:
@@ -6335,12 +6578,14 @@ This runs:
 ```
 crates/
 ├── icegate-common/      # Shared infrastructure (catalog, storage, metrics, tracing)
+├── icegate-catalog-s3/  # S3-backed Iceberg catalog (default) and its REST server
 ├── icegate-queue/       # Write-ahead log (Parquet on object storage)
-├── icegate-query/       # Query service (Loki/Prometheus/Tempo APIs)
-├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC)
-├── icegate-maintain/    # Maintenance operations (schema migration)
-└── icegate-jobmanager/  # Shift job state management
+├── icegate-query/       # Query service (Loki/Tempo/Flight SQL; Prometheus routes 501)
+├── icegate-ingest/      # Ingest service (OTLP HTTP/gRPC, WAL, shift)
+└── icegate-maintain/    # Migration, compaction, orphan GC, pricing crawler
 ```
+
+The job/task framework is not a workspace crate: it lives in `icegatetech/jobmanager` and is consumed as a git-pinned dependency.
 
 See [Architecture](../architecture/overview.md) for details.
 
@@ -6465,7 +6710,7 @@ IceGate is an observability data lake engine that stores logs, traces, metrics, 
 ### What makes IceGate different?
 
 - **Open Standards**: Built entirely on Apache Iceberg, Arrow, Parquet, and OpenTelemetry
-- **Cost-Effective**: Uses object storage (S3/MinIO) instead of expensive databases
+- **Cost-Effective**: Uses object storage (S3 or RustFS) instead of expensive databases
 - **ACID Transactions**: Full transaction support without a dedicated OLTP database
 - **Compute-Storage Separation**: Scale processing and storage independently
 
@@ -6659,3 +6904,11 @@ See [Contributing Guide](development/contributing.md). We welcome:
 ### Where do I report issues?
 
 GitHub Issues: [https://github.com/icegatetech/icegate/issues](https://github.com/icegatetech/icegate/issues)
+
+---
+
+## Trademarks
+
+Apache®, Apache Iceberg, Apache Arrow, Apache Parquet, Apache DataFusion, Apache Arrow Flight SQL and associated project logos are either registered trademarks or trademarks of The Apache Software Foundation in the United States and/or other countries. OpenTelemetry® and Prometheus® are registered trademarks of The Linux Foundation. Grafana®, Loki® and Tempo® are registered trademarks of Raintank, Inc. dba Grafana Labs. IceGate is not affiliated with, endorsed by, or sponsored by any of these organizations. All other trademarks are the property of their respective owners.
+
+Where this documentation describes an API as Loki- or Tempo-compatible, IceGate implements a subset of that project's HTTP read API sufficient for the documented endpoints — not a complete reimplementation. The Prometheus-compatible API is planned but NOT implemented: every route returns 501 Not Implemented except /-/ready, which responds, and its reference page documents an intended surface rather than a working one. The API reference pages state what is supported today.

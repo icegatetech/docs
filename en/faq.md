@@ -1,36 +1,36 @@
 ---
 title: FAQ
-description: Frequently asked questions about IceGate
+description: Frequently asked questions about {{product_name}}
 ---
 
 # Frequently Asked Questions
 
 ## General
 
-### What is IceGate?
+### What is {{product_name}}?
 
-IceGate is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki, Prometheus, and Tempo-compatible APIs for querying.
+{{product_name}} is an observability data lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. It provides Loki- and Tempo-compatible APIs for querying, plus Arrow Flight SQL. A Prometheus-compatible API is [planned but not implemented yet](api-reference/prometheus.md) — see the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references for what is served today.
 
-### What makes IceGate different?
+### What makes {{product_name}} different?
 
 - **Open Standards**: Built entirely on Apache Iceberg, Arrow, Parquet, and OpenTelemetry
-- **Cost-Effective**: Uses object storage (S3/MinIO) instead of expensive databases
+- **Cost-Effective**: Uses object storage (S3 or RustFS) instead of expensive databases
 - **ACID Transactions**: Full transaction support without a dedicated OLTP database
 - **Compute-Storage Separation**: Scale processing and storage independently
 
 ### What is the current status?
 
-IceGate is in **alpha** development. Core features work, but APIs may change.
+{{product_name}} is in **alpha** development. Core features work, but APIs may change.
 
-### What license is IceGate under?
+### What license is {{product_name}} under?
 
-Apache License 2.0.
+{{license}}.
 
 ## Getting Started
 
 ### What are the minimum requirements?
 
-- Rust 1.92.0+
+- Rust {{rust_version}}+
 - Docker (for development environment)
 - S3-compatible object storage
 
@@ -40,7 +40,7 @@ See the [Installation](getting-started/installation.md) guide and [Quick Start](
 
 ### Do I need Kubernetes?
 
-No. IceGate can run with Docker Compose for smaller deployments. Kubernetes is recommended for production.
+No. {{product_name}} can run with Docker Compose for smaller deployments. Kubernetes is recommended for production.
 
 ## Data and Storage
 
@@ -97,7 +97,7 @@ Not yet implemented:
 
 ### Can I use Grafana?
 
-Yes! IceGate provides Loki-compatible APIs that work with Grafana's Loki data source.
+Yes. {{product_name}} provides Loki-compatible APIs that work with Grafana's Loki data source, and Tempo-compatible APIs for the Tempo data source. Both implement a subset of the upstream API, so check the [Loki](api-reference/loki.md) and [Tempo](api-reference/tempo.md) references if a panel depends on a specific endpoint. The Prometheus data source will not work yet — that API is planned.
 
 ## Multi-Tenancy
 
@@ -111,11 +111,11 @@ Yes. Queries only access data for the tenant specified in the header. Data is ph
 
 ### Can I have multiple tenants in one deployment?
 
-Yes. IceGate is designed as a multi-tenant system.
+Yes. {{product_name}} is designed as a multi-tenant system.
 
 ## Performance
 
-### How does IceGate scale?
+### How does {{product_name}} scale?
 
 - **Ingest**: Horizontal scaling for write throughput
 - **Query**: Horizontal scaling for concurrent queries
@@ -137,7 +137,7 @@ The Ingest service's built-in shift process automatically compacts WAL files int
 
 ## Operations
 
-### How do I monitor IceGate?
+### How do I monitor {{product_name}}?
 
 - Prometheus metrics exposed on each service
 - Health check endpoints
@@ -207,4 +207,4 @@ See [Contributing Guide](development/contributing.md). We welcome:
 
 ### Where do I report issues?
 
-GitHub Issues: [https://github.com/icegatetech/icegate/issues](https://github.com/icegatetech/icegate/issues)
+GitHub Issues: [{{repo_url}}/issues]({{repo_url}}/issues)

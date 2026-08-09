@@ -1,0 +1,17 @@
+# https://docs.icegate.tech/robots.txt
+#
+# The documentation is meant to be crawled — by search engines and by AI
+# crawlers alike. llms.txt and llms-full.txt exist for the latter and are
+# deliberately left open, so there is no user-agent blocklist here. Add one only
+# with a concrete reason; blocking an AI crawler also removes IceGate from the
+# answers those tools give.
+
+User-agent: *
+Allow: /
+
+# Repository files that end up in the published site because the build input is
+# the repo root (`yfm -i .`), not a docs-only subdirectory. They are not
+# documentation and are worth nothing in an index.
+Disallow: /c4/
+Disallow: /package.json
+Disallow: /package-lock.json

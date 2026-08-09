@@ -1,6 +1,6 @@
 ---
 title: End-to-End Distributed Tracing
-description: Instrument services, send traces to IceGate, and query them via the Tempo API
+description: Instrument services, send traces to {{product_name}}, and query them via the Tempo API
 ---
 
 # End-to-End Distributed Tracing
@@ -9,7 +9,7 @@ This cookbook walks through instrumenting services with OpenTelemetry, sending t
 
 {% note warning %}
 
-The Tempo API is currently under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language support is planned for future releases.
+The Tempo-compatible API implements a subset of Tempo's API: trace retrieval by ID, TraceQL search via `/api/search`, and tag discovery (v1 and v2). TraceQL features that are not yet implemented return `501 Not Implemented` rather than a wrong result. See the [Tempo API reference](../api-reference/tempo.md) for the endpoints served today.
 
 {% endnote %}
 
@@ -288,7 +288,7 @@ datasources:
 
 Then in Grafana:
 
-1. Go to **Explore** > select **IceGate Traces**
+1. Go to **Explore** > select **{{product_name}} Traces**
 2. Enter a service name in the search field
 3. Click a trace to view its span waterfall diagram
 4. Inspect individual spans for attributes and timing

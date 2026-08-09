@@ -5,7 +5,7 @@ description: OpenTelemetry Protocol endpoints for data ingestion
 
 # OTLP Ingestion API
 
-IceGate accepts observability data via the OpenTelemetry Protocol (OTLP). Both HTTP and gRPC transports are supported.
+{{product_name}} accepts observability data via the OpenTelemetry Protocol (OTLP). Both HTTP and gRPC transports are supported.
 
 ## Protocols
 
@@ -291,7 +291,7 @@ service:
 
 ## Load Testing with IceGen
 
-[IceGen](https://github.com/icegatetech/icegen) is a high-performance OpenTelemetry log generator for testing IceGate ingestion.
+[IceGen](https://github.com/icegatetech/icegen) is a high-performance OpenTelemetry log generator for testing {{product_name}} ingestion.
 
 ### Install
 

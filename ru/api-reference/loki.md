@@ -1,11 +1,14 @@
 ---
 title: Справочник Loki API
-description: HTTP API эндпоинты совместимые с Loki
+description: HTTP API эндпоинты, совместимые с Loki, которые обслуживает {{product_name}}
 ---
 
 # Справочник Loki API
 
-IceGate предоставляет HTTP API совместимый с Loki для запросов к логам.
+{{product_name}} предоставляет HTTP API, совместимый с Loki®, для запросов к логам — на порту 3100. Ниже
+описаны реализованные эндпоинты: это подмножество API Loki, а не полная реализация, поэтому всё,
+что здесь не перечислено, следует считать нереализованным. Атрибуцию см. в разделе
+[Товарные знаки](../trademarks.md).
 
 ## Базовый URL
 
@@ -220,7 +223,7 @@ curl -G http://localhost:3100/loki/api/v1/series \
 
 ### Explain
 
-Получение плана выполнения запроса (расширение IceGate).
+Получение плана выполнения запроса (расширение {{product_name}}).
 
 **Эндпоинт:** `GET /loki/api/v1/explain`
 
@@ -269,5 +272,5 @@ curl -G http://localhost:3100/loki/api/v1/explain \
 ## Следующие Шаги
 
 - Изучите [Запросы LogQL](../guides/querying.md)
-- Изучите [Prometheus API](prometheus.md)
+- Изучите [Prometheus API](prometheus.md) — запланирован, пока не реализован
 - Смотрите [Tempo API](tempo.md) для трейсов

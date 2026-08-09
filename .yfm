@@ -7,6 +7,10 @@ vars:
   product_description: "Observability Data Lake Engine"
   version: "0.1.0"
   repo_url: "https://github.com/icegatetech/icegate"
+  # Rust toolchain floor. Churns on every edition/MSRV bump and is quoted in 12 prose
+  # places across en/fr/ru, so it is the highest-churn literal in the corpus after the
+  # product name. Code blocks keep the literal (see AGENTS.md).
+  rust_version: "1.92.0"
   license: "Apache 2.0"
 
 # Markdown parsing options

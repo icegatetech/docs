@@ -1,6 +1,6 @@
 ---
 title: Centralized Logging for Microservices
-description: Set up centralized log collection from microservices into IceGate
+description: Set up centralized log collection from microservices into {{product_name}}
 ---
 
 # Centralized Logging for Microservices

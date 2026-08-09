@@ -1,16 +1,16 @@
 ---
 title: Развёртывание
-description: Развёртывание IceGate в продакшен окружениях
+description: Развёртывание {{product_name}} в продакшен окружениях
 ---
 
 # Развёртывание
 
-Это руководство охватывает развёртывание IceGate в продакшен окружениях.
+Это руководство охватывает развёртывание {{product_name}} в продакшен окружениях.
 
 ## Предварительные Требования
 
-- **Объектное Хранилище:** S3, MinIO или S3-совместимое хранилище
-- **Каталог Iceberg:** Nessie (REST), AWS S3 Tables или AWS Glue
+- **Объектное Хранилище:** S3, RustFS или S3-совместимое хранилище
+- **Каталог Iceberg:** встроенный S3-каталог (по умолчанию), либо Nessie (REST), AWS S3 Tables или AWS Glue
 - **Docker/Kubernetes:** Для оркестрации контейнеров
 
 ## Архитектурные Решения
@@ -21,7 +21,7 @@ description: Развёртывание IceGate в продакшен окруж
 |-----------|-----------------|------------|
 | Ingest | Горизонтальное | Масштабируйте для увеличения пропускной способности записи |
 | Query | Горизонтальное | Масштабируйте для увеличения параллелизма запросов |
-| Maintain | Один лидер | Координирует компакцию |
+| Maintain | Горизонтальное | Воркеры координируются через состояние задач в объектном хранилище (compare-and-swap) |
 
 ### Требования к Ресурсам
 
@@ -50,7 +50,7 @@ description: Развёртывание IceGate в продакшен окруж
 Проект включает профили Docker Compose для различных сценариев развёртывания:
 
 ```bash
-# Основные сервисы: MinIO, Nessie, Ingest, Query, Maintain
+# Основные сервисы: RustFS, Ingest, Query, Maintain
 make run-core-release
 
 # Основные + генератор нагрузки для тестирования
@@ -66,26 +66,19 @@ make run-analytics-release
 ```yaml
 # docker-compose.yml
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  rustfs:
+    image: rustfs/rustfs:1.0.0-beta.8
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: "0.0.0.0:9001"
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
-
-  nessie:
-    image: projectnessie/nessie:latest
-    environment:
-      NESSIE_VERSION_STORE_TYPE: ROCKSDB
-    volumes:
-      - nessie-data:/data
-    ports:
-      - "19120:19120"
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
 
   ingest:
     image: icegate/ingest:latest
@@ -100,8 +93,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "9091:9091"   # Prometheus metrics
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   query:
     image: icegate/query:latest
@@ -116,9 +108,9 @@ services:
       - "3100:3100"   # Loki API
       - "9090:9090"   # Prometheus API
       - "3200:3200"   # Tempo API
+      - "8815:8815"   # Arrow Flight SQL
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
   maintain:
     image: icegate/maintain:latest
@@ -128,12 +120,10 @@ services:
     volumes:
       - ./config/maintain.yaml:/etc/icegate/maintain.yaml:ro
     depends_on:
-      - minio
-      - nessie
+      - rustfs
 
 volumes:
-  minio-data:
-  nessie-data:
+  rustfs-data:
   query-cache:
 ```
 
@@ -165,7 +155,7 @@ docker build -t icegate/maintain:latest \
 
 ### Helm Charts
 
-IceGate включает Helm charts для развёртывания в Kubernetes:
+{{product_name}} включает Helm charts для развёртывания в Kubernetes:
 
 ```bash
 # Установка из локальных charts
@@ -187,7 +177,7 @@ helm install icegate ./config/helm/icegate \
 | `orbstack` | Среда выполнения контейнеров OrbStack |
 | `aws-glue` | Интеграция с каталогом AWS Glue |
 | `aws-s3tables` | Интеграция каталога AWS S3 Tables |
-| `external-s3` | Внешнее хранилище S3 (не MinIO) |
+| `external-s3` | Внешнее хранилище S3 с каталогом Nessie |
 
 ```bash
 # Применение с kustomize
@@ -205,13 +195,13 @@ storage:
     region: us-east-1
 ```
 
-### MinIO
+### RustFS (S3-совместимое)
 
 ```yaml
 storage:
   backend: !s3
     bucket: warehouse
-    endpoint: http://minio:9000
+    endpoint: http://rustfs:9000
     region: us-east-1
 ```
 
@@ -242,7 +232,7 @@ services:
 
 ### Метрики
 
-Сервисы IceGate предоставляют метрики Prometheus на выделенном порту (по умолчанию: 9091):
+Сервисы {{product_name}} предоставляют метрики Prometheus на выделенном порту (по умолчанию: 9091):
 
 - Метрики Ingest: `http://ingest:9091/metrics`
 - Метрики Query: `http://query:9091/metrics`
@@ -259,7 +249,7 @@ metrics:
 
 ### Самонаблюдаемость с Трейсингом
 
-IceGate может экспортировать собственные трейсы через OTLP для отладки:
+{{product_name}} может экспортировать собственные трейсы через OTLP для отладки:
 
 ```yaml
 tracing:
@@ -283,7 +273,7 @@ environment:
 ### Сетевая Безопасность
 
 - Используйте TLS для всех внешних подключений
-- Ограничьте доступ к MinIO/Nessie только внутренней сетью
+- Ограничьте доступ к объектному хранилищу и любому внешнему каталогу только внутренней сетью
 - Используйте сетевые политики в Kubernetes
 
 ### Аутентификация

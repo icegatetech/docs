@@ -1,6 +1,6 @@
 # IceGate Documentation
 
-> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki, Prometheus, and Tempo-compatible APIs.
+> IceGate is an Observability Data Lake engine that stores logs, traces, metrics, and events in Apache Iceberg tables. Data is ingested via OpenTelemetry Protocol (OTLP) and queried via Loki®- and Tempo®-compatible APIs plus Arrow Flight SQL. A Prometheus®-compatible API is planned but NOT implemented — every route returns 501 Not Implemented except /-/ready, which responds.
 
 ## Key Links
 
@@ -20,7 +20,7 @@
 | OTLP gRPC (Ingest) | 4317 | gRPC | OpenTelemetry Collector |
 | Loki (Query) | 3100 | HTTP | Grafana Loki |
 | Prometheus (Query) | 9090 | HTTP | Grafana Prometheus (under development) |
-| Tempo (Query) | 3200 | HTTP | Grafana Tempo (basic retrieval, TraceQL planned) |
+| Tempo (Query) | 3200 | HTTP | Grafana Tempo (retrieval and search; TraceQL supported, unimplemented features return 501) |
 | Metrics | 9091 | HTTP | Prometheus scrape target |
 
 ## Installation (Kubernetes with Helm)
@@ -33,7 +33,7 @@ helm install icegate oci://ghcr.io/icegatetech/charts/icegate \
   -f values.yaml
 ```
 
-Supported catalog backends: REST (Nessie), AWS S3 Tables, AWS Glue.
+Supported catalog backends: S3 (default — catalog state is a `root.json` object in object storage, no external catalog service required), REST (Nessie), AWS S3 Tables, AWS Glue.
 Kustomize overlays available for: skaffold, orbstack, aws-glue, aws-s3tables, external-s3.
 
 ## Configuration
@@ -43,12 +43,23 @@ IceGate uses YAML or TOML config files (auto-detected by extension).
 ### Services
 
 - **Ingest** (`ingest run -c config.yaml`): OTLP HTTP (4318), OTLP gRPC (4317), WAL queue, shift (WAL→Iceberg)
-- **Query** (`query run -c config.yaml`): Loki (3100), Prometheus (9090), Tempo (3200), DataFusion engine
+- **Query** (`query run -c config.yaml`): Loki (3100), Prometheus (9090), Tempo (3200), Arrow Flight SQL (8815), DataFusion engine
 - **Maintain** (`maintain migrate create/upgrade -c config.yaml`): Schema migration
+- **Maintain** (`maintain run -c config.yaml`): Long-running data compaction, manifest compaction, orphan-file GC, and LLM pricing crawler
+- **Catalog** (`catalog serve -c config.yaml`, optional): Standalone Iceberg REST server (8181) over the S3 catalog
 
 ### Catalog Backends
 
 ```yaml
+# S3 — the default; catalog state lives in object storage, no external service
+catalog:
+  backend: !s3
+    warehouse: catalog
+  warehouse: s3://warehouse/
+  properties:
+    bucket: warehouse
+    region: us-east-1
+
 # REST (Nessie)
 catalog:
   backend: !rest
@@ -75,7 +86,7 @@ storage:
   backend: !s3
     bucket: warehouse
     region: us-east-1
-    endpoint: http://minio:9000  # optional, for S3-compatible
+    endpoint: http://rustfs:9000  # optional, for S3-compatible
 ```
 
 ### Environment Variables
@@ -287,7 +298,7 @@ curl http://localhost:3100/loki/api/v1/label/service_name/values \
 
 ## Query Traces (Tempo API — Port 3200)
 
-The Tempo API is under development. Basic trace retrieval by ID and search by tags are available. TraceQL query language is planned for future releases.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval by ID, search by tags and /api/search are available, and TraceQL is supported for search; TraceQL features that are not yet implemented return 501 Not Implemented.
 
 ### Tempo API Endpoints
 
@@ -325,7 +336,7 @@ curl -G http://localhost:3200/api/search \
 
 ## Prometheus API (Port 9090) — Under Development
 
-The Prometheus query API is under development. Metadata endpoints (labels, series) are available. PromQL queries are not yet supported. Use LogQL metric queries (rate, count_over_time, sum by) as an alternative for log-based metrics.
+The Prometheus query API is NOT implemented. Every route returns 501 Not Implemented, including the metadata endpoints; only /-/ready responds. PromQL is not parsed at all yet. Use LogQL metric queries (rate, count_over_time, sum by) as an alternative for log-based metrics.
 
 ## Multi-Tenancy
 
@@ -471,7 +482,7 @@ EXECUTE remove_orphan_files(retention_threshold => '1d');
 
 ## Fault Tolerance
 
-- **WAL durability**: All data written to S3/MinIO before acknowledgment
+- **WAL durability**: All data written to S3 or RustFS before acknowledgment
 - **Stateless query**: Any replica can serve any query; no coordination needed
 - **Immutable WAL segments**: Once written, cannot be corrupted
 - **Iceberg snapshots**: Atomic commits; failed shifts don't corrupt data
@@ -529,3 +540,8 @@ curl http://localhost:9090/-/ready
 - Data Model: https://docs.icegate.tech/en/architecture/data-model
 - Deployment: https://docs.icegate.tech/en/operations/deployment
 - Development Setup: https://docs.icegate.tech/en/development/setup
+- Trademarks: https://docs.icegate.tech/en/trademarks
+
+## Trademarks
+
+Apache®, Apache Iceberg, Apache Arrow, Apache Parquet, Apache DataFusion, Apache Arrow Flight SQL and associated project logos are either registered trademarks or trademarks of The Apache Software Foundation in the United States and/or other countries. OpenTelemetry® and Prometheus® are registered trademarks of The Linux Foundation. Grafana®, Loki® and Tempo® are registered trademarks of Raintank, Inc. dba Grafana Labs. IceGate is not affiliated with, endorsed by, or sponsored by any of these organizations. All other trademarks are the property of their respective owners.

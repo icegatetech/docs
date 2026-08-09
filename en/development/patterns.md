@@ -1,11 +1,11 @@
 ---
 title: Development Patterns
-description: Standard patterns used across the IceGate codebase
+description: Standard patterns used across the {{product_name}} codebase
 ---
 
 # Development Patterns
 
-This document defines the standard patterns used across the IceGate codebase for config, errors, HTTP routes, handlers, and services.
+This document defines the standard patterns used across the {{product_name}} codebase for config, errors, HTTP routes, handlers, and services.
 
 ## 1. Config Pattern
 

@@ -1,17 +1,17 @@
 ---
 title: Сборка
-description: Сборка IceGate из исходного кода
+description: Сборка {{product_name}} из исходного кода
 ---
 
 # Сборка из Исходного Кода
 
-Это руководство охватывает сборку IceGate из исходного кода для разработки и продакшена.
+Это руководство охватывает сборку {{product_name}} из исходного кода для разработки и продакшена.
 
 ## Предварительные Требования
 
 ### Обязательные
 
-- **Rust** >= 1.92.0 (для поддержки Rust 2024 edition)
+- **Rust** >= {{rust_version}} (для поддержки Rust 2024 edition)
 - **Cargo** (входит в Rust)
 - **Git**
 
@@ -96,17 +96,17 @@ debug = true
 
 ## Структура Рабочего Пространства
 
-IceGate использует Cargo workspace:
+{{product_name}} использует Cargo workspace:
 
 ```text
 Cargo.toml (workspace)
 ├── crates/
 │   ├── icegate-common/Cargo.toml
+│   ├── icegate-catalog-s3/Cargo.toml
 │   ├── icegate-queue/Cargo.toml
 │   ├── icegate-query/Cargo.toml
 │   ├── icegate-ingest/Cargo.toml
-│   ├── icegate-maintain/Cargo.toml
-│   └── icegate-jobmanager/Cargo.toml
+│   └── icegate-maintain/Cargo.toml
 ```
 
 Сборка отдельных крейтов:
@@ -194,7 +194,7 @@ make ci
 
 ### Ошибки Компиляции
 
-1. Убедитесь, что версия Rust >= 1.92.0:
+1. Убедитесь, что версия Rust >= {{rust_version}}:
 
    ```bash
    rustup update

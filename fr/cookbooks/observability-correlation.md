@@ -1,6 +1,6 @@
 ---
 title: Corrélation des Signaux d'Observabilité
-description: Corréler les logs et les traces dans IceGate pour un diagnostic efficace
+description: Corréler les logs et les traces dans {{product_name}} pour un diagnostic efficace
 ---
 
 # Corrélation des Signaux d'Observabilité

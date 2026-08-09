@@ -1,21 +1,21 @@
 ---
 title: Quick Start
-description: Ingest and query your first observability data with IceGate
+description: Ingest and query your first observability data with {{product_name}}
 ---
 
 # Quick Start
 
-This guide walks you through ingesting logs, traces, and metrics into IceGate and querying them via the API and Grafana.
+This guide walks you through ingesting logs, traces, and metrics into {{product_name}} and querying them via the API and Grafana.
 
 {% note info %}
 
-This guide assumes IceGate is already running. See [Installation](installation.md) for Helm deployment or [Development Setup](../development/setup.md) for a local environment.
+This guide assumes {{product_name}} is already running. See [Installation](installation.md) for Helm deployment or [Development Setup](../development/setup.md) for a local environment.
 
 {% endnote %}
 
 ## Ingest Logs
 
-IceGate accepts data via the OpenTelemetry Protocol (OTLP) on the Ingest service.
+{{product_name}} accepts data via the OpenTelemetry Protocol (OTLP) on the Ingest service.
 
 ### Send Logs via OTLP HTTP
 
@@ -140,7 +140,8 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Query Logs with LogQL
 
-IceGate provides a Loki-compatible API on the Query service (port 3100).
+{{product_name}} provides a Loki-compatible API on the Query service (port 3100) — a subset of Loki's API,
+listed in the [API reference](../api-reference/loki.md).
 
 ### Basic Log Query
 
@@ -219,9 +220,9 @@ curl -G http://localhost:3100/loki/api/v1/series \
 
 ## Using Grafana
 
-IceGate is compatible with Grafana's Loki data source for log visualization and dashboarding.
+{{product_name}} is compatible with Grafana's Loki data source for log visualization and dashboarding.
 
-### Add IceGate as a Data Source
+### Add {{product_name}} as a Data Source
 
 1. Open Grafana (default: [http://localhost:3000](http://localhost:3000))
 2. Go to **Connections** > **Data sources** > **Add data source**
@@ -255,11 +256,11 @@ IceGate is compatible with Grafana's Loki data source for log visualization and 
 
 ### Pre-Built Dashboards
 
-If deployed with the Kustomize overlays or Docker Compose, Grafana comes pre-configured with IceGate dashboards for Ingest and Query service metrics.
+If deployed with the Kustomize overlays or Docker Compose, Grafana comes pre-configured with {{product_name}} dashboards for Ingest and Query service metrics.
 
 ## Using the OpenTelemetry Collector
 
-For production workloads, use the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) to forward data from your applications to IceGate:
+For production workloads, use the [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) to forward data from your applications to {{product_name}}:
 
 ```yaml
 # otel-collector-config.yaml
@@ -286,7 +287,7 @@ service:
 
 ## Multi-Tenancy
 
-IceGate isolates data by tenant using the `X-Scope-OrgID` header. Each tenant's data is physically partitioned.
+{{product_name}} isolates data by tenant using the `X-Scope-OrgID` header. Each tenant's data is physically partitioned.
 
 ```bash
 # Ingest for tenant "team-a"

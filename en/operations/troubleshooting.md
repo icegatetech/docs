@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Diagnose and resolve common IceGate issues
+description: Diagnose and resolve common {{product_name}} issues
 ---
 
 # Troubleshooting
@@ -61,15 +61,15 @@ docker compose logs -f maintain
 
 **Symptoms:**
 
-- "Connection refused" to MinIO
+- "Connection refused" to the object store
 - S3 authentication errors
 
 **Solutions:**
 
-1. Verify MinIO is running:
+1. On a local RustFS deployment, verify the object store is running. The readiness path is RustFS's own — on AWS S3 or another provider, skip to step 3 instead:
 
    ```bash
-   curl http://localhost:9000/minio/health/ready
+   curl http://localhost:9000/health/ready
    ```
 
 2. Check credentials:
@@ -79,7 +79,7 @@ docker compose logs -f maintain
    echo $AWS_SECRET_ACCESS_KEY
    ```
 
-3. Test S3 connection:
+3. Test the S3 connection. Drop `--endpoint-url` when the backend is real AWS S3:
 
    ```bash
    aws s3 ls --endpoint-url http://localhost:9000
@@ -94,19 +94,31 @@ docker compose logs -f maintain
 
 **Solutions:**
 
-1. Verify Nessie is running:
+1. On the default S3 catalog, confirm the catalog state object is readable — there is no catalog service to check:
 
    ```bash
-   curl http://localhost:19120/api/v1/trees
+   aws --endpoint-url http://localhost:9000 s3 ls s3://warehouse/catalog/root.json
    ```
+
+   A missing `root.json` means migration never ran. Run `maintain migrate create` before anything else.
 
 2. Check catalog configuration:
 
    ```yaml
    catalog:
-     backend: !rest
-       uri: http://nessie:19120/iceberg
+     backend: !s3
+       warehouse: catalog
      warehouse: s3://warehouse/
+     properties:
+       bucket: warehouse
+       region: us-east-1
+       endpoint: http://rustfs:9000
+   ```
+
+3. On the REST backend only, verify Nessie is running:
+
+   ```bash
+   curl http://localhost:19120/api/v1/trees
    ```
 
 ## Query Issues
@@ -273,10 +285,10 @@ If issues persist:
    docker stats > stats.txt
    ```
 
-2. Check [GitHub Issues](https://github.com/icegatetech/icegate/issues)
+2. Check [GitHub Issues]({{repo_url}}/issues)
 
 3. Include:
-   - IceGate version
+   - {{product_name}} version
    - Configuration (sanitized)
    - Error messages
    - Steps to reproduce

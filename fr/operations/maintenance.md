@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintenir IceGate pour des performances optimales
+description: Maintenir {{product_name}} pour des performances optimales
 ---
 
 # Maintenance
@@ -19,7 +19,7 @@ maintain migrate create -c maintain.yaml
 
 ### Mises à Niveau de Schéma
 
-Mettre à niveau les schémas de tables existants lors de la mise à jour d'IceGate :
+Mettre à niveau les schémas de tables existants lors de la mise à jour d'{{product_name}} :
 
 ```bash
 maintain migrate upgrade -c maintain.yaml
@@ -52,8 +52,9 @@ Le service Ingest transfère automatiquement les données WAL vers des tables Ic
 3. Lit les fichiers WAL Parquet en parallèle
 4. Fusionne et re-partitionne les données
 5. Écrit les fichiers de données Iceberg optimisés
-6. Valide un nouveau snapshot dans le catalogue
-7. Supprime les segments WAL traités
+6. Valide un nouveau snapshot dans le catalogue, en enregistrant le dernier offset WAL validé dans le résumé du snapshot
+
+Le shift ne supprime pas les segments WAL. Une règle de cycle de vie objet sur le bucket de la queue les récupère, et c'est l'offset du résumé du snapshot qui permet au shift de reprendre là où il s'était arrêté.
 
 ### Optimisation des Performances du Shift
 
@@ -146,7 +147,15 @@ curl http://localhost:4318/health
 
 ### Sauvegarde du Catalogue
 
-Nessie stocke les métadonnées du catalogue. Sauvegardez les données RocksDB :
+Avec le catalogue S3 par défaut, les métadonnées sont `root.json` et les fichiers de métadonnées de table dans le bucket warehouse : une sauvegarde est donc une copie de ce préfixe, sans service à arrêter :
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+`sync` n'est pas un instantané atomique : il liste puis copie, et des commits survenant entre-temps peuvent produire une copie mélangeant plusieurs générations du catalogue. Pour une copie à un instant donné, utilisez le versioning du bucket (ci-dessous) en lisant une seule version, ou effectuez la copie pendant que les écritures sont suspendues. Vérifiez toute sauvegarde en la restaurant sur un préfixe de test et en listant les tables avant de vous y fier.
+
+Si vous utilisez le backend de catalogue REST, sauvegardez les données RocksDB de Nessie :
 
 ```bash
 # Arrêter Nessie
@@ -180,7 +189,7 @@ Activez le versioning sur votre bucket S3 pour la récupération à un point dan
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 

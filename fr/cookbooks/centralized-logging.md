@@ -1,6 +1,6 @@
 ---
 title: Journalisation Centralisée pour Microservices
-description: Mettre en place une journalisation centralisée avec OpenTelemetry Collector et IceGate
+description: Mettre en place une journalisation centralisée avec OpenTelemetry Collector et {{product_name}}
 ---
 
 # Journalisation Centralisée pour Microservices

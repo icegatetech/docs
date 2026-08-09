@@ -1,15 +1,15 @@
 ---
 title: Development Setup
-description: Set up a local IceGate development environment
+description: Set up a local {{product_name}} development environment
 ---
 
 # Development Setup
 
-This guide covers setting up a local IceGate development environment for contributing code, running tests, and debugging.
+This guide covers setting up a local {{product_name}} development environment for contributing code, running tests, and debugging.
 
 ## Prerequisites
 
-- **Rust** >= 1.92.0 (Rust 2024 edition)
+- **Rust** >= {{rust_version}} (Rust 2024 edition)
 - **Docker** (for building container images)
 - **Git**
 - A local Kubernetes cluster (for Skaffold)
@@ -58,7 +58,7 @@ You need a local Kubernetes cluster. Options:
 ### Run with Skaffold
 
 ```bash
-# Default profile (local k8s with MinIO + Nessie)
+# Default profile (local k8s with RustFS + the built-in S3 catalog)
 skaffold dev
 
 # OrbStack profile
@@ -75,7 +75,7 @@ skaffold dev -p k3s-external-s3
 
 Skaffold uses Kustomize overlays that compose multiple Helm charts:
 
-**IceGate namespace (`icegate`):**
+**{{product_name}} namespace (`icegate`):**
 
 | Component | Description |
 |-----------|-------------|
@@ -87,22 +87,21 @@ Skaffold uses Kustomize overlays that compose multiple Helm charts:
 
 | Component | Description |
 |-----------|-------------|
-| MinIO | S3-compatible storage with buckets: `warehouse`, `queue`, `jobs` |
-| Nessie | Iceberg REST catalog with RocksDB persistence |
+| RustFS | S3-compatible storage with buckets: `warehouse`, `queue`, `jobs` |
 
 **Observability namespace (`observability`):**
 
 | Component | Description |
 |-----------|-------------|
 | Prometheus | Metrics collection (kube-prometheus-stack) |
-| Grafana | Dashboards with pre-built IceGate Ingest and Query panels |
-| Jaeger | Distributed tracing for IceGate services |
+| Grafana | Dashboards with pre-built {{product_name}} Ingest and Query panels |
+| Jaeger | Distributed tracing for {{product_name}} services |
 
 ### Skaffold Profiles
 
 | Profile | Overlay | Use Case |
 |---------|---------|----------|
-| (default) | `skaffold` | Local development with MinIO + Nessie |
+| (default) | `skaffold` | Local development with RustFS + the built-in S3 catalog |
 | `orbstack` | `orbstack` | OrbStack Kubernetes (macOS) |
 | `aws-glue` | `aws-glue` | AWS Glue catalog (pushes images) |
 | `k3s-external-s3` | `external-s3` | External S3 + Nessie (pushes images) |
@@ -155,10 +154,9 @@ make down
 
 | Service | Port | Description |
 |---------|------|-------------|
-| MinIO | 9000, 9001 | S3-compatible storage + console |
-| Nessie | 19120 | Iceberg REST catalog |
+| RustFS | 9000, 9001 | S3-compatible storage + console |
 | Ingest | 4317, 4318 | OTLP gRPC and HTTP receivers |
-| Query | 3100, 9090, 3200 | Loki, Prometheus, Tempo APIs |
+| Query | 3100, 9090, 3200, 8815 | Loki, Tempo, Arrow Flight SQL APIs; Prometheus routes return 501 except `/-/ready` |
 | Grafana | 3000 | Dashboards |
 
 Docker Compose profiles add optional services:
@@ -167,7 +165,7 @@ Docker Compose profiles add optional services:
 |---------|----------|
 | `load` | otelgen (log load generator) |
 | `monitoring` | Jaeger (16686), Prometheus (9092), node-exporter, cAdvisor |
-| `analytics` | Trino SQL engine (8082) |
+| `analytics` | Nessie (19120) and Trino SQL engine (8082) |
 
 ### Docker Build
 
@@ -188,11 +186,11 @@ docker build -t icegate/query:dev \
 
 ## Environment Variables
 
-For local development with MinIO:
+For local development with RustFS:
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 

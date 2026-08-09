@@ -1,21 +1,21 @@
 ---
 title: Installation
-description: Installer IceGate sur Kubernetes avec Helm
+description: Installer {{product_name}} sur Kubernetes avec Helm
 ---
 
 # Installation
 
-IceGate est déployé sur Kubernetes en utilisant des charts Helm, avec des overlays Kustomize pour les personnalisations spécifiques à l'environnement.
+{{product_name}} est déployé sur Kubernetes en utilisant des charts Helm, avec des overlays Kustomize pour les personnalisations spécifiques à l'environnement.
 
 ## Prérequis
 
 - **Kubernetes** >= 1.28 avec **Helm 3**
-- **Stockage objet :** AWS S3 ou compatible S3 (MinIO)
-- **Catalogue Iceberg :** Nessie (REST), AWS S3 Tables ou AWS Glue
+- **Stockage objet :** AWS S3 ou compatible S3 (RustFS)
+- **Catalogue Iceberg :** le catalogue S3 intégré (par défaut, sans service externe), ou Nessie (REST), AWS S3 Tables ou AWS Glue
 
 ## Helm Chart
 
-Le chart Helm déploie tous les composants IceGate : Ingest, Query et un job Migrate (création du schéma en tant que hook pre-install/pre-upgrade).
+Le chart Helm déploie tous les composants {{product_name}} : Ingest, Query et un job Migrate (création du schéma en tant que hook pre-install/pre-upgrade).
 
 ### Installation depuis le registre OCI
 
@@ -41,11 +41,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: rest` + `rest.uri`). Le chart traduit ces valeurs dans le format natif de configuration serde tagged enum (`backend: !rest`) attendu par les binaires IceGate. Voir [Configuration](configuration.md) pour la référence de configuration native.
+Les valeurs Helm utilisent le camelCase et des clés plates (ex. `backend: s3` + `s3.warehouse`). Le chart traduit ces valeurs dans le format natif de configuration serde tagged enum (`backend: !s3`) attendu par les binaires {{product_name}}. Voir [Configuration](configuration.md) pour la référence de configuration native.
 
 {% endnote %}
 
-Un fichier `values.yaml` minimal pour un catalogue REST (Nessie) avec stockage compatible S3 :
+Un fichier `values.yaml` minimal utilisant le catalogue S3 intégré par défaut avec un stockage compatible S3. Aucun service de catalogue externe n'intervient — l'état du catalogue est un objet `root.json` dans le bucket warehouse :
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### Catalogue REST (Nessie)
+
+À utiliser uniquement si vous exploitez déjà Nessie ou un autre catalogue REST Iceberg — cela ajoute un service externe dont le déploiement par défaut n'a pas besoin :
 
 ```yaml
 catalog:
@@ -58,11 +84,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
+    endpoint: "http://rustfs:9000"
 
 aws:
   existingSecret: icegate-aws-credentials
@@ -109,9 +131,9 @@ aws:
 
 | Valeur | Défaut | Description |
 |--------|--------|-------------|
-| `catalog.backend` | `rest` | Type de catalogue : `rest`, `s3tables` ou `glue` |
+| `catalog.backend` | `s3` | Type de catalogue : `s3`, `rest`, `s3tables` ou `glue` |
 | `storage.s3.bucket` | `warehouse` | Nom du bucket S3 |
-| `storage.s3.endpoint` | `""` | Endpoint S3 personnalisé (MinIO). Omettre pour AWS S3 réel |
+| `storage.s3.endpoint` | `""` | Endpoint S3 personnalisé (RustFS). Omettre pour AWS S3 réel |
 | `aws.existingSecret` | `""` | Secret contenant les clés `aws-access-key-id` et `aws-secret-access-key` |
 | `query.replicaCount` | `1` | Réplicas du service Query |
 | `ingest.replicaCount` | `1` | Réplicas du service Ingest |
@@ -130,19 +152,19 @@ aws:
 
 ## Overlays Kustomize
 
-Pour les personnalisations spécifiques à l'environnement, IceGate fournit des overlays Kustomize qui composent le chart Helm avec les dépendances d'infrastructure.
+Pour les personnalisations spécifiques à l'environnement, {{product_name}} fournit des overlays Kustomize qui composent le chart Helm avec les dépendances d'infrastructure.
 
 ### Overlays disponibles
 
 | Overlay | Description | Infrastructure |
 |---------|-------------|----------------|
-| `skaffold` | Développement local avec Skaffold | MinIO, Nessie, stack d'observabilité |
-| `orbstack` | Runtime de conteneurs OrbStack | MinIO, Nessie, stack d'observabilité |
-| `aws-glue` | Catalogue AWS Glue | Stack d'observabilité (sans MinIO/Nessie) |
-| `aws-s3tables` | Catalogue AWS S3 Tables | Stack d'observabilité (sans MinIO/Nessie) |
-| `external-s3` | S3 externe + catalogue Nessie | Nessie, stack d'observabilité (sans MinIO) |
+| `skaffold` | Développement local avec Skaffold | RustFS, stack d'observabilité |
+| `orbstack` | Runtime de conteneurs OrbStack | RustFS, stack d'observabilité |
+| `aws-glue` | Catalogue AWS Glue | Stack d'observabilité (S3 externe) |
+| `aws-s3tables` | Catalogue AWS S3 Tables | Stack d'observabilité (S3 externe) |
+| `external-s3` | S3 externe + catalogue Nessie | Nessie, stack d'observabilité |
 
-Tous les overlays partagent une base commune (`config/kustomize/base/`) qui déploie la stack d'observabilité : Prometheus (kube-prometheus-stack), Grafana avec des tableaux de bord IceGate pré-configurés et Jaeger pour le traçage distribué.
+Tous les overlays partagent une base commune (`config/kustomize/base/`) qui déploie la stack d'observabilité : Prometheus (kube-prometheus-stack), Grafana avec des tableaux de bord {{product_name}} pré-configurés et Jaeger pour le traçage distribué.
 
 ### Utilisation
 
@@ -159,7 +181,7 @@ skaffold dev
 Chaque overlay contient :
 
 - `kustomization.yaml` — déclare les charts Helm et les patches
-- `values-icegate.yaml` — valeurs Helm IceGate pour cet environnement
+- `values-icegate.yaml` — valeurs Helm {{product_name}} pour cet environnement
 - `secret-aws.yaml` — Secret des identifiants AWS (à modifier avant application)
 
 Pour créer un overlay personnalisé :

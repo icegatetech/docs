@@ -1,6 +1,6 @@
 ---
 title: Optimisation des Performances
-description: Optimiser le débit d'ingestion, les performances de requêtes et la compaction dans IceGate
+description: Optimiser le débit d'ingestion, les performances de requêtes et la compaction dans {{product_name}}
 ---
 
 # Optimisation des Performances

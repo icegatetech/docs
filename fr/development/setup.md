@@ -1,15 +1,15 @@
 ---
 title: Environnement de Développement
-description: Configurer un environnement de développement local pour IceGate
+description: Configurer un environnement de développement local pour {{product_name}}
 ---
 
 # Environnement de Développement
 
-Ce guide couvre la configuration d'un environnement de développement local IceGate pour contribuer au code, exécuter les tests et déboguer.
+Ce guide couvre la configuration d'un environnement de développement local {{product_name}} pour contribuer au code, exécuter les tests et déboguer.
 
 ## Prérequis
 
-- **Rust** >= 1.92.0 (édition Rust 2024)
+- **Rust** >= {{rust_version}} (édition Rust 2024)
 - **Docker** (pour la construction des images de conteneurs)
 - **Git**
 - Un cluster Kubernetes local (pour Skaffold)
@@ -58,7 +58,7 @@ Vous avez besoin d'un cluster Kubernetes local. Options :
 ### Exécuter avec Skaffold
 
 ```bash
-# Profil par défaut (k8s local avec MinIO + Nessie)
+# Profil par défaut (k8s local avec RustFS + le catalogue S3 intégré)
 skaffold dev
 
 # Profil OrbStack
@@ -75,7 +75,7 @@ skaffold dev -p k3s-external-s3
 
 Skaffold utilise des overlays Kustomize qui composent plusieurs charts Helm :
 
-**Namespace IceGate (`icegate`) :**
+**Namespace {{product_name}} (`icegate`) :**
 
 | Composant | Description |
 |-----------|-------------|
@@ -87,22 +87,21 @@ Skaffold utilise des overlays Kustomize qui composent plusieurs charts Helm :
 
 | Composant | Description |
 |-----------|-------------|
-| MinIO | Stockage compatible S3 avec les buckets : `warehouse`, `queue`, `jobs` |
-| Nessie | Catalogue Iceberg REST avec persistance RocksDB |
+| RustFS | Stockage compatible S3 avec les buckets : `warehouse`, `queue`, `jobs` |
 
 **Namespace Observabilité (`observability`) :**
 
 | Composant | Description |
 |-----------|-------------|
 | Prometheus | Collecte de métriques (kube-prometheus-stack) |
-| Grafana | Tableaux de bord avec panneaux IceGate Ingest et Query pré-configurés |
-| Jaeger | Traçage distribué pour les services IceGate |
+| Grafana | Tableaux de bord avec panneaux {{product_name}} Ingest et Query pré-configurés |
+| Jaeger | Traçage distribué pour les services {{product_name}} |
 
 ### Profils Skaffold
 
 | Profil | Overlay | Cas d'utilisation |
 |--------|---------|-------------------|
-| (défaut) | `skaffold` | Développement local avec MinIO + Nessie |
+| (défaut) | `skaffold` | Développement local avec RustFS + le catalogue S3 intégré |
 | `orbstack` | `orbstack` | Kubernetes OrbStack (macOS) |
 | `aws-glue` | `aws-glue` | Catalogue AWS Glue (pousse les images) |
 | `k3s-external-s3` | `external-s3` | S3 externe + Nessie (pousse les images) |
@@ -155,10 +154,9 @@ make down
 
 | Service | Port | Description |
 |---------|------|-------------|
-| MinIO | 9000, 9001 | Stockage compatible S3 + console |
-| Nessie | 19120 | Catalogue Iceberg REST |
+| RustFS | 9000, 9001 | Stockage compatible S3 + console |
 | Ingest | 4317, 4318 | Récepteurs OTLP gRPC et HTTP |
-| Query | 3100, 9090, 3200 | APIs Loki, Prometheus, Tempo |
+| Query | 3100, 9090, 3200, 8815 | APIs Loki, Tempo, Arrow Flight SQL ; les routes Prometheus retournent 501 sauf `/-/ready` |
 | Grafana | 3000 | Tableaux de bord |
 
 Les profils Docker Compose ajoutent des services optionnels :
@@ -167,7 +165,7 @@ Les profils Docker Compose ajoutent des services optionnels :
 |--------|----------|
 | `load` | otelgen (générateur de charge de logs) |
 | `monitoring` | Jaeger (16686), Prometheus (9092), node-exporter, cAdvisor |
-| `analytics` | Moteur SQL Trino (8082) |
+| `analytics` | Nessie (19120) et moteur SQL Trino (8082) |
 
 ### Build Docker
 
@@ -188,11 +186,11 @@ docker build -t icegate/query:dev \
 
 ## Variables d'Environnement
 
-Pour le développement local avec MinIO :
+Pour le développement local avec RustFS :
 
 ```bash
-export AWS_ACCESS_KEY_ID=minioadmin
-export AWS_SECRET_ACCESS_KEY=minioadmin
+export AWS_ACCESS_KEY_ID=rustfsadmin
+export AWS_SECRET_ACCESS_KEY=rustfsadmin
 export AWS_REGION=us-east-1
 ```
 

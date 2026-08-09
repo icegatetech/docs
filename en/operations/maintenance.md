@@ -1,6 +1,6 @@
 ---
 title: Maintenance
-description: Maintain IceGate for optimal performance
+description: Maintain {{product_name}} for optimal performance
 ---
 
 # Maintenance
@@ -19,7 +19,7 @@ maintain migrate create -c maintain.yaml
 
 ### Schema Upgrades
 
-Upgrade existing table schemas when updating IceGate:
+Upgrade existing table schemas when updating {{product_name}}:
 
 ```bash
 maintain migrate upgrade -c maintain.yaml
@@ -52,8 +52,9 @@ The Ingest service automatically shifts WAL data into optimized Iceberg tables v
 3. Reads WAL Parquet files in parallel
 4. Merges and re-partitions data
 5. Writes optimized Iceberg data files
-6. Commits new snapshot to catalog
-7. Deletes processed WAL segments
+6. Commits a new snapshot to the catalog, recording the last committed WAL offset in the snapshot summary
+
+Shift does not delete WAL segments. An object lifecycle rule on the queue bucket reclaims them, and the offset in the snapshot summary is what lets shift resume where it left off.
 
 ### Tuning Shift Performance
 
@@ -144,7 +145,15 @@ curl http://localhost:4318/health
 
 ### Catalog Backup
 
-Nessie stores catalog metadata. Back up the RocksDB data:
+On the default S3 catalog the metadata is `root.json` plus the table metadata files in the warehouse bucket, so a backup is a copy of that prefix — there is no service to stop:
+
+```bash
+aws s3 sync s3://warehouse/catalog/ ./catalog-backup/
+```
+
+`sync` is not an atomic snapshot: it lists, then copies, and commits landing in between can leave the copy mixing catalog generations. For a point-in-time copy, use bucket versioning (below) and read a single version, or take the copy while writes are quiesced. Verify any backup by restoring it to a scratch prefix and listing the tables before relying on it.
+
+If you run the REST catalog backend instead, back up Nessie's RocksDB data:
 
 ```bash
 # Stop Nessie
@@ -178,7 +187,7 @@ Enable versioning on your S3 bucket for point-in-time recovery:
 
 ```bash
 aws s3api put-bucket-versioning \
-  --bucket icegate-warehouse \
+  --bucket warehouse \
   --versioning-configuration Status=Enabled
 ```
 

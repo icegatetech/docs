@@ -1,11 +1,11 @@
 ---
 title: Data Ingestion
-description: Ingest logs, traces, and metrics into IceGate
+description: Ingest logs, traces, and metrics into {{product_name}}
 ---
 
 # Data Ingestion
 
-IceGate accepts observability data via the OpenTelemetry Protocol (OTLP). This guide covers how to ingest logs, traces, and metrics.
+{{product_name}} accepts observability data via the OpenTelemetry Protocol (OTLP). This guide covers how to ingest logs, traces, and metrics.
 
 ## Supported Protocols
 
@@ -49,7 +49,7 @@ curl -X POST http://localhost:4318/v1/logs \
 
 ### Using OpenTelemetry SDKs
 
-Configure your OpenTelemetry SDK to send logs to IceGate:
+Configure your OpenTelemetry SDK to send logs to {{product_name}}:
 
 ```python
 # Python example
@@ -70,7 +70,7 @@ logger_provider.add_log_record_processor(
 
 ## Ingesting Traces
 
-Send distributed trace spans to IceGate:
+Send distributed trace spans to {{product_name}}:
 
 ```bash
 curl -X POST http://localhost:4318/v1/traces \
@@ -133,7 +133,7 @@ curl -X POST http://localhost:4318/v1/metrics \
 
 ## Tenant Identification
 
-IceGate is multi-tenant. Specify the tenant using the `X-Scope-OrgID` header:
+{{product_name}} is multi-tenant. Specify the tenant using the `X-Scope-OrgID` header:
 
 ```bash
 curl -X POST http://localhost:4318/v1/logs \
@@ -151,7 +151,7 @@ curl -X POST http://localhost:4318/v1/logs \
 
 ## Delivery Guarantees
 
-IceGate provides **exactly-once delivery** semantics:
+{{product_name}} provides **exactly-once delivery** semantics:
 
 - Data is durably written to object storage before acknowledgment
 - Idempotent writes prevent duplicates

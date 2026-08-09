@@ -1,11 +1,16 @@
 ---
 title: Tempo API Reference
-description: Tempo-compatible HTTP API endpoints
+description: Tempo-compatible HTTP API endpoints served by {{product_name}}
 ---
 
 # Tempo API Reference
 
-IceGate provides a Tempo-compatible HTTP API for querying distributed traces.
+{{product_name}} provides a Tempo®-compatible HTTP API for querying distributed traces, served on port 3200.
+The endpoints documented below are the ones implemented — this is a subset of Tempo's API, not a
+complete reimplementation, so anything not listed here should be assumed unimplemented. TraceQL is
+supported for `/api/search`; TraceQL features that are not yet implemented return
+`501 Not Implemented` rather than silently returning wrong results. See
+[Trademarks](../trademarks.md) for attribution.
 
 ## Base URL
 
@@ -25,7 +30,7 @@ X-Scope-OrgID: my-tenant
 
 {% note warning %}
 
-The Tempo API is currently under development. Basic trace retrieval is available but TraceQL support is planned for future releases.
+The Tempo API implements a subset of Tempo's HTTP read API. Trace retrieval and `/api/search` are available, and TraceQL is supported for search — TraceQL features that are not yet implemented return `501 Not Implemented` rather than silently returning wrong results.
 
 {% endnote %}
 
@@ -136,7 +141,7 @@ curl http://localhost:3200/api/search/tag/service.name/values \
 
 ## Span Data Model
 
-Spans stored in IceGate include:
+Spans stored in {{product_name}} include:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -157,4 +162,4 @@ Spans stored in IceGate include:
 
 - Learn about [Data Ingestion](../guides/ingestion.md)
 - Explore the [Loki API](loki.md) for logs
-- See [Prometheus API](prometheus.md) for metrics
+- See [Prometheus API](prometheus.md) for the planned metrics API (not implemented yet)

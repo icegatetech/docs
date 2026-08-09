@@ -1,21 +1,21 @@
 ---
 title: Installation
-description: Install IceGate on Kubernetes with Helm
+description: Install {{product_name}} on Kubernetes with Helm
 ---
 
 # Installation
 
-IceGate is deployed on Kubernetes using Helm charts, with Kustomize overlays for environment-specific customizations.
+{{product_name}} is deployed on Kubernetes using Helm charts, with Kustomize overlays for environment-specific customizations.
 
 ## Prerequisites
 
 - **Kubernetes** >= 1.28 with **Helm 3**
-- **Object Storage:** AWS S3 or S3-compatible (MinIO)
-- **Iceberg Catalog:** Nessie (REST), AWS S3 Tables, or AWS Glue
+- **Object Storage:** AWS S3 or S3-compatible (RustFS)
+- **Iceberg Catalog:** the built-in S3 catalog (default, no external service), or Nessie (REST), AWS S3 Tables, or AWS Glue
 
 ## Helm Chart
 
-The Helm chart deploys all IceGate components: Ingest, Query, and a Migrate job (schema creation as a pre-install/pre-upgrade hook).
+The Helm chart deploys all {{product_name}} components: Ingest, Query, and a Migrate job (schema creation as a pre-install/pre-upgrade hook).
 
 ### Install from OCI Registry
 
@@ -41,11 +41,37 @@ helm install icegate ./icegate/config/helm/icegate \
 
 {% note info %}
 
-Helm values use camelCase and flat keys (e.g., `backend: rest` + `rest.uri`). The chart translates these into the native serde tagged enum config format (`backend: !rest`) that IceGate binaries expect. See [Configuration](configuration.md) for the native config reference.
+Helm values use camelCase and flat keys (e.g., `backend: s3` + `s3.warehouse`). The chart translates these into the native serde tagged enum config format (`backend: !s3`) that {{product_name}} binaries expect. See [Configuration](configuration.md) for the native config reference.
 
 {% endnote %}
 
-A minimal `values.yaml` for a REST catalog (Nessie) with S3-compatible storage:
+A minimal `values.yaml` using the default built-in S3 catalog with S3-compatible storage. No external catalog service is involved — the catalog state is a `root.json` object in the warehouse bucket:
+
+```yaml
+catalog:
+  backend: s3
+  s3:
+    warehouse: catalog
+  warehouse: "s3://warehouse/"
+
+storage:
+  s3:
+    bucket: warehouse
+    region: us-east-1
+    endpoint: "http://rustfs:9000"
+
+queue:
+  common:
+    basePath: "s3://queue/"
+
+aws:
+  existingSecret: icegate-aws-credentials
+  region: us-east-1
+```
+
+### REST Catalog (Nessie)
+
+Use this only if you already run a Nessie or other Iceberg REST catalog — it adds an external service the default deployment does not need:
 
 ```yaml
 catalog:
@@ -58,11 +84,7 @@ storage:
   s3:
     bucket: warehouse
     region: us-east-1
-    endpoint: "http://minio:9000"
-
-queue:
-  common:
-    basePath: "s3://queue/"
+    endpoint: "http://rustfs:9000"
 
 aws:
   existingSecret: icegate-aws-credentials
@@ -109,9 +131,9 @@ aws:
 
 | Value | Default | Description |
 |-------|---------|-------------|
-| `catalog.backend` | `rest` | Catalog type: `rest`, `s3tables`, or `glue` |
+| `catalog.backend` | `s3` | Catalog type: `s3`, `rest`, `s3tables`, or `glue` |
 | `storage.s3.bucket` | `warehouse` | S3 bucket name |
-| `storage.s3.endpoint` | `""` | Custom S3 endpoint (MinIO). Omit for real AWS S3 |
+| `storage.s3.endpoint` | `""` | Custom S3 endpoint (RustFS). Omit for real AWS S3 |
 | `aws.existingSecret` | `""` | Secret with `aws-access-key-id` and `aws-secret-access-key` keys |
 | `query.replicaCount` | `1` | Query service replicas |
 | `ingest.replicaCount` | `1` | Ingest service replicas |
@@ -130,19 +152,19 @@ aws:
 
 ## Kustomize Overlays
 
-For environment-specific customizations, IceGate provides Kustomize overlays that compose the Helm chart with infrastructure dependencies.
+For environment-specific customizations, {{product_name}} provides Kustomize overlays that compose the Helm chart with infrastructure dependencies.
 
 ### Available Overlays
 
 | Overlay | Description | Infrastructure |
 |---------|-------------|----------------|
-| `skaffold` | Local development with Skaffold | MinIO, Nessie, observability stack |
-| `orbstack` | OrbStack container runtime | MinIO, Nessie, observability stack |
-| `aws-glue` | AWS Glue catalog | Observability stack (no MinIO/Nessie) |
-| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (no MinIO/Nessie) |
-| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack (no MinIO) |
+| `skaffold` | Local development with Skaffold | RustFS, observability stack |
+| `orbstack` | OrbStack container runtime | RustFS, observability stack |
+| `aws-glue` | AWS Glue catalog | Observability stack (external S3) |
+| `aws-s3tables` | AWS S3 Tables catalog | Observability stack (external S3) |
+| `external-s3` | External S3 + Nessie catalog | Nessie, observability stack |
 
-All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built IceGate dashboards, and Jaeger for distributed tracing.
+All overlays share a common base (`config/kustomize/base/`) that deploys the observability stack: Prometheus (kube-prometheus-stack), Grafana with pre-built {{product_name}} dashboards, and Jaeger for distributed tracing.
 
 ### Usage
 
@@ -159,7 +181,7 @@ skaffold dev
 Each overlay contains:
 
 - `kustomization.yaml` — declares Helm charts and patches
-- `values-icegate.yaml` — IceGate Helm values for this environment
+- `values-icegate.yaml` — {{product_name}} Helm values for this environment
 - `secret-aws.yaml` — AWS credentials Secret (edit before applying)
 
 To create a custom overlay:

@@ -2,7 +2,14 @@ title: IceGate Documentation
 description: |
   An Observability Data Lake engine designed to be fast, easy-to-use, cost-effective, scalable, and fault-tolerant.
 meta:
-  title: IceGate - Observability Data Lake Engine
+  # Rendered as "<meta.title> | <title>", so this plus " | IceGate Documentation" is the whole
+  # <title> tag — keep the pair under 60 characters or Google truncates it. Naming the product
+  # here as well as in `title` would spend 8 of those characters saying "IceGate" twice.
+  title: Observability Data Lake Engine
+  # Leading pages emit no <meta name="description"> from the `description` field above — that
+  # one only renders as body copy. Without this key the landing page of each language ships
+  # without a description at all.
+  description: Documentation for IceGate, an open-source observability data lake engine — install, query, and operate it on Apache Iceberg, Arrow and Parquet.
 links:
   - title: Getting Started
     description: Install IceGate and run your first queries in minutes
@@ -11,7 +18,7 @@ links:
     description: Learn how to ingest data, query logs, and configure multi-tenancy
     href: guides/ingestion.md
   - title: API Reference
-    description: Loki, Prometheus, and Tempo compatible APIs
+    description: Loki®- and Tempo®-compatible APIs (Prometheus® planned)
     href: api-reference/loki.md
   - title: Architecture
     description: Understand IceGate's compute-storage separation design

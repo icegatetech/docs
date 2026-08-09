@@ -1,11 +1,11 @@
 ---
 title: Contribuer
-description: Comment contribuer au développement d'IceGate
+description: Comment contribuer au développement d'{{product_name}}
 ---
 
 # Contribuer
 
-Nous accueillons les contributions à IceGate ! Ce guide explique comment commencer.
+Nous accueillons les contributions à {{product_name}} ! Ce guide explique comment commencer.
 
 ## Façons de Contribuer
 
@@ -19,7 +19,7 @@ Nous accueillons les contributions à IceGate ! Ce guide explique comment commen
 
 ### Prérequis
 
-- Rust >= 1.92.0
+- Rust >= {{rust_version}}
 - Docker et Docker Compose
 - Git
 
@@ -100,12 +100,14 @@ Cela exécute :
 ```
 crates/
 ├── icegate-common/      # Infrastructure partagée (catalogue, stockage, métriques, traçage)
+├── icegate-catalog-s3/  # Catalogue Iceberg sur S3 (par défaut) et son serveur REST
 ├── icegate-queue/       # Write-ahead log (Parquet sur stockage objet)
-├── icegate-query/       # Service Query (APIs Loki/Prometheus/Tempo)
-├── icegate-ingest/      # Service Ingest (OTLP HTTP/gRPC)
-├── icegate-maintain/    # Opérations de maintenance (migration de schéma)
-└── icegate-jobmanager/  # Gestion de l'état des jobs shift
+├── icegate-query/       # Service Query (Loki/Tempo/Flight SQL ; routes Prometheus 501)
+├── icegate-ingest/      # Service Ingest (OTLP HTTP/gRPC, WAL, shift)
+└── icegate-maintain/    # Migration, compaction, GC des orphelins, crawler de tarifs
 ```
+
+Le framework de jobs/tâches n'est pas un crate du workspace : il réside dans `icegatetech/jobmanager` et est consommé comme dépendance git épinglée.
 
 Voir l'[Architecture](../architecture/overview.md) pour les détails.
 

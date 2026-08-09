@@ -1,11 +1,11 @@
 ---
 title: Data Model
-description: IceGate Iceberg table schemas for observability data
+description: {{product_name}} Iceberg table schemas for observability data
 ---
 
 # Data Model
 
-IceGate stores observability data in four Apache Iceberg tables: logs, spans, events, and metrics.
+{{product_name}} stores observability data in five tenant-scoped Apache Iceberg tables — logs, spans, events, metrics, and operations — plus one global reference table, prices.
 
 ## Table Overview
 
@@ -15,12 +15,14 @@ IceGate stores observability data in four Apache Iceberg tables: logs, spans, ev
 | `spans` | Distributed trace spans | Request tracing |
 | `events` | Semantic events | Business events, alerts |
 | `metrics` | All metric types | Performance monitoring |
+| `operations` | LLM and agent operations | Token usage, cost, prompt and completion capture |
+| `prices` | Global LLM rate card (no `tenant_id`) | Reference rates for costing `operations` |
 
 ## Common Design Patterns
 
 ### Multi-Tenancy
 
-All tables use identity partitioning on `tenant_id`:
+The five tenant-scoped tables use identity partitioning on `tenant_id`. `prices` is reference data shared by every tenant, so it carries no `tenant_id` and is partitioned differently:
 
 ```sql
 partitioning = ARRAY['tenant_id', 'account_id', 'day(timestamp)']
@@ -263,6 +265,125 @@ CREATE TABLE metrics (
 | `histogram` | `count`, `sum`, `min`, `max`, `bucket_counts`, `explicit_bounds` |
 | `exponential_histogram` | `count`, `sum`, `scale`, `zero_count`, `positive_*`, `negative_*` |
 | `summary` | `count`, `sum`, `quantile_values` |
+
+## Operations Table
+
+LLM and agent operations, following the OpenTelemetry generative-AI semantic conventions.
+
+```sql
+CREATE TABLE operations (
+    tenant_id VARCHAR NOT NULL,
+    conversation_id VARCHAR,
+
+    -- identity
+    trace_id VARBINARY NOT NULL,
+    span_id VARBINARY NOT NULL,
+    parent_span_id VARBINARY,
+    service_name VARCHAR,
+    scope_name VARCHAR,
+    scope_version VARCHAR,
+
+    -- timing
+    timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    end_timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    duration_micros BIGINT NOT NULL,
+    ingested_timestamp TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+
+    operation_name VARCHAR NOT NULL,
+
+    -- provider and model
+    provider_name VARCHAR,
+    request_model VARCHAR,
+    response_model VARCHAR,
+    response_id VARCHAR,
+
+    -- sampling parameters
+    temperature DOUBLE,
+    top_p DOUBLE,
+    top_k BIGINT,
+    max_tokens BIGINT,
+    frequency_penalty DOUBLE,
+    presence_penalty DOUBLE,
+    seed BIGINT,
+    stream BOOLEAN,
+    choice_count BIGINT,
+    output_type VARCHAR,
+    reasoning_effort VARCHAR,
+
+    time_to_first_chunk_ms BIGINT,
+
+    -- token usage
+    input_tokens BIGINT,
+    output_tokens BIGINT,
+    total_tokens BIGINT,
+    reasoning_tokens BIGINT,
+    cache_creation_input_tokens BIGINT,
+    cache_read_input_tokens BIGINT,
+
+    user_id VARCHAR,
+
+    -- tool calls
+    tool_name VARCHAR,
+    tool_call_id VARCHAR,
+    tool_type VARCHAR,
+    tool_description VARCHAR,
+
+    data_source_id VARCHAR,
+    embedding_dimensions INTEGER,
+
+    -- server and status
+    server_address VARCHAR,
+    server_port INTEGER,
+    status_code INTEGER,
+    status_message VARCHAR,
+    error_type VARCHAR,
+
+    -- agent and workflow
+    agent_id VARCHAR,
+    agent_name VARCHAR,
+    agent_version VARCHAR,
+    agent_description VARCHAR,
+    workflow_name VARCHAR,
+
+    -- content, JSON-encoded
+    input_messages VARCHAR,
+    output_messages VARCHAR,
+    system_instructions VARCHAR,
+    tool_definitions VARCHAR,
+    tool_call_arguments VARCHAR,
+    tool_call_result VARCHAR,
+
+    stop_sequences ARRAY(VARCHAR),
+    finish_reasons ARRAY(VARCHAR),
+    encoding_formats ARRAY(VARCHAR)
+)
+```
+
+**Partitioning:** `tenant_id` (identity), `day(timestamp)`
+
+**Sorting:** `trace_id`, `timestamp DESC` — clusters a trace's operations together, recent first
+
+The six `VARCHAR` content columns (`input_messages`, `output_messages`, `system_instructions`, `tool_definitions`, `tool_call_arguments`, `tool_call_result`) hold JSON-encoded payloads rather than parsed structures, so prompt and completion shapes can vary per provider without a schema change.
+
+## Prices Table
+
+A global LLM rate card, populated by the Maintain service's pricing crawler from the OpenRouter and LiteLLM feeds.
+
+Unlike the five telemetry tables it carries **no `tenant_id`** — rates are reference data, identical for every tenant. It is an append-only observation log: a row is written only when a rate first differs from the previous one for its key, and `valid_to` is derived at query time.
+
+**Key:** `(provider, model, service_tier, region, min_input_tokens, valid_from)`
+
+Context tiers and service tiers live in the key rather than in extra columns, so the rate columns stay flat as the card grows. Rate columns are `DECIMAL(38, 10)` rather than floating point — money has to be exact, and binary `f64` cannot represent a value like `0.075` or sum it without drift.
+
+### Joining Prices to Operations
+
+The query engine exposes a derived view, `prices_effective`, which adds `valid_to` — the next revision's `valid_from` for the same key, `NULL` for the row currently in effect. It is a DataFusion object, so the Loki, Tempo, and Flight SQL paths see it; Trino reads the Iceberg catalog directly and does not, which is why the raw table stays self-sufficient.
+
+{% note warning %}
+
+{{product_name}} does not compute cost, and `operations` does not carry the full pricing key. It records `provider_name` and `request_model`, which line up with `prices.provider` and `prices.model`, but nothing for `service_tier`, `region`, or `min_input_tokens`. A cost query has to supply those three from deployment knowledge — a fixed tier and region per account, say. Treat such a join as an estimate parameterised by your own assumptions, not a derivation the schema guarantees.
+
+{% endnote %}
 
 ## Query Examples
 
